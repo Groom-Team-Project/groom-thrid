@@ -21,6 +21,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException e) {
 
+        String customCode = "C_001";
+        StatusCodeMessage codeMessage = StatusCodeMessage.INPUT_ERROR;
+        int code = codeMessage.getCode();
+        String message = codeMessage.getMessage();
+
         // 검증 실패한 필드 정보 추출
         List<ErrorDetail> errors = e.getBindingResult()
                 .getFieldErrors()
@@ -29,7 +34,7 @@ public class GlobalExceptionHandler {
                         error.getField(),
                         error.getRejectedValue(),
                         error.getDefaultMessage(),
-                        "C_001"  // 에러 코드 : 클라이언트 입력에러
+                        customCode  // 에러 코드 : 클라이언트 입력에러
                 ))
                 .toList();
 
@@ -39,18 +44,18 @@ public class GlobalExceptionHandler {
                     null,
                     null,
                     e.getMessage(),
-                    "C_001" // 에러 코드 : 클라이언트 입력에러
+                    customCode // 에러 코드 : 클라이언트 입력에러
             ));
         }
 
         ApiResponse<Void> response = ApiResponse.error(
-            StatusCodeMessage.BAD_REQUEST.getCode(),
-            StatusCodeMessage.BAD_REQUEST.getMessage(),
+            code,
+            message,
             errors
         );
 
         return ResponseEntity
-            .status(HttpStatus.BAD_REQUEST)
+            .status(code)
             .body(response);
     }
 

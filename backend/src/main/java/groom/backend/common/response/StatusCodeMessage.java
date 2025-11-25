@@ -4,13 +4,6 @@ import lombok.Getter;
 
 /**
  * HTTP 상태코드와 기본 메시지를 관리하는 Enum
- *
- * 각 상태코드별로 의미있는 기본 메시지를 정의합니다.
- * GlobalResponseAdvice에서 자동으로 메시지가 적용됩니다.
- *
- * 사용법:
- * - 컨트롤러에서 기본 메시지를 사용할 경우: response.setStatus(201);
- * - 커스텀 메시지가 필요한 경우: GlobalExceptionHandler에서 직접 ApiResponse 생성
  */
 @Getter
 public enum StatusCodeMessage {
@@ -32,7 +25,10 @@ public enum StatusCodeMessage {
     // 5xx Server Error
     INTERNAL_SERVER_ERROR(500, "서버 내부 오류가 발생했습니다"),
     BAD_GATEWAY(502, "게이트웨이 오류가 발생했습니다"),
-    SERVICE_UNAVAILABLE(503, "서비스가 일시적으로 이용 불가합니다");
+    SERVICE_UNAVAILABLE(503, "서비스가 일시적으로 이용 불가합니다"),
+
+    // custom Error
+    INPUT_ERROR(400, "요청 형식이 잘못되었습니다.(DTO)");
 
     private final int code;
     private final String message;
