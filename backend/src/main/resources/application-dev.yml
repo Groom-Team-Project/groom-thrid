@@ -13,3 +13,12 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+
+  springdoc:
+    swagger-ui:
+      enabled: true
+      path: /swagger-ui.html
+      operations-sorter: method
+      tags-sorter: alpha
+    api-docs:
+      path: /v3/api-doc
