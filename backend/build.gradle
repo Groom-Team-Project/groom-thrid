@@ -34,7 +34,7 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
 
     // Flyway
-    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-core:8.5.13'
     testAnnotationProcessor 'org.projectlombok:lombok' // 테스트를 위한 세팅
     testImplementation 'org.projectlombok:lombok' // 테스트를 위한 세팅
 
