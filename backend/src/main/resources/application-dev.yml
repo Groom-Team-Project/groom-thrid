@@ -1,9 +1,9 @@
 spring:
   datasource:
-    url:
-    username:
-    password:
-    driver-class-name:
+    url: jdbc:postgresql://localhost:5432/groom_third
+    username: dev
+    password: dev123
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
@@ -22,3 +22,10 @@ spring:
       tags-sorter: alpha
     api-docs:
       path: /v3/api-doc
+    enabled: false
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+  address: 0.0.0.0

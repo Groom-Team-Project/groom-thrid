@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/locations")
+@RequestMapping("/v1/locations")
 @Tag(name = "Location", description = "위치 관리 API")
 public class LocationController {
 
@@ -50,5 +50,10 @@ public class LocationController {
     })
     public CreateLocationResponse getLocation(@PathVariable Long locationId) {
         return locationService.getLocation(locationId);
+    }
+
+    @GetMapping("/kakao/key")
+    public String getKey() {
+        return "32f825b60a03b505712a82f7faefe59b";
     }
 }
