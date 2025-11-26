@@ -5,7 +5,6 @@ import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.Setter;
 
-@Entity
 @MappedSuperclass
 @Getter
 @Setter
