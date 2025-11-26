@@ -28,7 +28,7 @@ export default function App() {
     useEffect(() => {
         const fetchApiKey = async () => {
             try {
-                const res = await fetch('/api/v1/kakao/key');
+                const res = await fetch('/api/v1/locations/kakao/key');
 
                 const contentType = res.headers.get('content-type') || '';
                 let key = '';
