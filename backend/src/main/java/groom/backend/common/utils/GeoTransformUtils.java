@@ -15,9 +15,9 @@ public class GeoTransformUtils {
    * @param EPSGCode 좌표계 예시 : "EPSG:5181"
    * @return Float[]{x, y} → 4326 좌표 (동북 방향 m 단위)
    */
-  public static Float[] toEPSG4326(float lat, float lng, String EPSGCode) {
+  public static Double[] toEPSG4326(Double lat, Double lng, String crsCode) {
 
-    CoordinateReferenceSystem srcCrs = crsFactory.createFromName(EPSGCode);
+    CoordinateReferenceSystem srcCrs = crsFactory.createFromName(crsCode);
     CoordinateReferenceSystem dstCrs = crsFactory.createFromName("EPSG:4326");
 
     CoordinateTransform transform = ctFactory.createTransform(srcCrs, dstCrs);
@@ -32,6 +32,6 @@ public class GeoTransformUtils {
       throw new RuntimeException("EPSG:4326 좌표 변환 실패", e);
     }
 
-    return new Float[]{(float) dst.x, (float) dst.y};
+    return new Double[]{(Double) dst.x, (Double) dst.y};
   }
 }
