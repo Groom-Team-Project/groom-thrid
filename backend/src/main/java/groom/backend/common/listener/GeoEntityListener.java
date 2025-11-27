@@ -16,19 +16,19 @@ public class GeoEntityListener {
     }
 
     // EPSG가 이미 4326이면 스킵
-    if (geo.getEPSG() != null && geo.getEPSG() == "EPSG:4326") return;
+    if (geo.getCrs() != null && geo.getCrs() == "EPSG:4326") return;
 
     if (geo.getLat() == null || geo.getLng() == null) return;
 
     // 좌표 변환 수행
-    Float[] converted = GeoTransformUtils.toEPSG4326(
+    Double[] converted = GeoTransformUtils.toEPSG4326(
             geo.getLat(),
             geo.getLng(),
-            geo.getEPSG()
+            geo.getCrs()
     );
 
     geo.setLat(converted[0]);
     geo.setLng(converted[1]);
-    geo.setEPSG("EPSG:4326");
+    geo.setCrs("EPSG:4326");
   }
 }
