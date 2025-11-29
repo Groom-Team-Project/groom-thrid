@@ -25,7 +25,7 @@ public class TmapApiClient {
     Integer version = 1;
     log.info(this.tmapApiKey);
     PathFindResponse pathFindResponse = restClient.post().uri(uriBuilder -> uriBuilder
-            .path("/path")
+            .path("/tmap/routes/pedestrian")
             .queryParam("version", version).build())
             .header("appKey", tmapApiKey)
             .header("Accept", "*/*")
