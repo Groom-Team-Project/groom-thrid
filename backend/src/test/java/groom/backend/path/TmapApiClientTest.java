@@ -2,7 +2,7 @@ package groom.backend.path;
 
 import groom.backend.domain.path.dto.request.PathFindRequest;
 import groom.backend.domain.path.dto.response.PathFindResponse;
-import groom.backend.domain.path.service.spec.TmapApiClient;
+import groom.backend.interfaces.TmapApiClient;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

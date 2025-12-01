@@ -3,8 +3,8 @@ package groom.backend.domain.path.service.spec;
 import groom.backend.domain.path.dto.request.PathFindRequest;
 import groom.backend.domain.path.dto.response.PathFindResponse;
 import groom.backend.domain.path.service.impl.PathService;
+import groom.backend.interfaces.TmapApiClient;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service

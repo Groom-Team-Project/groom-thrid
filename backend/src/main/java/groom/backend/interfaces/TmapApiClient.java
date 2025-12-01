@@ -1,4 +1,4 @@
-package groom.backend.domain.path.service.spec;
+package groom.backend.interfaces;
 
 import groom.backend.domain.path.dto.request.PathFindRequest;
 import groom.backend.domain.path.dto.response.PathFindResponse;
