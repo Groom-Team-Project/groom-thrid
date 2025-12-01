@@ -15,6 +15,7 @@ import groom.backend.domain.opendata.service.spec.ChargerLocationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.net.URI;
@@ -55,6 +56,7 @@ public class ChargerLocationServiceImpl implements ChargerLocationService {
             .configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     @Override
+    @Transactional
     public void getAllOpenDataChargers() {
         repository.deleteAll();
 
