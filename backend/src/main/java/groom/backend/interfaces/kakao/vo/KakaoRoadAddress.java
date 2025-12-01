@@ -1,5 +1,12 @@
 package groom.backend.interfaces.kakao.vo;
 
+import lombok.*;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
 public class KakaoRoadAddress {
   private String addressName;
   private String region1DepthName;

@@ -20,15 +20,15 @@ public class KakaoCoordTransferTest {
 
   @Test
   void kakaoApiCoordSearchResponseTest() {
-    // given
-    KakaoAddressRequest request = KakaoAddressRequest.builder()
-            .x("126.9783882")   // 서울 시청 경도
-            .y("37.5666103")    // 서울 시청 위도
-            .inputCoord("WGS84")
-            .build();
+//    // given
+//    KakaoAddressRequest request = KakaoAddressRequest.builder()
+//            .x("126.9783882")   // 서울 시청 경도
+//            .y("37.5666103")    // 서울 시청 위도
+//            .inputCoord("WGS84")
+//            .build();
 
     // when
-    KakaoAddressResponse response = kakaoApiClient.transferToAddress(request);
+    KakaoAddressResponse response = kakaoApiClient.transferToAddress(126.9783882, 37.5666103);
 
     // then
     assertThat(response).isNotNull();

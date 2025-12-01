@@ -21,8 +21,12 @@ public class KakaoApiClient {
     this.kakaoApiKey = kakaoApiKey;
   }
 
-  public KakaoAddressResponse transferToAddress(KakaoAddressRequest request) {
-    log.info("Kakao AK " + kakaoApiKey);
+  public KakaoAddressResponse transferToAddress(Double lng, Double lat) {
+    KakaoAddressRequest request = KakaoAddressRequest.builder()
+            .x(Double.toString(lng))
+            .y(Double.toString(lat))
+            .build();
+
     KakaoAddressResponse response = restClient.get().uri(uriBuilder -> uriBuilder
                     .path("/v2/local/geo/coord2address.json")
                     .queryParam("x", request.getX())
