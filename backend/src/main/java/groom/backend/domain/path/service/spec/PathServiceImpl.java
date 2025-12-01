@@ -14,7 +14,7 @@ public class PathServiceImpl implements PathService {
 
   @Override
   public PathFindResponse findPath(PathFindRequest pathFindRequest)  {
-    // 서비스 제공 구역 검사
+    // 서비스 제공 구역 검사 (시작점, 종료점 각각 검사)
 
     // 제공 구역이 아닐 경우, Exception 발생
 
