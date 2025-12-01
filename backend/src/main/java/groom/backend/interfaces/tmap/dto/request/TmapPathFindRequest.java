@@ -1,4 +1,4 @@
-package groom.backend.domain.path.dto.request;
+package groom.backend.interfaces.tmap.dto.request;
 
 import lombok.*;
 
@@ -9,7 +9,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TmapApiRequest {
+public class TmapPathFindRequest {
   private Double startX;
   private Double startY;
   private Double endX;

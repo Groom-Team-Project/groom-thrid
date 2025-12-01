@@ -1,7 +1,7 @@
-package groom.backend.interfaces;
+package groom.backend.interfaces.tmap;
 
-import groom.backend.domain.path.dto.request.PathFindRequest;
-import groom.backend.domain.path.dto.response.PathFindResponse;
+import groom.backend.interfaces.tmap.dto.request.TmapPathFindRequest;
+import groom.backend.interfaces.tmap.dto.response.TmapPathFindResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -21,16 +21,16 @@ public class TmapApiClient {
     this.tmapApiKey = tmapApiKey;
   }
 
-  public PathFindResponse tmapApiPathFind(PathFindRequest pathFindRequest) {
+  public TmapPathFindResponse tmapApiPathFind(TmapPathFindRequest pathFindRequest) {
     Integer version = 1;
     log.info(this.tmapApiKey);
-    PathFindResponse pathFindResponse = restClient.post().uri(uriBuilder -> uriBuilder
+    TmapPathFindResponse pathFindResponse = restClient.post().uri(uriBuilder -> uriBuilder
             .path("/tmap/routes/pedestrian")
             .queryParam("version", version).build())
             .header("appKey", tmapApiKey)
             .header("Accept", "*/*")
             .header("Content-Type", "application/json")
-            .body(pathFindRequest).retrieve().body(PathFindResponse.class);
+            .body(pathFindRequest).retrieve().body(TmapPathFindResponse.class);
 
     return pathFindResponse;
   }
