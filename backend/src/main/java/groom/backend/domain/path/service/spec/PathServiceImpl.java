@@ -25,4 +25,15 @@ public class PathServiceImpl implements PathService {
     // 반환
     return null;
   }
+
+  /**
+   * 위치 주소 변환 및 시도, 시군구 추출을 통해 서비스 제공 구역 확인
+   * @param lng 경도
+   * @param lat 위도
+   * @return
+   */
+  private Boolean isProvisionArea(Double lng, Double lat) {
+    // find
+    return false;
+  }
 }
