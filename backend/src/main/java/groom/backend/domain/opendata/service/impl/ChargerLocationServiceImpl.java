@@ -71,7 +71,7 @@ public class ChargerLocationServiceImpl implements ChargerLocationService {
             String body = fetchResponseBody(url);
 
             if (body == null || body.isBlank()) {
-                // 필요시 로그 추가
+                log.warn("빈 응답 본문으로 인해 데이터 수집 중단");
                 return;
             }
 
@@ -98,7 +98,7 @@ public class ChargerLocationServiceImpl implements ChargerLocationService {
                 return jsonMapper.readValue(arr.toString(), new TypeReference<List<OpenDataCharger>>() {});
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("API 응답 파싱 중 오류 발생", e);
         }
 
         // 3) 못 찾으면 빈 리스트 반환
@@ -119,7 +119,8 @@ public class ChargerLocationServiceImpl implements ChargerLocationService {
             JsonNode root = jsonMapper.readTree(body);
 
             return readIntAt(root, "/response/body/totalCount", 0);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.error("총 데이터 개수 조회 중 오류 발생", e);
         }
         return 0;
     }
@@ -154,13 +155,12 @@ public class ChargerLocationServiceImpl implements ChargerLocationService {
 
             HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
             int status = resp.statusCode();
-            if (status >= 200 && status < 300) {
-                return resp.body();
-            } else {
-                // 필요시 로그 추가
-                return resp.body();
+            if (status < 200 || status >= 300) {
+                log.error("API 요청 실패: 상태 코드 {}, 응답 본문: {}", status, resp.body());
             }
+            return resp.body();
         } catch (InterruptedException | IOException e) {
+            log.error("API 요청 중 오류 발생", e);
             Thread.currentThread().interrupt();
             return null;
         }
