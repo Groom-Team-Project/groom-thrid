@@ -1,0 +1,82 @@
+package groom.backend.domain.users.entity;
+
+import groom.backend.common.entity.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Table(
+    name = "user_credentials",
+    uniqueConstraints = {
+        @jakarta.persistence.UniqueConstraint(
+            name = "uk_provider_providerId",
+            columnNames = {"provider", "providerId"}
+        )
+    }
+)
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class UserCredential extends BaseEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @Setter
+    private User user;
+
+    @Column(nullable = false)
+    private Provider provider;
+
+    @Column(name = "provider_id")
+    private String providerId;
+
+    @Column(name = "login_email", unique = true)
+    private String loginEmail;
+
+    @Column
+    private String password;
+
+    // Form용 로그인정보 Credential 생성
+    public static UserCredential createFormCredential(User user, String loginEmail, String encodedPassword) {
+        UserCredential credential = new UserCredential();
+        credential.user = user;
+        credential.provider = Provider.Form;
+        credential.loginEmail = loginEmail;
+        credential.password = encodedPassword;
+        return credential;
+    }
+
+    // OAuth용 로그인정보 Credential 생성
+    public static UserCredential createOAuthCredential(User user, Provider provider, String providerId) {
+        if (provider == Provider.Form) {
+            throw new IllegalArgumentException("Form provider는 createFormCredential을 사용해야 합니다");
+        }
+        UserCredential credential = new UserCredential();
+        credential.user = user;
+        credential.provider = provider;
+        credential.providerId = providerId;
+        return credential;
+    }
+
+    // Form용 비밀번호 변경
+    public void updatePassword(String encodedPassword) {
+        if (this.provider != Provider.Form) {
+            throw new IllegalStateException("OAuth 로그인은 비밀번호를 변경할 수 없습니다");
+        }
+        this.password = encodedPassword;
+    }
+}
