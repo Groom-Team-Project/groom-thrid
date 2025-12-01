@@ -33,12 +33,6 @@ public class ChargerLocationRepositoryImpl implements ChargerLocationRepository 
     }
 
     @Override
-    public List<ChargerLocation> saveAll(List<OpenDataCharger> data) {
-        List<ChargerLocation> locations = ChargerLocationMapper.toEntityList(data);
-        return jpaChargerLocationRepository.saveAll(locations);
-    }
-
-    @Override
     public void deleteAll() {
         log.info("충전소 데이터 전체 삭제 시작");
         jpaChargerLocationRepository.deleteAllInBatch();
