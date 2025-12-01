@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class GeoEntity {
-  private String EPSG;
-  private Float lat;
-  private Float lng;
+  private String crs;
+  private Double lat;
+  private Double lng;
 }
