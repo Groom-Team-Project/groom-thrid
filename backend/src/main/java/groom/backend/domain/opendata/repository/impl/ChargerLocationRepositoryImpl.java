@@ -1,8 +1,6 @@
 package groom.backend.domain.opendata.repository.impl;
 
-import groom.backend.domain.opendata.dto.OpenDataCharger;
 import groom.backend.domain.opendata.entity.ChargerLocation;
-import groom.backend.domain.opendata.mapper.ChargerLocationMapper;
 import groom.backend.domain.opendata.repository.spec.ChargerLocationRepository;
 import groom.backend.domain.opendata.repository.spec.jpa.JpaChargerLocationRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -10,13 +8,14 @@ import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.util.List;
 
+import static java.sql.Types.DATE;
 import static java.sql.Types.TIME;
-import static java.util.Calendar.DATE;
 
 @Slf4j
 @Repository
@@ -120,7 +119,7 @@ public class ChargerLocationRepositoryImpl implements ChargerLocationRepository 
                     ps.setString(19, it.getManageOrgName());
                     ps.setString(20, it.getManageOrgContact());
                     if (it.getDataUpdated() != null) {
-                        ps.setDate(21, java.sql.Date.valueOf(it.getDataUpdated()));
+                        ps.setDate(21, Date.valueOf(it.getDataUpdated()));
                     } else {
                         ps.setNull(21, DATE);
                     }
