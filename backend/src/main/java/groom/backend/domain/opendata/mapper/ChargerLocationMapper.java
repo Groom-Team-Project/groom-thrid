@@ -30,6 +30,8 @@ public class ChargerLocationMapper {
                         .capacity(dto.getSmtmUseCo())
                         .isAirPump("Y".equals(dto.getAirInjectorYn())?true : false)
                         .isCharger("Y".equals(dto.getMoblphonChrstnYn())?true : false)
+                        .isAirPump("Y".equals(dto.getAirInjectorYn()))
+                        .isCharger("Y".equals(dto.getMoblphonChrstnYn()))
                         .manageOrgName(dto.getInstitutionNm())
                         .manageOrgContact(dto.getInstitutionPhoneNumber())
                         .dataUpdated(dto.getReferenceDate())
