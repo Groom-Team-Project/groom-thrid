@@ -49,7 +49,7 @@ public class TmapToPathMapper {
               properties.getTime(),
               properties.getCategoryRoadType(),
               (Integer) Integer.parseInt(properties.getFacilityType() != "" ?
-                      properties.getFacilityType() : "1") // facility Type이 문자열로 직렬화되기 때문에 정수형변환 필요, 종료지점의 경우 empty 반환함.
+                      properties.getFacilityType() : "11") // facility Type이 문자열로 직렬화되기 때문에 정수형변환 필요, 종료지점의 경우 empty 반환함.
       );
       pathNodeList.add(pathNode);
     }
