@@ -9,13 +9,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -35,29 +30,29 @@ public class User extends BaseEntity {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(length = 100)
-    private String contactEmail;
+    @Column(name = "email", unique = true)
+    private String email;
 
-    @Column(nullable = false)
+    @Column
     private String phone;
 
     @Column
     private boolean active = true;
 
-    // User 1:N UserCredential 관계
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<UserCredential> credentials = new HashSet<>();
+    // User 1:1 UserCredential 관계
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private UserCredential credential;
 
     @Column(nullable = false)
     private Role role = Role.USER;
 
     // User 생성(팩토리 패턴)
-    public static User createUser(String contactEmail, String name, String phone, Role role) {
+    public static User createUser(String name, String phone, Role role, String email) {
         User user = new User();
-        user.contactEmail = contactEmail;
         user.name = name;
         user.phone = phone;
         user.active = true;
+        user.email = email;
         user.role = role != null ? role : Role.USER;
         return user;
     }
@@ -83,21 +78,16 @@ public class User extends BaseEntity {
     }
 
     // 사용자 정보 수정
-    public void updateProfile(String name, String phone, String contactEmail) {
+    public void updateProfile(String name, String phone) {
         if (name != null) this.name = name;
         if (phone != null) this.phone = phone;
-        if (contactEmail != null) this.contactEmail = contactEmail;
     }
 
-    // Credential 추가 (양방향 관계 동기화)
-    public void addCredential(UserCredential credential) {
-        this.credentials.add(credential);
-        credential.setUser(this);
-    }
-
-    // Credential 제거 (양방향 관계 동기화)
-    public void removeCredential(UserCredential credential) {
-        this.credentials.remove(credential);
-        credential.setUser(null);
+    // Credential 설정 (양방향 관계 동기화)
+    public void setCredential(UserCredential credential) {
+        this.credential = credential;
+        if (credential != null) {
+            credential.setUser(this);
+        }
     }
 }

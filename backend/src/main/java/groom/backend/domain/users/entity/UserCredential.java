@@ -8,7 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.util.UUID;
 import lombok.AccessLevel;
@@ -33,8 +33,8 @@ public class UserCredential extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     @Setter
     private User user;
 
@@ -44,18 +44,18 @@ public class UserCredential extends BaseEntity {
     @Column(name = "provider_id")
     private String providerId;
 
-    @Column(name = "login_email", unique = true)
-    private String loginEmail;
+    @Column(name = "email", unique = true)
+    private String email;
 
     @Column
     private String password;
 
     // Form용 로그인정보 Credential 생성
-    public static UserCredential createFormCredential(User user, String loginEmail, String encodedPassword) {
+    public static UserCredential createFormCredential(User user, String email, String encodedPassword) {
         UserCredential credential = new UserCredential();
         credential.user = user;
         credential.provider = Provider.Form;
-        credential.loginEmail = loginEmail;
+        credential.email = email;
         credential.password = encodedPassword;
         return credential;
     }
