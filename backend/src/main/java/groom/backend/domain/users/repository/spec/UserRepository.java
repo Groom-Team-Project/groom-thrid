@@ -10,9 +10,7 @@ public interface UserRepository {
     Optional<User> findById(UUID id);
 
     Boolean existsByEmail(String email);
-
-    User update(UUID id, User user);
-
+    
     User save(User user);
 
     List<User> findAll();
