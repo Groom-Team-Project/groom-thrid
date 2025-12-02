@@ -1,7 +1,10 @@
-package groom.backend.interfaces.kakao.vo;
+package groom.backend.interfaces.kakao.dto.response;
 
 import lombok.*;
 
+/**
+ * 지번 주소 및 도로 주소를 담는 DTO
+ */
 @Getter
 @Setter
 @NoArgsConstructor

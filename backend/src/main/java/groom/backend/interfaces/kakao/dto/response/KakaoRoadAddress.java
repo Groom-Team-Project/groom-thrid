@@ -1,7 +1,10 @@
-package groom.backend.interfaces.kakao.vo;
+package groom.backend.interfaces.kakao.dto.response;
 
 import lombok.*;
 
+/**
+ * 카카오 API 요청 시 응답하는 도로 주소지 정보
+ */
 @Getter
 @Setter
 @NoArgsConstructor

@@ -1,9 +1,9 @@
-package groom.backend.interfaces.kakao.vo;
+package groom.backend.interfaces.kakao.dto.response;
 
 import lombok.*;
 
 /**
- * 카카오 API 요청 시 응답하는 주소지 값들의 정보
+ * 카카오 API 요청 시 응답하는 지번 주소지 정보
  */
 @Getter
 @Setter
