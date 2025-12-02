@@ -1,7 +1,5 @@
 package groom.backend.interfaces.kakao.dto.response;
 
-import groom.backend.interfaces.kakao.vo.KakaoAddress;
-import groom.backend.interfaces.kakao.vo.KakaoLotAddress;
 import lombok.*;
 
 import java.util.List;

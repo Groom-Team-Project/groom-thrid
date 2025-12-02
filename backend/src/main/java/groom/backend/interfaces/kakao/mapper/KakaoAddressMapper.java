@@ -2,7 +2,7 @@ package groom.backend.interfaces.kakao.mapper;
 
 import groom.backend.domain.path.dto.response.PathAddressResponse;
 import groom.backend.interfaces.kakao.dto.response.KakaoAddressResponse;
-import groom.backend.interfaces.kakao.vo.KakaoAddress;
+import groom.backend.interfaces.kakao.dto.response.KakaoAddress;
 
 public class KakaoAddressMapper {
 

@@ -6,6 +6,10 @@ import lombok.*;
 
 import java.util.List;
 
+/**
+ * 길찾기 요청에 대한 응답
+ * PathNode를 반환
+ */
 @Setter
 @Getter
 @ToString
