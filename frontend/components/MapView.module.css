@@ -1,0 +1,645 @@
+.mapContainer {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+  background: #e8f4f8;
+  position: relative;
+  overflow: hidden;
+}
+
+.userMarker {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+.userMarkerDot {
+  width: 20px;
+  height: 20px;
+  background: #007AFF;
+  border: 3px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+.stationMarker {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  z-index: 20;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.stationMarker:hover {
+  transform: translate(-50%, -100%) scale(1.1);
+}
+
+.stationMarker.selected {
+  z-index: 30;
+}
+
+.markerPin {
+  width: 32px;
+  height: 32px;
+  background: #ff9500;
+  border: 3px solid white;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.markerPin::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-radius: 50%;
+}
+
+.stationMarker.selected .markerPin {
+  background: #007AFF;
+  width: 40px;
+  height: 40px;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
+}
+
+.markerLabel {
+  margin-top: 4px;
+  padding: 4px 8px;
+  background: white;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.stationMarker:hover .markerLabel,
+.stationMarker.selected .markerLabel {
+  opacity: 1;
+}
+
+.emergencyButton {
+  position: absolute;
+  top: 80px;
+  right: 16px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px;
+  background: #ff3b30;
+  color: white;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease;
+}
+
+.emergencyButton:active {
+  transform: scale(0.95);
+}
+
+.emergencyIcon {
+  font-size: 24px;
+}
+
+.emergencyLabel {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.myLocationButton {
+  position: absolute;
+  bottom: 100px;
+  left: 16px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: white;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease;
+}
+
+.myLocationButton:active {
+  transform: scale(0.95);
+}
+
+.myLocationIcon {
+  font-size: 24px;
+}
+
+.infoPanel {
+  position: absolute;
+  bottom: 80px;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: white;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+  max-height: calc(60vh - 80px);
+  animation: slideUp 0.3s ease;
+  padding-bottom: env(safe-area-inset-bottom);
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.stationHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.panelHeader {
+  display: flex;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 0 16px;
+}
+
+.panelTab {
+  flex: 1;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #666;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.panelTab.active {
+  color: #007AFF;
+  border-bottom-color: #007AFF;
+}
+
+.panelContent {
+  padding: 24px;
+  padding-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(60vh - 120px);
+}
+
+.stationInfoText {
+  flex: 1;
+  min-width: 0;
+}
+
+.stationName {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: #333;
+  line-height: 1.3;
+}
+
+.stationAddress {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+  margin: 0;
+}
+
+
+.stationInfo {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #f5f5f5;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.stationInfo p {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.stationInfo p:last-child {
+  margin-bottom: 0;
+}
+
+.infoContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.actionButtons {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  align-items: flex-start;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.reportButton,
+.endButton,
+.guideButton {
+  padding: 3px 12px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  line-height: 1.2;
+  height: 30px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  width: auto;
+}
+
+.reportButton {
+  background: #007AFF;
+  color: white;
+}
+
+.reportButton:hover {
+  background: #0056b3;
+}
+
+.reportButton:active {
+  transform: scale(0.98);
+}
+
+.endButton {
+  background: #007AFF;
+  color: white;
+}
+
+.endButton:hover {
+  background: #0056b3;
+}
+
+.endButton:active {
+  transform: scale(0.98);
+}
+
+.guideButton {
+  background: #007AFF;
+  color: white;
+}
+
+.guideButton:hover {
+  background: #0056b3;
+}
+
+.guideButton:active {
+  transform: scale(0.98);
+}
+
+.dialogOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.dialog {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 320px;
+  width: 90%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  animation: slideUpDialog 0.3s ease;
+}
+
+@keyframes slideUpDialog {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.dialogMessage {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.dialogButtons {
+  display: flex;
+  gap: 12px;
+}
+
+.dialogButton {
+  flex: 1;
+  padding: 14px;
+  background: #007AFF;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  transition: background 0.3s ease;
+}
+
+.dialogButton:hover {
+  background: #0056b3;
+}
+
+.dialogButton:active {
+  transform: scale(0.98);
+}
+
+.dialogButtonCancel {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.dialogButtonCancel:hover {
+  background: #e0e0e0;
+}
+
+.reviewSection {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 0;
+  min-height: 0;
+  max-height: 200px;
+}
+
+.reviewHeaderSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.reviewTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.reviewList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  flex: 0;
+}
+
+.reviewItem {
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.reviewItem:hover {
+  background: #f0f0f0;
+}
+
+.reviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.reviewAuthorSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.reviewAuthor {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+}
+
+.reviewActions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.menuIcon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #666;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  line-height: 1;
+  padding: 0;
+}
+
+.menuIcon:hover {
+  color: #333;
+}
+
+.emptyReview {
+  padding: 40px 20px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+
+.reviewText {
+  font-size: 11px;
+  color: #666;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.reviewDate {
+  font-size: 10px;
+  color: #999;
+}
+
+.reviewPhotoContainer {
+  margin: 8px 0;
+  width: 100%;
+}
+
+.reviewPhoto {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.writeReviewButton {
+  padding: 5px 13px;
+  background: #007AFF;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+}
+
+.writeReviewButton:hover {
+  background: #0056b3;
+}
+
+.reportSection {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.reportTitle {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #333;
+}
+
+.reportDescription {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.reportButton {
+  width: 100%;
+  padding: 16px;
+  background: #007AFF;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  margin-bottom: 12px;
+}
+
+.reportButton:hover {
+  background: #0056b3;
+}
+
+.reportButton:active {
+  transform: scale(0.98);
+}
+
+.reportListButton {
+  width: 100%;
+  padding: 16px;
+  background: #f5f5f5;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.reportListButton:hover {
+  background: #e0e0e0;
+}
+
+.reportListButton:active {
+  transform: scale(0.98);
+}
+
