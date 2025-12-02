@@ -41,7 +41,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     // 카카오 지도 로드
     useEffect(() => {
         if (mapLoaded) return
-        if (typeof window === 'undefined' || mapLoaded) return;
+        if (typeof window === 'undefined') return;
 
         const script = document.createElement('script')
         script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&autoload=false&libraries=services`
@@ -370,7 +370,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
 
   const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // 마커나 버튼이 아닌 지도 배경을 클릭한 경우에만 패널 닫기
-    if (e.target === e.currentTarget || (e.target as HTMLElement).id === 'map') {
+    if (e.target === e.currentTarget) {
       setSelectedStation(null)
     }
   }
