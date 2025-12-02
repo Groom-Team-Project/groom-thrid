@@ -23,7 +23,6 @@ public class TmapApiClient {
 
   public TmapPathFindResponse tmapApiPathFind(TmapPathFindRequest pathFindRequest) {
     Integer version = 1;
-    log.info(this.tmapApiKey);
     TmapPathFindResponse pathFindResponse = restClient.post().uri(uriBuilder -> uriBuilder
             .path("/tmap/routes/pedestrian")
             .queryParam("version", version).build())
@@ -31,7 +30,7 @@ public class TmapApiClient {
             .header("Accept", "*/*")
             .header("Content-Type", "application/json")
             .body(pathFindRequest).retrieve().body(TmapPathFindResponse.class);
-
+    log.info("tmapApiPathFind response: {}", pathFindResponse);
     return pathFindResponse;
   }
 }
