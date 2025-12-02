@@ -10,10 +10,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class PathController {
   private final PathService pathService;
 
-  @GetMapping
+  @PostMapping
   @Operation(
           summary = "장애물 회피 길찾기 기능",
           description = "현재 위치 기반 종료지점까지 계단과 같은 장애물을 회피하는 경로를 생성합니다."
