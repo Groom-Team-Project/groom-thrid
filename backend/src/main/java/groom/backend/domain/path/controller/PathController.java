@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/paths")
+@RequestMapping("/v1/paths")
 public class PathController {
   private final PathService pathService;
 
