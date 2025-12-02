@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getStations, type ChargingStation } from '@/lib/stations'
 import { getReviewsByStation, deleteReview, type Review } from '@/lib/reviews'
@@ -12,104 +12,367 @@ interface MapViewProps {
   selectedCategory: 'charging' | 'restroom' | null
 }
 
-export default function MapView({ selectedCategory }: MapViewProps) {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
-  const [stations, setStations] = useState<ChargingStation[]>([])
-  const [selectedStation, setSelectedStation] = useState<ChargingStation | null>(null)
-  const [mapLoaded, setMapLoaded] = useState(false)
-  const [showEmergencyDialog, setShowEmergencyDialog] = useState(false)
-  const [activeTab, setActiveTab] = useState<'info' | 'review'>('info')
-  const [reviews, setReviews] = useState<Review[]>([])
-  const [userType, setUserType] = useState<string | null>(null)
+declare global {
+    interface Window {
+        kakao: any
+    }
+}
 
-  // 사용자 위치 가져오기
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          })
-        },
-        () => {
-          // 기본 위치 (서울 시청)
+export default function MapView({ selectedCategory }: MapViewProps) {
+    const router = useRouter()
+    const searchParams = useSearchParams()
+
+    const mapRef = useRef<HTMLDivElement>(null)
+    const kakaoMapRef = useRef<any>(null)
+    const markersRef = useRef<any[]>([])
+    const userMarkerRef = useRef<any>(null)
+
+    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+    const [stations, setStations] = useState<ChargingStation[]>([])
+    const [selectedStation, setSelectedStation] = useState<ChargingStation | null>(null)
+    const [mapLoaded, setMapLoaded] = useState(false)
+    const [showEmergencyDialog, setShowEmergencyDialog] = useState(false)
+    const [activeTab, setActiveTab] = useState<'info' | 'review'>('info')
+    const [reviews, setReviews] = useState<Review[]>([])
+    const [userType, setUserType] = useState<string | null>(null)
+
+    const apiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY ?? ''
+
+    // 카카오 지도 로드
+    useEffect(() => {
+        if (mapLoaded) return
+        if (typeof window === 'undefined') return;
+
+        const script = document.createElement('script')
+        script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&autoload=false&libraries=services`
+        script.async = true
+        script.onload = () => {
+            window.kakao.maps.load(() => {
+                setMapLoaded(true)
+            })
+        }
+        document.head.appendChild(script)
+
+        return () => {
+            // 클린업은 필요 시에만
+        }
+    }, [apiKey, mapLoaded])
+
+    // 사용자 위치 가져오기
+    useEffect(() => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setUserLocation({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    })
+                },
+                () => {
+                    // 기본 위치 (서울 시청)
+                    setUserLocation({ lat: 37.5665, lng: 126.9780 })
+            }
+          )
+        } else {
           setUserLocation({ lat: 37.5665, lng: 126.9780 })
         }
-      )
-    } else {
-      setUserLocation({ lat: 37.5665, lng: 126.9780 })
-    }
-  }, [])
+    }, [])
 
-  // 충전소 데이터 로드
-  useEffect(() => {
-    if (selectedCategory === 'charging' && userLocation) {
-      const stations = getStations()
-      setStations(stations)
-      
-      // URL 파라미터에서 stationId 확인
-      const stationId = searchParams?.get('stationId')
-      if (stationId) {
-        const station = stations.find(s => s.id === stationId)
-        if (station) {
-          setSelectedStation(station)
-          const stationReviews = getReviewsByStation(station.id)
-          setReviews(stationReviews)
+    // 사용자 타입 확인
+    useEffect(() => {
+        const type = localStorage.getItem('userType')
+        setUserType(type)
+    }, [])
+
+    // 충전소 데이터 로드
+    useEffect(() => {
+        if (selectedCategory === 'charging' && userLocation) {
+            const stations = getStations()
+            setStations(stations)
+
+            // URL 파라미터에서 stationId 확인
+            const stationId = searchParams?.get('stationId')
+            if (stationId) {
+                const station = stations.find(s => s.id === stationId)
+                if (station) {
+                    setSelectedStation(station)
+                    const stationReviews = getReviewsByStation(station.id)
+                    setReviews(stationReviews)
+                }
+            }
+
+            // URL 파라미터에서 tab 확인
+            const tab = searchParams?.get('tab')
+            if (tab === 'review') {
+                setActiveTab('review')
+            }
+        } else {
+            setStations([])
+            setSelectedStation(null)
         }
-      }
-      
-      // URL 파라미터에서 tab 확인
-      const tab = searchParams?.get('tab')
-      if (tab === 'review') {
-        setActiveTab('review')
-      }
-    } else {
-      setStations([])
-      setSelectedStation(null)
+    }, [selectedCategory, userLocation, searchParams])
+
+    // 카카오맵 초기화
+    useEffect(() => {
+        if (!mapLoaded || !mapRef.current || !userLocation) return
+
+        const container = mapRef.current
+        const options = {
+            center: new window.kakao.maps.LatLng(userLocation.lat, userLocation.lng),
+            level: 3, // 확대 레벨
+        }
+
+        const map = new window.kakao.maps.Map(container, options)
+        kakaoMapRef.current = map
+
+        // 지도 클릭 이벤트 - 선택 해제
+        window.kakao.maps.event.addListener(map, 'click', () => {
+            setSelectedStation(null)
+        })
+
+        // 사용자 위치 마커 생성
+        createUserMarker(map, userLocation)
+
+    }, [mapLoaded, userLocation])
+
+    // 사용자 위치 마커 생성
+    const createUserMarker = (map: any, location: { lat: number; lng: number }) => {
+        // 기존 마커 제거
+        if (userMarkerRef.current) {
+            userMarkerRef.current.setMap(null)
+        }
+
+        const markerPosition = new window.kakao.maps.LatLng(location.lat, location.lng)
+
+        // 커스텀 오버레이로 사용자 위치 표시
+        const content = `
+                          <div style="
+                            width: 20px;
+                            height: 20px;
+                            border-radius: 50%;
+                            background: #4A90E2;
+                            border: 3px solid white;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                          "></div>
+                        `
+
+        const customOverlay = new window.kakao.maps.CustomOverlay({
+            position: markerPosition,
+            content: content,
+            zIndex: 3
+        })
+
+        customOverlay.setMap(map)
+        userMarkerRef.current = customOverlay
     }
-  }, [selectedCategory, userLocation, searchParams])
 
-  // 사용자 타입 확인
-  useEffect(() => {
-    const type = localStorage.getItem('userType')
-    setUserType(type)
-  }, [])
+    // 충전소 마커들 생성
+    useEffect(() => {
+        if (!kakaoMapRef.current || !mapLoaded || selectedCategory !== 'charging') return
 
-  // 네이버 지도 로드
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !mapLoaded) {
-      const script = document.createElement('script')
-      script.src = `https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=YOUR_CLIENT_ID`
-      script.async = true
-      script.onload = () => setMapLoaded(true)
-      document.head.appendChild(script)
+        // 기존 마커들 제거
+        markersRef.current.forEach(marker => marker.setMap(null))
+        markersRef.current = []
+
+        // 새 마커들 생성
+        stations.forEach((station) => {
+            const markerPosition = new window.kakao.maps.LatLng(station.lat, station.lng)
+
+            // 마커 이미지 설정
+            const imageSrc = selectedStation?.id === station.id
+                ? 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png'
+                : 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png'
+
+            const imageSize = new window.kakao.maps.Size(24, 35)
+            const markerImage = new window.kakao.maps.MarkerImage(imageSrc, imageSize)
+
+            const marker = new window.kakao.maps.Marker({
+                position: markerPosition,
+                image: markerImage,
+                title: station.name,
+                clickable: true
+            })
+
+            // 마커 클릭 이벤트
+            window.kakao.maps.event.addListener(marker, 'click', () => {
+                handleStationClick(station)
+            })
+
+            marker.setMap(kakaoMapRef.current)
+            markersRef.current.push(marker)
+
+            // 커스텀 오버레이로 라벨 추가
+            const content = `
+        <div style="
+          padding: 5px 10px;
+          background: white;
+          border: 2px solid #4A90E2;
+          border-radius: 15px;
+          font-size: 12px;
+          font-weight: bold;
+          color: #333;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          white-space: nowrap;
+          cursor: pointer;
+        ">
+          ${station.name}
+        </div>
+      `
+
+            const labelPosition = new window.kakao.maps.LatLng(
+                station.lat + 0.0008, // 라벨을 마커 위에 표시
+                station.lng
+            )
+
+            const customOverlay = new window.kakao.maps.CustomOverlay({
+                position: labelPosition,
+                content: content,
+                yAnchor: 1
+            })
+
+            customOverlay.setMap(kakaoMapRef.current)
+            markersRef.current.push(customOverlay)
+        })
+
+    }, [stations, selectedStation, mapLoaded, selectedCategory])
+
+    // 선택된 충전소로 지도 이동
+    useEffect(() => {
+        if (selectedStation && kakaoMapRef.current) {
+            const moveLatLon = new window.kakao.maps.LatLng(selectedStation.lat, selectedStation.lng)
+            kakaoMapRef.current.panTo(moveLatLon)
+        }
+    }, [selectedStation])
+
+
+    const handleStationClick = (station: ChargingStation) => {
+        setSelectedStation(station)
+        // 리뷰 데이터 로드
+        const stationReviews = getReviewsByStation(station.id)
+        setReviews(stationReviews)
     }
-  }, [mapLoaded])
 
-  const handleStationClick = (station: ChargingStation) => {
-    setSelectedStation(station)
-    // 리뷰 데이터 로드
-    const stationReviews = getReviewsByStation(station.id)
-    setReviews(stationReviews)
-  }
+    const checkLogin = () => {
+        const loggedIn = localStorage.getItem('isLoggedIn')
+        if (loggedIn !== 'true') {
+            router.push('/auth')
+            return false
+        }
+        return true
+    }
+
+    const handleGuide = () => {
+        // 안내 버튼 클릭 시 제보 신청 페이지로 이동
+        if (!checkLogin()) return
+        if (selectedStation) {
+            router.push(`/report?stationName=${encodeURIComponent(selectedStation.name)}`)
+        }
+    }
+
+    const handleSetEnd = () => {
+        if (!checkLogin()) return
+        if (selectedStation && userLocation) {
+            // 지도에 표시된 충전소만 도착지로 설정 가능
+            const isStationOnMap = stations.some(s => s.id === selectedStation.id)
+            if (isStationOnMap) {
+                // 출발지 확인
+                const startStationId = localStorage.getItem('startStationId')
+
+                if (startStationId) {
+                    // 출발지가 있으면 길찾기 화면으로 이동
+                    router.push(`/directions?startId=${startStationId}&endId=${selectedStation.id}`)
+                    // localStorage 정리
+                    localStorage.removeItem('startStationId')
+                    localStorage.removeItem('startStationName')
+                } else {
+                    // 출발지가 없으면 현재 위치를 출발지로 사용
+                    router.push(`/directions?endId=${selectedStation.id}`)
+                }
+            }
+        }
+    }
+
+    const handleMyLocation = () => {
+        if (navigator.geolocation && kakaoMapRef.current) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const newLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    }
+                    setUserLocation(newLocation)
+
+                    // 지도 중심 이동
+                    const moveLatLon = new window.kakao.maps.LatLng(newLocation.lat, newLocation.lng)
+                    kakaoMapRef.current.panTo(moveLatLon)
+
+                    // 사용자 마커 업데이트
+                    createUserMarker(kakaoMapRef.current, newLocation)
+                }
+            )
+        }
+    }
+
+    const handleEmergencyClick = () => {
+        if (!checkLogin()) return
+        // 사용자 타입일 때만 긴급 알림 가능
+        if (userType !== 'user') {
+            alert('긴급 알림 기능은 사용자만 사용할 수 있습니다.')
+            return
+        }
+        setShowEmergencyDialog(true)
+    }
+
+    const handleEmergencyConfirm = () => {
+        // 사용자 타입 확인
+        const loggedIn = localStorage.getItem('isLoggedIn')
+        const currentUserType = localStorage.getItem('userType')
+
+        if (loggedIn !== 'true' || currentUserType !== 'user') {
+            setShowEmergencyDialog(false)
+            alert('긴급 알림 기능은 사용자만 사용할 수 있습니다.')
+            return
+        }
+
+        // 보호자에게 알림 전송
+        if (userLocation) {
+            const guardianEmail = localStorage.getItem('guardianEmail')
+            const userId = localStorage.getItem('userEmail') || ''
+            const userName = localStorage.getItem('userName') || '사용자'
+
+            if (guardianEmail) {
+                // 긴급 알림 저장
+                saveAlert({
+                    userId,
+                    userName,
+                    guardianEmail,
+                    lat: userLocation.lat,
+                    lng: userLocation.lng,
+                })
+
+                // 보호자 이메일이 등록되어 있으면 이메일로 알림 전송 (실제로는 API 호출)
+                // 여기서는 시뮬레이션
+                console.log(`긴급 알림을 ${guardianEmail}로 전송합니다.`)
+                console.log(`위치: ${userLocation.lat}, ${userLocation.lng}`)
+
+                alert('긴급 알림이 보호자에게 전송되었습니다.')
+            } else {
+                // 보호자 이메일이 없으면 보호자 화면으로만 이동
+                alert('보호자 이메일이 등록되지 않았습니다. 마이페이지에서 보호자를 등록해주세요.')
+            }
+        }
+        setShowEmergencyDialog(false)
+    }
+
+    const handleEmergencyCancel = () => {
+        setShowEmergencyDialog(false)
+    }
 
   const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // 마커나 버튼이 아닌 지도 배경을 클릭한 경우에만 패널 닫기
-    if (e.target === e.currentTarget || (e.target as HTMLElement).id === 'map') {
+    if (e.target === e.currentTarget) {
       setSelectedStation(null)
     }
-  }
-
-  const checkLogin = () => {
-    const loggedIn = localStorage.getItem('isLoggedIn')
-    if (loggedIn !== 'true') {
-      router.push('/auth')
-      return false
-    }
-    return true
   }
 
   const handleReport = () => {
@@ -117,106 +380,6 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     if (selectedStation) {
       router.push(`/report?stationName=${encodeURIComponent(selectedStation.name)}`)
     }
-  }
-
-  const handleGuide = () => {
-    // 안내 버튼 클릭 시 제보 신청 페이지로 이동
-    if (!checkLogin()) return
-    if (selectedStation) {
-      router.push(`/report?stationName=${encodeURIComponent(selectedStation.name)}`)
-    }
-  }
-
-
-  const handleSetEnd = () => {
-    if (!checkLogin()) return
-    if (selectedStation && userLocation) {
-      // 지도에 표시된 충전소만 도착지로 설정 가능
-      const isStationOnMap = stations.some(s => s.id === selectedStation.id)
-      if (isStationOnMap) {
-        // 출발지 확인
-        const startStationId = localStorage.getItem('startStationId')
-        
-        if (startStationId) {
-          // 출발지가 있으면 길찾기 화면으로 이동
-          router.push(`/directions?startId=${startStationId}&endId=${selectedStation.id}`)
-          // localStorage 정리
-          localStorage.removeItem('startStationId')
-          localStorage.removeItem('startStationName')
-        } else {
-          // 출발지가 없으면 현재 위치를 출발지로 사용
-          router.push(`/directions?endId=${selectedStation.id}`)
-        }
-      }
-    }
-  }
-
-  const handleMyLocation = () => {
-    if (userLocation && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          })
-        }
-      )
-    }
-  }
-
-  const handleEmergencyClick = () => {
-    if (!checkLogin()) return
-    // 사용자 타입일 때만 긴급 알림 가능
-    if (userType !== 'user') {
-      alert('긴급 알림 기능은 사용자만 사용할 수 있습니다.')
-      return
-    }
-    setShowEmergencyDialog(true)
-  }
-
-  const handleEmergencyConfirm = () => {
-    // 사용자 타입 확인
-    const loggedIn = localStorage.getItem('isLoggedIn')
-    const currentUserType = localStorage.getItem('userType')
-    
-    if (loggedIn !== 'true' || currentUserType !== 'user') {
-      setShowEmergencyDialog(false)
-      alert('긴급 알림 기능은 사용자만 사용할 수 있습니다.')
-      return
-    }
-    
-    // 보호자에게 알림 전송
-    if (userLocation) {
-      const guardianEmail = localStorage.getItem('guardianEmail')
-      const userId = localStorage.getItem('userEmail') || ''
-      const userName = localStorage.getItem('userName') || '사용자'
-      
-      if (guardianEmail) {
-        // 긴급 알림 저장
-        saveAlert({
-          userId,
-          userName,
-          guardianEmail,
-          lat: userLocation.lat,
-          lng: userLocation.lng,
-        })
-        
-        // 보호자 이메일이 등록되어 있으면 이메일로 알림 전송 (실제로는 API 호출)
-        // 여기서는 시뮬레이션
-        console.log(`긴급 알림을 ${guardianEmail}로 전송합니다.`)
-        console.log(`위치: ${userLocation.lat}, ${userLocation.lng}`)
-        
-        alert('긴급 알림이 보호자에게 전송되었습니다.')
-      } else {
-        // 보호자 이메일이 없으면 보호자 화면으로만 이동
-        alert('보호자 이메일이 등록되지 않았습니다. 마이페이지에서 보호자를 등록해주세요.')
-      }
-    }
-    setShowEmergencyDialog(false)
-  }
-
-  const handleEmergencyCancel = () => {
-    setShowEmergencyDialog(false)
   }
 
   // 마커 위치 계산 (간단한 상대 위치)
@@ -233,30 +396,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
 
   return (
     <div className={styles.mapContainer}>
-      <div id="map" className={styles.map} onClick={handleMapClick}>
-        {/* 사용자 위치 마커 */}
-        {userLocation && (
-          <div className={styles.userMarker}>
-            <div className={styles.userMarkerDot} />
-          </div>
-        )}
-
-        {/* 충전소 마커들 */}
-        {selectedCategory === 'charging' && stations.map((station, index) => {
-          const position = getMarkerPosition(station, index)
-          return (
-            <button
-              key={station.id}
-              className={`${styles.stationMarker} ${selectedStation?.id === station.id ? styles.selected : ''}`}
-              style={position}
-              onClick={() => handleStationClick(station)}
-            >
-              <div className={styles.markerPin} />
-              <span className={styles.markerLabel}>{station.name}</span>
-            </button>
-          )
-        })}
-      </div>
+        <div ref={mapRef} className={styles.map} />
       
       {/* 긴급 버튼 - 사용자 타입일 때만 표시 */}
       {userType === 'user' && (
