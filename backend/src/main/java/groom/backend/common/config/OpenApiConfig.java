@@ -36,7 +36,7 @@ public class OpenApiConfig {
 
                 // 접근 주소
                 .addServersItem(new Server()
-                        .url("http://localhost:8080")
+                        .url("http://localhost:8080/api")
                         .description("Development Server")
                 );
     }

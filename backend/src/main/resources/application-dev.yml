@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://db:5432/groom_third
+    url: jdbc:postgresql://localhost:5432/groom_third
     username: dev
     password: dev123
     driver-class-name: org.postgresql.Driver
@@ -22,10 +22,21 @@ spring:
       tags-sorter: alpha
     api-docs:
       path: /v3/api-doc
-    enabled: false
+    enabled: true
 
 server:
   port: 8080
   servlet:
     context-path: /api
   address: 0.0.0.0
+
+api:
+  tmap:
+    api-key: aBYN2RzWLP6cd0eicubRx67Xrm9s5deO58KSSJHJ
+    url: https://apis.openapi.sk.com
+  kakao:
+    rest-api-key: e57fa4c3002e088c8d00b3dd4ab47fae
+    url: https://dapi.kakao.com
+  opendata:
+    url: http://api.data.go.kr/openapi/tn_pubr_public_electr_whlchairhgh_spdchrgr_api
+    api-key: 5a8b1379a32f7e5cd42ad5d7a3db84fef82feab65fcb0f9b486e3134c25d76cf
