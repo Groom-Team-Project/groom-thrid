@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,7 +24,7 @@ public class ChargerLocationController {
     private final ChargerLocationService chargerLocationService;
     private final Executor opendataExecutor;
 
-    public ChargerLocationController(ChargerLocationService chargerLocationService, Executor opendataExecutor) {
+    public ChargerLocationController(ChargerLocationService chargerLocationService, @Qualifier("opendataExecutor") Executor opendataExecutor) {
         this.chargerLocationService = chargerLocationService;
         this.opendataExecutor = opendataExecutor;
     }
@@ -35,7 +37,7 @@ public class ChargerLocationController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "202", description = "즉시 응답 성공")
     })
     @GetMapping("/chargers")
-    public ApiResponse chargers() {
+    public ResponseEntity<ApiResponse<Void>> chargers() {
         log.info("OpenApi 충전소 데이터 수집 요청");
         CompletableFuture.runAsync(() -> {
             try {
@@ -45,6 +47,7 @@ public class ChargerLocationController {
                 log.error("OpenApi 충전소 데이터 수집 실패: {}", e);
             }
         }, opendataExecutor);
-        return ApiResponse.success(202, "success", null);
+        ApiResponse<Void> response = ApiResponse.success(202, "데이터 수집 작업이 시작되었습니다", null);
+        return ResponseEntity.accepted().body(response);
     }
 }
