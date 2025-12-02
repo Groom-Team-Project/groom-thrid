@@ -36,19 +36,12 @@ public interface UserService {
      */
     UserResponse updateUserRole(UUID id, Role role);
 
-    // ========== 다른 Service용 메서드 (Entity 반환) ==========
+    // ================= 내부 api용 ===================
 
     /**
      * ID로 User Entity 조회 (내부 도메인용)
      */
     User findUserEntityById(UUID id);
-
-    /**
-     * 이메일로 User Entity 조회 (내부 도메인용) - UserDetailsService에서 사용 (Spring Security 인증) - Auth 도메인에서 사용 (토큰 생성 등)
-     */
-    User findUserEntityByEmail(String email);
-
-    // ========== 유틸리티 메서드 ==========
 
     /**
      * 이메일 중복 확인 (회원가입 시 사용)
