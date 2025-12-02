@@ -33,7 +33,7 @@ public class KakaoApiClient {
                     .queryParam("y", request.getY())
                     .queryParam("input_coord", request.getInputCoord())
                     .build())
-            .header("Authorization", "Kakao AK " + kakaoApiKey)
+            .header("Authorization", "KakaoAK " + kakaoApiKey)
             .header("Content-Type", "application/json;charset=UTF-8")
 
             .retrieve().body(KakaoAddressResponse.class);
