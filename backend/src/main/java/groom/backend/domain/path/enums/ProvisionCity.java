@@ -7,14 +7,14 @@ package groom.backend.domain.path.enums;
  */
 public enum ProvisionCity {
   // 서울 및 6개 광역시, 제주에 대해 모든 구역에서 서비스 제공
-  SEOUL("서울특별시", true),
-  BUSAN("부산광역시", true),
-  DAEGU("대구광역시", true),
-  INCHEON("인천광역시", true),
-  GWANGJU("광주광역시", true),
-  DAEJEON("대전광역시", true),
-  ULSAN("울산광역시", true),
-  JEJU("제주도", true),
+  SEOUL("서울", true),
+  BUSAN("부산", true),
+  DAEGU("대구", true),
+  INCHEON("인천", true),
+  GWANGJU("광주", true),
+  DAEJEON("대전", true),
+  ULSAN("울산", true),
+  JEJU("제주특별자치도", true),
   INVALID("없음", false);
 
   private String name;

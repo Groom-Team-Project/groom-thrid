@@ -7,6 +7,7 @@ package groom.backend.domain.path.enums;
 public enum ProvisionDistrict {
   // ProvisionCity에 대한 의존성을 가져야함.
   // TODO : 입력 검증을 위해, ProvisionCity에서 true로 되어있는 시도의 시군구 또한 enum으로 넣어줄 것.
+  // TODO : 시도 시군구 추가시, 각 시도의 명칭을 KAKAO API 기준으로 등록할 것.
   // 현재는 구역 전체가 제공구역이 아닌 시도에 한해서만 enum에 등록할 것.
   // 제공되지 않는 시군구의 경우, INVALID로 통일
 
@@ -59,7 +60,7 @@ public enum ProvisionDistrict {
   ASAN("아산시", true),
   NONSAN("논산시", true),
 
-  // 전라북도
+  // 전라북도 - 전북특별자치도
   JEONJU("전주시", true),
   GUNSAN("군산시", true),
   IKSAN("익산시", true),
