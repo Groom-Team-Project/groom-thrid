@@ -9,7 +9,7 @@ public interface UserRepository {
 
     Optional<User> findById(UUID id);
 
-    Optional<User> existsByEmail(String email);
+    Boolean existsByEmail(String email);
 
     User update(UUID id, User user);
 

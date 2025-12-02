@@ -1,16 +1,14 @@
-package groom.backend.domain.users.repository.spec;
+package groom.backend.domain.users.repository.jpa;
 
 import groom.backend.domain.users.entity.Provider;
 import groom.backend.domain.users.entity.UserCredential;
 import java.util.Optional;
+import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UserCredentialRepository {
+public interface JpaUserCredentialRepository extends JpaRepository<UserCredential, UUID> {
 
-    // Form 용
     Optional<UserCredential> findByEmail(String email);
 
-    // OAuth용
     Optional<UserCredential> findByProviderIdAndProvider(String providerId, Provider provider);
-
-    UserCredential save(UserCredential userCredential);
 }
