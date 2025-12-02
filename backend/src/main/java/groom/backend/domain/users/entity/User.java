@@ -33,7 +33,7 @@ public class User extends BaseEntity {
     @Column(name = "email", unique = true)
     private String email;
 
-    @Column
+    @Column(length = 13)
     private String phone;
 
     @Column
@@ -58,7 +58,7 @@ public class User extends BaseEntity {
     }
 
     // OAuth 방식 User 생성(보류)
-    public static User createOAuthUser(String contactEmail, String name){
+    public static User createOAuthUser(String contactEmail, String name) {
         return new User();
     }
 
@@ -79,8 +79,12 @@ public class User extends BaseEntity {
 
     // 사용자 정보 수정
     public void updateProfile(String name, String phone) {
-        if (name != null) this.name = name;
-        if (phone != null) this.phone = phone;
+        if (name != null) {
+            this.name = name;
+        }
+        if (phone != null) {
+            this.phone = phone;
+        }
     }
 
     // Credential 설정 (양방향 관계 동기화)
