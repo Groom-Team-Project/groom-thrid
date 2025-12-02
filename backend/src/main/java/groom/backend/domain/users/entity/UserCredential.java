@@ -18,13 +18,13 @@ import lombok.Setter;
 
 @Entity
 @Table(
-    name = "user_credentials",
-    uniqueConstraints = {
-        @jakarta.persistence.UniqueConstraint(
-            name = "uk_provider_providerId",
-            columnNames = {"provider", "providerId"}
-        )
-    }
+        name = "user_credentials",
+        uniqueConstraints = {
+                @jakarta.persistence.UniqueConstraint(
+                        name = "uk_provider_providerId",
+                        columnNames = {"provider", "providerId"}
+                )
+        }
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -70,13 +70,5 @@ public class UserCredential extends BaseEntity {
         credential.provider = provider;
         credential.providerId = providerId;
         return credential;
-    }
-
-    // Form용 비밀번호 변경
-    public void updatePassword(String encodedPassword) {
-        if (this.provider != Provider.Form) {
-            throw new IllegalStateException("OAuth 로그인은 비밀번호를 변경할 수 없습니다");
-        }
-        this.password = encodedPassword;
     }
 }
