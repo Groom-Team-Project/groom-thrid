@@ -37,6 +37,7 @@ public class KakaoApiClient {
             .header("Content-Type", "application/json;charset=UTF-8")
 
             .retrieve().body(KakaoAddressResponse.class);
+    log.info("kakaoApiPathFind response: {}", response.getDocuments().getFirst().getAddress().toString());
     return response;
   }
 }

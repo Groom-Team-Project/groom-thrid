@@ -1,5 +1,6 @@
 package groom.backend.interfaces.kakao.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 /**
@@ -12,8 +13,11 @@ import lombok.*;
 @ToString
 public class KakaoRoadAddress {
   private String addressName;
+  @JsonProperty("region_1depth_name")
   private String region1DepthName;
+  @JsonProperty("region_2depth_name")
   private String region2DepthName;
+  @JsonProperty("region_3depth_name")
   private String region3DepthName;
   private String roadName;
   private String undergroundYn;

@@ -16,7 +16,7 @@ public class KakaoAddressMapper {
 
     // TODO : 도로명 주소 지번 주소 시도 및 시군구 차이있는지 확인할 것
     KakaoAddress lotAddr = response.getDocuments().get(0);
-    KakaoAddress roadAddr = response.getDocuments().get(1);
+    KakaoAddress roadAddr = response.getDocuments().get(0);
 
     // 도로명 주소 우선 사용, 없으면 지번 주소
     String fullAddress =
