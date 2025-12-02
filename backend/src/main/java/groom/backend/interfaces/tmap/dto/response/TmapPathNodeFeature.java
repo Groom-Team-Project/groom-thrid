@@ -1,6 +1,8 @@
 package groom.backend.interfaces.tmap.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.*;
 
 /**
@@ -14,6 +16,6 @@ import lombok.*;
 public class TmapPathNodeFeature {
   @JsonProperty("geometry")
   private TmapPathGeometry geometry;
-  @JsonProperty("geometry")
+  @JsonProperty("properties")
   private TmapPathNodeProperties properties;
 }

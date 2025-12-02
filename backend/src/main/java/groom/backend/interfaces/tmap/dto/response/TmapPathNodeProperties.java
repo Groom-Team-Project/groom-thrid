@@ -27,21 +27,13 @@ public class TmapPathNodeProperties {
   private String facilityType; // 시설물 유형 정보. 교량, 터널, 일반보행자도로 등...
   @JsonProperty("pointType")
   private String pointType; // 시작, 경유, 종료 지점 타입. feature type이 Point일 때 존재.
+  @JsonProperty("distance")
+  private Integer distance;  // 거리. feature type Line
+  @JsonProperty("time")
+  private Integer time;  // 도달 시간(단위 : 초). feature type Line
+  @JsonProperty("categoryRoadType")
+  private Integer categoryRoadType;
+  @JsonProperty("roadType")
+  private Integer roadType; // 도로 유형 정보
 
-
-//                "totalDistance": 329,
-//                        "totalTime": 267,
-//                        "index": 0,
-//                        "pointIndex": 0,
-//                        "name": "",
-//                        "description": "보행자도로를 따라 114m 이동",
-//                        "direction": "",
-//                        "nearPoiName": "",
-//                        "nearPoiX": "0.0",
-//                        "nearPoiY": "0.0",
-//                        "intersectionName": "",
-//                        "facilityType": "11",
-//                        "facilityName": "",
-//                        "turnType": 200,
-//                        "pointType": "SP"
 }
