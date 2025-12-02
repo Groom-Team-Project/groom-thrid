@@ -6,14 +6,14 @@ import lombok.*;
 import java.util.List;
 
 /**
- * GeoJSON 기반 경로 리스트 반환 DTO
+ * LineString 타입의 geometry를 나타내는 DTO
  */
 @Setter
 @Getter
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class TmapPathFindResponse {
-  @JsonProperty("features")
-  private List<TmapPathNodeFeature> pathNodeList;
+public class TmapPathLineStringNode implements TmapPathGeometry{
+  @JsonProperty("coordinates")
+  List<List<Double>> coordinates;
 }

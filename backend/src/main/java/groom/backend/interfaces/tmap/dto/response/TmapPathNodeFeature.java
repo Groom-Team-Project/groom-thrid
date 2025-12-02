@@ -1,0 +1,19 @@
+package groom.backend.interfaces.tmap.dto.response;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.*;
+
+/**
+ * LineString 또는 Point Feature 규격을 지키는 노드
+ */
+@Setter
+@Getter
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
+public class TmapPathNodeFeature {
+  @JsonProperty("geometry")
+  private TmapPathGeometry geometry;
+  @JsonProperty("geometry")
+  private TmapPathNodeProperties properties;
+}
