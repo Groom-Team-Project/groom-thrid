@@ -1,5 +1,6 @@
 package groom.backend.domain.path.vo;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,7 +14,10 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Schema(description = "경로 요약 정보")
 public class PathSummary {
+  @Schema(description = "전체 거리(m)", example = "532")
   private Integer totalDistance;
+  @Schema(description = "전체 시간(초)", example = "420")
   private Integer totalTime;
 }
