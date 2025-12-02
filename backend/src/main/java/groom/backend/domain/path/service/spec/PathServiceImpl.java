@@ -36,6 +36,7 @@ public class PathServiceImpl implements PathService {
     PathFindResponse response = TmapToPathMapper.toPathFindResponseDto(
             tmapApiClient.tmapApiPathFind(
                     TmapToPathMapper.toTmapPathFindRequestDto(pathFindRequest)));
+    log.info("response: {}", response);
     // 반환
     return response;
   }
