@@ -1,0 +1,21 @@
+package groom.backend.domain.users.repository.spec;
+
+import groom.backend.domain.users.entity.User;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+public interface UserRepository {
+
+    Optional<User> findById(UUID id);
+
+    Optional<User> existsByEmail(String email);
+
+    User update(UUID id, User user);
+
+    User save(User user);
+
+    List<User> findAll();
+
+    void deleteById(UUID id);
+}
