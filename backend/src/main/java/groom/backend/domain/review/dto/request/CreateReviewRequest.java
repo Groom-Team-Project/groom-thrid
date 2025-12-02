@@ -5,13 +5,9 @@ import jakarta.validation.constraints.*;
 
 @Schema(
     description = "리뷰 생성 요청 DTO",
-    example = "{\"placeId\": 1, \"content\": \"좋은 장소입니다!\", \"rating\": 4.5, \"author\": \"홍길동\", \"imageUrl\": \"https://example.com/image.jpg\"}"
+    example = "{\"content\": \"좋은 장소입니다!\", \"rating\": 4.5, \"author\": \"홍길동\", \"imageUrl\": \"https://example.com/image.jpg\"}"
 )
 public record CreateReviewRequest(
-    @Schema(description = "장소 ID (ChargerLocation의 placeId)", example = "1")
-    @NotNull(message = "장소 ID는 필수입니다")
-    Long placeId,
-
     @Schema(description = "리뷰 내용", example = "좋은 장소입니다!")
     @NotBlank(message = "리뷰 내용은 필수입니다")
     @Size(max = 1000, message = "리뷰 내용은 1000자 이하여야 합니다")
