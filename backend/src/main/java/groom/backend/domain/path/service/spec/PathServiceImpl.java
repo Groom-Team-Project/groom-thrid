@@ -28,7 +28,7 @@ public class PathServiceImpl implements PathService {
     if(!isProvisionArea(pathFindRequest.getStartX(), pathFindRequest.getStartY()) &&
             !isProvisionArea(pathFindRequest.getEndX(), pathFindRequest.getEndY()) ) {
       // TODO : 제공 구역이 아닐 경우, 대안 사용. Kakao URL scheme 반환
-      log.info("서비스 미제공 구역");
+      log.info("서비스 미제공 구역입니다.");
       return null;
     }
 
