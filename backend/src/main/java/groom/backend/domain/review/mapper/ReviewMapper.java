@@ -10,9 +10,9 @@ import java.util.List;
 @Component
 public class ReviewMapper {
 
-    public static Review toEntity(CreateReviewRequest request) {
+    public static Review toEntity(Long placeId, CreateReviewRequest request) {
         return Review.builder()
-                .placeId(request.placeId())
+                .placeId(placeId)
                 .content(request.content())
                 .rating(request.rating())
                 .author(request.author())

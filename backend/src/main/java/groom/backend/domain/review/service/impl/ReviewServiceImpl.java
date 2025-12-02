@@ -21,8 +21,8 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional
-    public ReviewResponse createReview(CreateReviewRequest request) {
-        Review review = ReviewMapper.toEntity(request);
+    public ReviewResponse createReview(Long placeId, CreateReviewRequest request) {
+        Review review = ReviewMapper.toEntity(placeId, request);
         Review savedReview = reviewRepository.save(review);
         return ReviewMapper.toResponse(savedReview);
     }
