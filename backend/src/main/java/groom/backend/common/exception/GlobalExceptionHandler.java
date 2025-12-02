@@ -60,6 +60,27 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 사용자 NotFoundException 처리 (404 Not Found)
+     */
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUserNotFoundException(UserNotFoundException e) {
+        ApiResponse<Void> response = ApiResponse.error(
+            StatusCodeMessage.NOT_FOUND.getCode(),
+            StatusCodeMessage.NOT_FOUND.getMessage(),
+            List.of(new ErrorDetail(
+                null,
+                null,
+                e.getMessage(),
+                "B_001"  // Business logic error
+            ))
+        );
+
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(response);
+    }
+
+    /**
      * 모든 예외의 기본 처리
      */
     @ExceptionHandler(Exception.class)
