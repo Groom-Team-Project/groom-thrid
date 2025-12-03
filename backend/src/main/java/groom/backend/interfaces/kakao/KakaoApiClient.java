@@ -6,19 +6,27 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.util.UriBuilder;
+import org.springframework.web.util.UriBuilderFactory;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
 
 @Service
 @Slf4j
 public class KakaoApiClient {
   private final String kakaoApiKey;
+  private final String kakaoMapUrl;
 
   private final RestClient restClient;
 
   public KakaoApiClient(RestClient.Builder builder,
-                       @Value("${api.kakao.url}") String kakaoUrl,
-                       @Value("${api.kakao.rest-api-key}") String kakaoApiKey) {
+                        @Value("${api.kakao.url}") String kakaoUrl,
+                        @Value("${api.kakao.rest-api-key}") String kakaoApiKey,
+                        @Value("${api.kakao.map-url}") String kakaoMapUrl) {
     this.restClient = builder.baseUrl(kakaoUrl).build();
     this.kakaoApiKey = kakaoApiKey;
+    this.kakaoMapUrl = kakaoMapUrl;
   }
 
   public KakaoAddressResponse transferToAddress(Double lng, Double lat) {
@@ -39,5 +47,23 @@ public class KakaoApiClient {
             .retrieve().body(KakaoAddressResponse.class);
     log.info("kakaoApiPathFind response: {}", response.getDocuments().getFirst().getAddress().toString());
     return response;
+  }
+
+  /**
+   * Kakao URL scheme을 이용한 지도 api 반환
+   * @param startX lng
+   * @param startY lat
+   * @param endX lng
+   * @param endY lat
+   * @return
+   */
+  public String pathFindUrlScheme(Double startX, Double startY, Double endX, Double endY) {
+    String url = String.format(
+            "%s/link/by/walk/출발지,%f,%f/목적지,%f,%f",
+            kakaoMapUrl,
+            startY, startX,
+            endY, endX
+    );
+    return url;
   }
 }

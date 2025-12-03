@@ -53,7 +53,7 @@ public class TmapToPathMapper {
       );
       pathNodeList.add(pathNode);
     }
-    return new PathFindResponse(pathSummary, pathNodeList);
+    return new PathFindResponse(pathSummary, pathNodeList, null);
   }
 
   public static TmapPathFindRequest toTmapPathFindRequestDto(PathFindRequest PathFindRequest) {
