@@ -59,10 +59,10 @@ public class KakaoApiClient {
    */
   public String pathFindUrlScheme(Double startX, Double startY, Double endX, Double endY) {
     String url = String.format(
-            "%s/link/map/출발지,%f,%f/목적지,%f,%f",
+            "%s/link/by/walk/출발지,%f,%f/목적지,%f,%f",
             kakaoMapUrl,
-            startX, startY,
-            endX, endY
+            startY, startX,
+            endY, endX
     );
     return url;
   }
