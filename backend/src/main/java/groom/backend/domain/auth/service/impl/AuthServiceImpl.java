@@ -33,6 +33,7 @@ public class AuthServiceImpl implements AuthService {
 
         // 1. 이메일 중복 검사
         if (userRepository.existsByEmail(req.email())) {
+            // 에러코드 설정
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
 
@@ -60,8 +61,8 @@ public class AuthServiceImpl implements AuthService {
         // 6. DB 저장
         User newUser = userRepository.save(user);
 
-        // 7. JWT 토큰 생성
-        String accessToken = jwtUtil.generateAccessToken(newUser.getId());
+        // 7. JWT 토큰 생성 (userId + role 포함)
+        String accessToken = jwtUtil.generateAccessToken(newUser.getId(), newUser.getRole());
         String refreshToken = jwtUtil.generateRefreshToken(newUser.getId());
 
         // 8. DTO 변환 및 반환
