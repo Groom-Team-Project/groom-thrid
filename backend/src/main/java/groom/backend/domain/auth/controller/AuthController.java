@@ -23,6 +23,7 @@ public class AuthController {
 
     private final AuthServiceImpl authService;
 
+    // 회원가입
     @PostMapping("/")
     public SignupAuthResponse formSignup(
             @Valid @RequestBody CreateUserRequest req,
@@ -35,24 +36,24 @@ public class AuthController {
         return result;
     }
 
-    /**
-     * Form 로그인
-     */
+    // 로그인(form)
     @PostMapping("/form-login")
     public CommonAuthResponse formLogin(@Valid @RequestBody FormLoginAuthRequest req) {
         return authService.formLogin(req);
     }
 
+    // 로그아웃(토큰 무효화)
     @PostMapping("/logout")
     public void logout(@RequestHeader("Authorization") String authorizationHeader) {
         String refreshToken = authorizationHeader.replace("Bearer ", "");
+        authService.logout(refreshToken);
+        // GlobalResponseAdvice가 204 No Content로 처리
     }
 
+    // access 토큰 재발급
     @PostMapping("/refresh")
     public CommonAuthResponse refreshToken(@RequestHeader("Authorization") String authorizationHeader) {
-
         String refreshToken = authorizationHeader.replace("Bearer ", "");
-
-        return null;
+        return authService.refreshToken(refreshToken);
     }
 }
