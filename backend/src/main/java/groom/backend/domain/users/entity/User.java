@@ -5,6 +5,8 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -44,6 +46,7 @@ public class User extends BaseEntity {
     private UserCredential credential;
 
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private Role role = Role.USER;
 
     // User 생성(팩토리 패턴)
