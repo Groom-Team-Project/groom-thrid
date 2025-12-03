@@ -1,12 +1,17 @@
 package groom.backend.domain.auth.service.spec;
 
+import groom.backend.domain.auth.dto.request.FormLoginAuthRequest;
 import groom.backend.domain.auth.dto.response.CommonAuthResponse;
+import groom.backend.domain.auth.dto.response.SignupAuthResponse;
+import groom.backend.domain.users.dto.request.CreateUserRequest;
 
 public interface AuthService {
 
-    public CommonAuthResponse formSignup();
+    SignupAuthResponse formSignup(CreateUserRequest req);
 
-    public CommonAuthResponse formLogin();
+    CommonAuthResponse formLogin(FormLoginAuthRequest req);
 
-    public void logout(String refreshToken);
+    void logout(String refreshToken);
+
+    CommonAuthResponse refreshToken(String refreshToken);
 }
