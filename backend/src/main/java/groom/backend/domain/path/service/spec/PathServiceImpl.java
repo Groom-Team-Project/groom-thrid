@@ -36,10 +36,23 @@ public class PathServiceImpl implements PathService {
     }
 
     // API 호출, 값 구해오기
-    PathFindResponse response = TmapToPathMapper.toPathFindResponseDto(
-            tmapApiClient.tmapApiPathFind(
-                    TmapToPathMapper.toTmapPathFindRequestDto(pathFindRequest)));
-    log.info("response: {}", response);
+    PathFindResponse response = null;
+
+    try {
+      response = TmapToPathMapper.toPathFindResponseDto(
+              tmapApiClient.tmapApiPathFind(
+                      TmapToPathMapper.toTmapPathFindRequestDto(pathFindRequest)));
+      log.info("response: {}", response);
+    } catch (Exception e) {
+      // 4xx 또는 5xx 에러 발생
+      response = new PathFindResponse(null, null,
+              kakaoApiClient.pathFindUrlScheme(
+                      pathFindRequest.getStartX(), pathFindRequest.getStartY(),
+                      pathFindRequest.getEndX(), pathFindRequest.getEndY()
+              ));
+      log.info("Exception occurred by : {}", e.toString());
+    }
+
     // 반환
     return response;
   }
