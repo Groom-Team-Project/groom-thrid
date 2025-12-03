@@ -3,7 +3,6 @@ package groom.backend.common.response;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -32,6 +31,12 @@ public class GlobalResponseAdvice implements ResponseBodyAdvice<Object> {
     public Object beforeBodyWrite(Object body, MethodParameter returnType, MediaType selectedContentType,
                                   Class<? extends HttpMessageConverter<?>> selectedConverterType,
                                   ServerHttpRequest request, ServerHttpResponse response) {
+
+        // Swagger/OpenAPI 문서 경로는 제외
+        String path = request.getURI().getPath();
+        if (path != null && (path.contains("/v3/api-docs") || path.contains("/swagger-ui") || path.contains("/api-doc"))) {
+            return body;
+        }
 
         // 이미 ApiResponse면 그냥 반환 : 이중검증
         if (body instanceof ApiResponse) {
