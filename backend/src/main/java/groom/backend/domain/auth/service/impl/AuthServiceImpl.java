@@ -11,6 +11,7 @@ import groom.backend.domain.auth.service.spec.AuthService;
 import groom.backend.domain.users.dto.request.CreateUserRequest;
 import groom.backend.domain.users.entity.User;
 import groom.backend.domain.users.entity.UserCredential;
+import groom.backend.domain.users.repository.impl.UserCredentialRepositoryImpl;
 import groom.backend.domain.users.repository.impl.UserRepositoryImpl;
 import groom.backend.domain.users.service.impl.UserServiceImpl;
 import jakarta.transaction.Transactional;
@@ -25,6 +26,7 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserServiceImpl userService;
     private final UserRepositoryImpl userRepository;
+    private final UserCredentialRepositoryImpl credentialRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -71,7 +73,29 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public CommonAuthResponse formLogin(FormLoginAuthRequest req) {
-        return null;
+        // 1. 이메일로 UserCredential 조회
+        UserCredential credential = credentialRepository.findByEmail(req.email())
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
+
+        // 2. 비밀번호 검증
+        if (!passwordEncoder.matches(req.password(), credential.getPassword())) {
+            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
+        }
+
+        // 3. 사용자 정보 조회
+        User user = credential.getUser();
+
+        // 4. 계정 활성화 여부 확인
+        if (!user.isActive()) {
+            throw new BusinessException(ErrorCode.DEACTIVATED_USER);
+        }
+
+        // 5. JWT 토큰 생성 (userId + role 포함)
+        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getRole());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getId());
+
+        // 6. 토큰 반환
+        return new CommonAuthResponse(accessToken, refreshToken);
     }
 
     @Override

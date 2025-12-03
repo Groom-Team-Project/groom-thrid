@@ -35,9 +35,12 @@ public class AuthController {
         return result;
     }
 
+    /**
+     * Form 로그인
+     */
     @PostMapping("/form-login")
     public CommonAuthResponse formLogin(@Valid @RequestBody FormLoginAuthRequest req) {
-        return null;
+        return authService.formLogin(req);
     }
 
     @PostMapping("/logout")
