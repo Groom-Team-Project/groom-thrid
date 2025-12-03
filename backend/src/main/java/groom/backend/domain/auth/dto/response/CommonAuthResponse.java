@@ -1,6 +1,6 @@
 package groom.backend.domain.auth.dto.response;
 
-public record LoginAuthResponse(
+public record CommonAuthResponse(
         String accessToken,
         String refreshToken
 ) {
