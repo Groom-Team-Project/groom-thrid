@@ -27,16 +27,32 @@ public class PathServiceImpl implements PathService {
     // 서비스 제공 구역 여부를 검사하는 것이므로, 두 검증에서 모두 false가 나와야 한다. 시도 단위로 제공 시 시군구 단위 정보를 제공하지 않음.
     if(!isProvisionArea(pathFindRequest.getStartX(), pathFindRequest.getStartY()) &&
             !isProvisionArea(pathFindRequest.getEndX(), pathFindRequest.getEndY()) ) {
-      // TODO : 제공 구역이 아닐 경우, 대안 사용. Kakao URL scheme 반환
-      log.info("서비스 미제공 구역");
-      return null;
+      log.info("서비스 미제공 구역입니다.");
+      return new PathFindResponse(null, null,
+              kakaoApiClient.pathFindUrlScheme(
+                      pathFindRequest.getStartX(), pathFindRequest.getStartY(),
+                      pathFindRequest.getEndX(), pathFindRequest.getEndY()
+              ));
     }
 
     // API 호출, 값 구해오기
-    PathFindResponse response = TmapToPathMapper.toPathFindResponseDto(
-            tmapApiClient.tmapApiPathFind(
-                    TmapToPathMapper.toTmapPathFindRequestDto(pathFindRequest)));
-    log.info("response: {}", response);
+    PathFindResponse response = null;
+
+    try {
+      response = TmapToPathMapper.toPathFindResponseDto(
+              tmapApiClient.tmapApiPathFind(
+                      TmapToPathMapper.toTmapPathFindRequestDto(pathFindRequest)));
+      log.info("response: {}", response);
+    } catch (Exception e) {
+      // 4xx 또는 5xx 에러 발생
+      response = new PathFindResponse(null, null,
+              kakaoApiClient.pathFindUrlScheme(
+                      pathFindRequest.getStartX(), pathFindRequest.getStartY(),
+                      pathFindRequest.getEndX(), pathFindRequest.getEndY()
+              ));
+      log.info("Exception occurred by : {}", e.toString());
+    }
+
     // 반환
     return response;
   }

@@ -10,7 +10,7 @@ public interface ReviewService {
     /**
      * 새로운 리뷰를 생성합니다
      */
-    ReviewResponse createReview(CreateReviewRequest request);
+    ReviewResponse createReview(Long placeId, CreateReviewRequest request);
 
     /**
      * ID로 리뷰를 조회합니다

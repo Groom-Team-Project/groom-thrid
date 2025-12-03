@@ -6,6 +6,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,13 +19,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.UUID;
-
 /**
- * JWT 인증 필터
- * 모든 요청에서 JWT 토큰을 검증하고 SecurityContext에 인증 정보를 설정
+ * JWT 인증 필터 모든 요청에서 JWT 토큰을 검증하고 SecurityContext에 인증 정보를 설정
  */
 @Slf4j
 @Component
@@ -51,11 +49,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // 4. Spring Security 인증 객체 생성
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
-                                userId,  // principal (인증된 사용자 ID)
+                                new AuthUser(userId, role),
                                 null,    // credentials (비밀번호는 불필요)
-                                Collections.singletonList(
-                                        new SimpleGrantedAuthority("ROLE_" + role.name())
-                                )
+                                List.of(new SimpleGrantedAuthority("ROLE_" + role))
                         );
 
                 // 5. 요청 상세 정보 설정

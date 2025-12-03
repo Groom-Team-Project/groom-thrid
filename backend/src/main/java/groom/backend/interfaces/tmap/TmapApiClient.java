@@ -21,6 +21,12 @@ public class TmapApiClient {
     this.tmapApiKey = tmapApiKey;
   }
 
+  /**
+   * Tmap API를 호출해 계단 회피 경로를 가져옵니다.
+   * 4xx 또는 5xx 에러 발생 시 Exception을 던집니다.
+   * @param pathFindRequest
+   * @return
+   */
   public TmapPathFindResponse tmapApiPathFind(TmapPathFindRequest pathFindRequest) {
     Integer version = 1;
     TmapPathFindResponse pathFindResponse = restClient.post().uri(uriBuilder -> uriBuilder

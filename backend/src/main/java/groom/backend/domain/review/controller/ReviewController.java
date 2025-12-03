@@ -27,18 +27,20 @@ public class ReviewController {
         this.reviewService = reviewService;
     }
 
-    @PostMapping
+    @PostMapping("/place/{placeId}")
     @Operation(
             summary = "리뷰 생성",
-            description = "새로운 리뷰를 생성합니다",
+            description = "장소별 새로운 리뷰를 생성합니다",
             security = {@SecurityRequirement(name = "bearerAuth")}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "생성 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청")
     })
-    public ReviewResponse createReview(@Valid @RequestBody CreateReviewRequest request) {
-        return reviewService.createReview(request);
+    public ReviewResponse createReview(
+            @PathVariable Long placeId,
+            @Valid @RequestBody CreateReviewRequest request) {
+        return reviewService.createReview(placeId, request);
     }
 
     @GetMapping("/{reviewId}")
