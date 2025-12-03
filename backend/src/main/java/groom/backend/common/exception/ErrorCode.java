@@ -17,6 +17,9 @@ public enum ErrorCode {
     UNAUTHORIZED(401, "A_004", "인증이 필요합니다"),
     TOKEN_EXPIRED(401, "A_005", "토큰이 만료되었습니다"),
     INVALID_TOKEN(401, "A_006", "유효하지 않은 토큰입니다"),
+    INVALID_REFRESH_TOKEN(401, "A_007", "유효하지 않은 Refresh Token입니다"),
+    REFRESH_TOKEN_NOT_FOUND(401, "A_008", "Refresh Token을 찾을 수 없습니다"),
+    USER_NOT_FOUND(404, "A_009", "사용자를 찾을 수 없습니다"),
 
     // Client/Validation 에러 (C_xxx)
     INVALID_INPUT(400, "C_001", "입력값이 올바르지 않습니다"),
