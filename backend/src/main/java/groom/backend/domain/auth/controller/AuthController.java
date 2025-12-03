@@ -1,10 +1,10 @@
 package groom.backend.domain.auth.controller;
 
 import groom.backend.domain.auth.dto.request.FormLoginAuthRequest;
+import groom.backend.domain.auth.dto.request.FormSignupAuthRequest;
 import groom.backend.domain.auth.dto.response.CommonAuthResponse;
 import groom.backend.domain.auth.dto.response.SignupAuthResponse;
 import groom.backend.domain.auth.service.impl.AuthServiceImpl;
-import groom.backend.domain.users.dto.request.CreateUserRequest;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -24,9 +24,9 @@ public class AuthController {
     private final AuthServiceImpl authService;
 
     // 회원가입
-    @PostMapping("/")
+    @PostMapping("/signup")
     public SignupAuthResponse formSignup(
-            @Valid @RequestBody CreateUserRequest req,
+            @Valid @RequestBody FormSignupAuthRequest req,
             HttpServletResponse res
     ) {
 

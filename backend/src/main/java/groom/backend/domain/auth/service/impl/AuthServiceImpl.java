@@ -4,13 +4,13 @@ import groom.backend.common.exception.BusinessException;
 import groom.backend.common.exception.ErrorCode;
 import groom.backend.common.util.JwtUtil;
 import groom.backend.domain.auth.dto.request.FormLoginAuthRequest;
+import groom.backend.domain.auth.dto.request.FormSignupAuthRequest;
 import groom.backend.domain.auth.dto.response.CommonAuthResponse;
 import groom.backend.domain.auth.dto.response.SignupAuthResponse;
 import groom.backend.domain.auth.mapper.AuthMapper;
 import groom.backend.domain.auth.repository.impl.RefreshTokenRedisRepositoryImpl;
 import groom.backend.domain.auth.service.spec.AuthService;
 import groom.backend.domain.auth.vo.RefreshTokenValue;
-import groom.backend.domain.users.dto.request.CreateUserRequest;
 import groom.backend.domain.users.entity.User;
 import groom.backend.domain.users.entity.UserCredential;
 import groom.backend.domain.users.repository.impl.UserCredentialRepositoryImpl;
@@ -39,7 +39,7 @@ public class AuthServiceImpl implements AuthService {
     private long refreshTokenExpiration;
 
     @Override
-    public SignupAuthResponse formSignup(CreateUserRequest req) {
+    public SignupAuthResponse formSignup(FormSignupAuthRequest req) {
 
         // 1. 이메일 중복 검사
         if (userRepository.existsByEmail(req.email())) {

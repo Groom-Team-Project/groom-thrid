@@ -17,7 +17,7 @@ public record FormSignupAuthRequest(
 
         @NotBlank(message = "비밀번호는 필수입니다")
         @Size(min = 8, max = 20)
-        @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]",
+        @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,20}$",
                 message = "비밀번호는 대소문자, 숫자, 특수문자를 포함해야 합니다")
         String password,
 
