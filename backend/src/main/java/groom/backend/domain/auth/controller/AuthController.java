@@ -47,7 +47,6 @@ public class AuthController {
     public void logout(@RequestHeader("Authorization") String authorizationHeader) {
         String refreshToken = authorizationHeader.replace("Bearer ", "");
         authService.logout(refreshToken);
-        // GlobalResponseAdvice가 204 No Content로 처리
     }
 
     // access 토큰 재발급
