@@ -34,6 +34,4 @@ build/
 *.bak
 .backup
 
-backend/RESPONSE_HANDLING_GUIDE.md
-
-CLAUDE.md
+*.md
