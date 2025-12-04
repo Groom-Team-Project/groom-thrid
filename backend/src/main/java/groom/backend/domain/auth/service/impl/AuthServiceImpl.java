@@ -13,8 +13,6 @@ import groom.backend.domain.auth.service.spec.AuthService;
 import groom.backend.domain.auth.vo.RefreshTokenValue;
 import groom.backend.domain.users.entity.User;
 import groom.backend.domain.users.entity.UserCredential;
-import groom.backend.domain.users.repository.impl.UserCredentialRepositoryImpl;
-import groom.backend.domain.users.repository.impl.UserRepositoryImpl;
 import groom.backend.domain.users.service.impl.UserServiceImpl;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -28,8 +26,6 @@ import org.springframework.stereotype.Service;
 public class AuthServiceImpl implements AuthService {
 
     private final UserServiceImpl userService;
-    private final UserRepositoryImpl userRepository;
-    private final UserCredentialRepositoryImpl credentialRepository;
     private final RefreshTokenRedisRepositoryImpl refreshTokenRedisRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
@@ -42,7 +38,7 @@ public class AuthServiceImpl implements AuthService {
     public SignupAuthResponse formSignup(FormSignupAuthRequest req) {
 
         // 1. 이메일 중복 검사
-        if (userRepository.existsByEmail(req.email())) {
+        if (userService.existsByEmail(req.email())) {
             // 에러코드 설정
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
@@ -69,7 +65,7 @@ public class AuthServiceImpl implements AuthService {
         user.setCredential(credential);
 
         // 6. DB 저장
-        User newUser = userRepository.save(user);
+        User newUser = userService.saveUser(user);
 
         // 7. JWT 토큰 생성 (userId + role 포함)
         String accessToken = jwtUtil.generateAccessToken(newUser.getId(), newUser.getRole());
@@ -86,7 +82,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public CommonAuthResponse formLogin(FormLoginAuthRequest req) {
         // 1. 이메일로 UserCredential 조회
-        UserCredential credential = credentialRepository.findByEmail(req.email())
+        UserCredential credential = userService.findUserCredentialByEmail(req.email())
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
 
         // 2. 비밀번호 검증
@@ -148,7 +144,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // 3. 사용자 정보 조회
-        User user = userRepository.findById(refreshTokenValue.getUserId())
+        User user = userService.findUserById(refreshTokenValue.getUserId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         // 4. 계정 활성화 여부 확인
