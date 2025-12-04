@@ -1,6 +1,7 @@
 package groom.backend.domain.users.mapper;
 
 import groom.backend.domain.users.dto.request.CreateUserRequest;
+import groom.backend.domain.users.dto.request.UpdateUserRequest;
 import groom.backend.domain.users.dto.response.UserResponse;
 import groom.backend.domain.users.entity.Role;
 import groom.backend.domain.users.entity.User;
@@ -52,5 +53,15 @@ public class UserMapper {
                 role,
                 request.email()
         );
+    }
+
+    public static void updateEntity(User user, UpdateUserRequest request) {
+        if (request == null) {
+            return;
+        }
+
+        user.updateProfile(request.name(), request.phone());
+
+        user.changeRole(request.role());
     }
 }
