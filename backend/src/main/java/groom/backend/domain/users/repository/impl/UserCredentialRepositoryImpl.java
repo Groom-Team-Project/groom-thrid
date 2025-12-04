@@ -15,7 +15,7 @@ public class UserCredentialRepositoryImpl implements UserCredentialRepository {
     private final JpaUserCredentialRepository jpaUserCredentialRepository;
 
     @Override
-    public Optional<UserCredential> findByEmail(String email) {
+    public Optional<UserCredential> findUserCredentialByEmail(String email) {
         return jpaUserCredentialRepository.findByEmail(email);
     }
 
