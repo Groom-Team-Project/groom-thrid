@@ -19,3 +19,4 @@ public record UpdateReportStatusRequest(
     String adminReply
 ) {
 }
+

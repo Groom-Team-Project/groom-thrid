@@ -1,5 +1,6 @@
 package groom.backend.domain.report.controller;
 
+import groom.backend.common.security.AuthUser;
 import groom.backend.domain.report.dto.request.CreateReportRequest;
 import groom.backend.domain.report.dto.request.DeleteReportsRequest;
 import groom.backend.domain.report.dto.request.UpdateReportRequest;
@@ -14,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -42,27 +44,29 @@ public class ReportController {
     })
     public ReportResponseDto createReport(
             @PathVariable Long placeId,
-            @Valid @RequestBody CreateReportRequest request) {
-        return reportService.createReport(placeId, request);
+            @Valid @RequestBody CreateReportRequest request,
+            @AuthenticationPrincipal AuthUser authUser) {
+        return reportService.createReport(placeId, request, authUser);
     }
 
-    @GetMapping("/my")
+    @GetMapping
     @Operation(
-            summary = "나의 제보 목록 조회",
-            description = "로그인한 사용자의 제보 목록을 조회합니다",
+            summary = "제보 목록 조회",
+            description = "USER, PROTECTOR: 자신이 생성한 제보 목록만 조회 / ADMIN: 모든 제보 목록 조회",
             security = {@SecurityRequirement(name = "bearerAuth")}
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공")
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
     })
-    public List<ReportResponseDto> getMyReports(@RequestParam String author) {
-        return reportService.getMyReports(author);
+    public List<ReportResponseDto> getReports(@AuthenticationPrincipal AuthUser authUser) {
+        return reportService.getReports(authUser);
     }
 
-    @GetMapping("/my/{reportId}")
+    @GetMapping("/{reportId}")
     @Operation(
-            summary = "나의 제보 상세 조회",
-            description = "나의 제보 상세 정보를 조회합니다",
+            summary = "제보 상세 조회",
+            description = "USER, PROTECTOR: 자신이 생성한 제보만 조회 / ADMIN: 모든 제보 조회",
             security = {@SecurityRequirement(name = "bearerAuth")}
     )
     @ApiResponses(value = {
@@ -70,16 +74,16 @@ public class ReportController {
             @ApiResponse(responseCode = "404", description = "제보를 찾을 수 없음"),
             @ApiResponse(responseCode = "403", description = "권한 없음")
     })
-    public ReportResponseDto getMyReport(
+    public ReportResponseDto getReport(
             @PathVariable Long reportId,
-            @RequestParam String author) {
-        return reportService.getMyReport(reportId, author);
+            @AuthenticationPrincipal AuthUser authUser) {
+        return reportService.getReport(reportId, authUser);
     }
 
-    @PutMapping("/my/{reportId}")
+    @PutMapping("/{reportId}")
     @Operation(
-            summary = "나의 제보 수정",
-            description = "나의 제보를 수정합니다",
+            summary = "제보 수정",
+            description = "USER, PROTECTOR: 자신이 생성한 제보만 수정 / ADMIN: 모든 제보 수정",
             security = {@SecurityRequirement(name = "bearerAuth")}
     )
     @ApiResponses(value = {
@@ -88,17 +92,17 @@ public class ReportController {
             @ApiResponse(responseCode = "403", description = "권한 없음"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청")
     })
-    public ReportResponseDto updateMyReport(
+    public ReportResponseDto updateReport(
             @PathVariable Long reportId,
-            @RequestParam String author,
-            @Valid @RequestBody UpdateReportRequest request) {
-        return reportService.updateMyReport(reportId, author, request);
+            @Valid @RequestBody UpdateReportRequest request,
+            @AuthenticationPrincipal AuthUser authUser) {
+        return reportService.updateReport(reportId, request, authUser);
     }
 
-    @DeleteMapping("/my/{reportId}")
+    @DeleteMapping("/{reportId}")
     @Operation(
-            summary = "나의 제보 삭제",
-            description = "나의 제보를 삭제합니다",
+            summary = "제보 삭제",
+            description = "USER, PROTECTOR: 자신이 생성한 제보만 삭제 / ADMIN: 모든 제보 삭제",
             security = {@SecurityRequirement(name = "bearerAuth")}
     )
     @ApiResponses(value = {
@@ -106,16 +110,16 @@ public class ReportController {
             @ApiResponse(responseCode = "404", description = "제보를 찾을 수 없음"),
             @ApiResponse(responseCode = "403", description = "권한 없음")
     })
-    public void deleteMyReport(
+    public void deleteReport(
             @PathVariable Long reportId,
-            @RequestParam String author) {
-        reportService.deleteMyReport(reportId, author);
+            @AuthenticationPrincipal AuthUser authUser) {
+        reportService.deleteReport(reportId, authUser);
     }
 
-    @DeleteMapping("/my")
+    @DeleteMapping
     @Operation(
-            summary = "나의 제보들 삭제",
-            description = "나의 여러 제보를 한 번에 삭제합니다",
+            summary = "제보들 일괄 삭제",
+            description = "USER, PROTECTOR: 자신이 생성한 제보만 삭제 / ADMIN: 모든 제보 삭제",
             security = {@SecurityRequirement(name = "bearerAuth")}
     )
     @ApiResponses(value = {
@@ -123,30 +127,13 @@ public class ReportController {
             @ApiResponse(responseCode = "400", description = "잘못된 요청"),
             @ApiResponse(responseCode = "403", description = "권한 없음")
     })
-    public void deleteMyReports(
-            @RequestParam String author,
-            @Valid @RequestBody DeleteReportsRequest request) {
-        reportService.deleteMyReports(request.reportIds(), author);
+    public void deleteReports(
+            @Valid @RequestBody DeleteReportsRequest request,
+            @AuthenticationPrincipal AuthUser authUser) {
+        reportService.deleteReports(request, authUser);
     }
 
-    // ========== 관리자용 API ==========
-
-    @GetMapping("/admin")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
-            summary = "모든 제보 목록 조회 (관리자)",
-            description = "관리자가 모든 제보 목록을 조회합니다",
-            security = {@SecurityRequirement(name = "bearerAuth")}
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "403", description = "권한 없음")
-    })
-    public List<ReportResponseDto> getAllReports() {
-        return reportService.getAllReports();
-    }
-
-    @PutMapping("/admin/{reportId}/status")
+    @PutMapping("/{reportId}/status")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "제보 상태 변경 (관리자)",
@@ -164,56 +151,6 @@ public class ReportController {
             @Valid @RequestBody UpdateReportStatusRequest request) {
         return reportService.updateReportStatus(reportId, request);
     }
-
-    @PutMapping("/admin/{reportId}")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
-            summary = "제보 수정 (관리자)",
-            description = "관리자가 사용자 제보를 수정합니다",
-            security = {@SecurityRequirement(name = "bearerAuth")}
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "수정 성공"),
-            @ApiResponse(responseCode = "404", description = "제보를 찾을 수 없음"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
-            @ApiResponse(responseCode = "403", description = "권한 없음")
-    })
-    public ReportResponseDto updateReport(
-            @PathVariable Long reportId,
-            @Valid @RequestBody UpdateReportRequest request) {
-        return reportService.updateReport(reportId, request);
-    }
-
-    @DeleteMapping("/admin/{reportId}")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
-            summary = "제보 삭제 (관리자)",
-            description = "관리자가 제보를 삭제합니다",
-            security = {@SecurityRequirement(name = "bearerAuth")}
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "삭제 성공"),
-            @ApiResponse(responseCode = "404", description = "제보를 찾을 수 없음"),
-            @ApiResponse(responseCode = "403", description = "권한 없음")
-    })
-    public void deleteReport(@PathVariable Long reportId) {
-        reportService.deleteReport(reportId);
-    }
-
-    @DeleteMapping("/admin")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
-            summary = "제보들 일괄 삭제 (관리자)",
-            description = "관리자가 여러 제보를 한 번에 삭제합니다",
-            security = {@SecurityRequirement(name = "bearerAuth")}
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "삭제 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
-            @ApiResponse(responseCode = "403", description = "권한 없음")
-    })
-    public void deleteReports(@Valid @RequestBody DeleteReportsRequest request) {
-        reportService.deleteReports(request.reportIds());
-    }
 }
+
 

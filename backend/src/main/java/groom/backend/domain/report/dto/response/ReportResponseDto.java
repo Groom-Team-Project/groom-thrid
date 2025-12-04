@@ -124,3 +124,4 @@ public class ReportResponseDto {
         this.updatedAt = updatedAt;
     }
 }
+

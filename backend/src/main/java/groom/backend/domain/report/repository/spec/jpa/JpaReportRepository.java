@@ -12,3 +12,4 @@ public interface JpaReportRepository extends JpaRepository<Report, Long> {
     List<Report> findAll();
 }
 
+

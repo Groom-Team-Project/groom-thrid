@@ -12,3 +12,4 @@ public interface JpaReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findByPlaceId(@Param("placeId") Long placeId);
 }
 
+
