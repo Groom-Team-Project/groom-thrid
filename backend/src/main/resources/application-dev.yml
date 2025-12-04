@@ -7,11 +7,11 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     show-sql: true # 개발용, 런타임에서 로그 보기 어려우면 false로 비활성화
 
   flyway:
-    enabled: true
+    enabled: false  # 개발 환경에서 Hibernate 자동 스키마 업데이트를 위해 일시적으로 비활성화
     locations: classpath:db/migration
 
   springdoc:

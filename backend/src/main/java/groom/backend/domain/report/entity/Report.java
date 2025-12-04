@@ -1,11 +1,14 @@
 package groom.backend.domain.report.entity;
 
 import groom.backend.common.entity.BaseEntity;
+import groom.backend.domain.users.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.UUID;
 
 @Entity(name = "report")
 @NoArgsConstructor
@@ -26,7 +29,12 @@ public class Report extends BaseEntity {
     @Column(nullable = false, length = 2000)
     private String content;
 
-    // 작성자 (추후 User 엔티티와 연결 할 것임)
+    // 작성자 (User 엔티티와 연결)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    // 작성자 이름 (조회 성능을 위한 denormalized 필드)
     @Column(nullable = false, length = 100)
     private String author;
 

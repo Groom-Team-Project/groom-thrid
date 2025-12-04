@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class ReportRepositoryImpl implements ReportRepository {
@@ -30,6 +31,11 @@ public class ReportRepositoryImpl implements ReportRepository {
     @Override
     public List<Report> findByAuthor(String author) {
         return jpaReportRepository.findByAuthor(author);
+    }
+
+    @Override
+    public List<Report> findByUserId(UUID userId) {
+        return jpaReportRepository.findByUserId(userId);
     }
 
     @Override
@@ -63,6 +69,13 @@ public class ReportRepositoryImpl implements ReportRepository {
                jpaReportRepository.findById(id)
                    .map(report -> report.getAuthor().equals(author))
                    .orElse(false);
+    }
+
+    @Override
+    public boolean existsByIdAndUserId(Long id, UUID userId) {
+        return jpaReportRepository.findById(id)
+                .map(report -> report.getUser() != null && report.getUser().getId().equals(userId))
+                .orElse(false);
     }
 
     @Override

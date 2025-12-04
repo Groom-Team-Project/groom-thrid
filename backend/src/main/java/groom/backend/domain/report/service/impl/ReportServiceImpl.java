@@ -12,6 +12,7 @@ import groom.backend.domain.report.mapper.ReportMapper;
 import groom.backend.domain.report.repository.spec.ReportRepository;
 import groom.backend.domain.report.service.spec.ReportService;
 import groom.backend.domain.users.entity.Role;
+import groom.backend.domain.users.entity.User;
 import groom.backend.domain.users.repository.spec.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,7 +30,11 @@ public class ReportServiceImpl implements ReportService {
     @Override
     @Transactional
     public ReportResponseDto createReport(Long placeId, CreateReportRequest request, AuthUser authUser) {
-        Report report = ReportMapper.toEntity(placeId, request);
+        // 현재 인증된 사용자 조회
+        User user = userRepository.findById(authUser.userId())
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. ID: " + authUser.userId()));
+        
+        Report report = ReportMapper.toEntity(placeId, request, user);
         Report savedReport = reportRepository.save(report);
         return ReportMapper.toResponseDto(savedReport);
     }
@@ -43,11 +48,8 @@ public class ReportServiceImpl implements ReportService {
             List<Report> reports = reportRepository.findAll();
             return ReportMapper.toResponseDtoList(reports);
         } else {
-            // USER, PROTECTOR는 자신의 이름으로 제보 조회
-            String userName = userRepository.findById(authUser.userId())
-                    .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."))
-                    .getName();
-            List<Report> reports = reportRepository.findByAuthor(userName);
+            // USER, PROTECTOR는 자신의 userId로 제보 조회
+            List<Report> reports = reportRepository.findByUserId(authUser.userId());
             return ReportMapper.toResponseDtoList(reports);
         }
     }
@@ -61,10 +63,7 @@ public class ReportServiceImpl implements ReportService {
         // ADMIN: 모든 제보 조회 가능
         // USER, PROTECTOR: 자신이 생성한 제보만 조회 가능
         if (authUser.role() != Role.ADMIN) {
-            String userName = userRepository.findById(authUser.userId())
-                    .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."))
-                    .getName();
-            if (!report.getAuthor().equals(userName)) {
+            if (report.getUser() == null || !report.getUser().getId().equals(authUser.userId())) {
                 throw new IllegalArgumentException("본인의 제보만 조회할 수 있습니다.");
             }
         }
@@ -81,10 +80,7 @@ public class ReportServiceImpl implements ReportService {
         // ADMIN: 모든 제보 수정 가능
         // USER, PROTECTOR: 자신이 생성한 제보만 수정 가능
         if (authUser.role() != Role.ADMIN) {
-            String userName = userRepository.findById(authUser.userId())
-                    .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."))
-                    .getName();
-            if (!report.getAuthor().equals(userName)) {
+            if (report.getUser() == null || !report.getUser().getId().equals(authUser.userId())) {
                 throw new IllegalArgumentException("본인의 제보만 수정할 수 있습니다.");
             }
         }
@@ -104,10 +100,7 @@ public class ReportServiceImpl implements ReportService {
         // ADMIN: 모든 제보 삭제 가능
         // USER, PROTECTOR: 자신이 생성한 제보만 삭제 가능
         if (authUser.role() != Role.ADMIN) {
-            String userName = userRepository.findById(authUser.userId())
-                    .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."))
-                    .getName();
-            if (!report.getAuthor().equals(userName)) {
+            if (report.getUser() == null || !report.getUser().getId().equals(authUser.userId())) {
                 throw new IllegalArgumentException("본인의 제보만 삭제할 수 있습니다.");
             }
         }
@@ -131,11 +124,8 @@ public class ReportServiceImpl implements ReportService {
             }
         } else {
             // USER, PROTECTOR는 자신의 제보만 삭제 가능
-            String userName = userRepository.findById(authUser.userId())
-                    .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."))
-                    .getName();
             for (Long reportId : reportIds) {
-                if (!reportRepository.existsByIdAndAuthor(reportId, userName)) {
+                if (!reportRepository.existsByIdAndUserId(reportId, authUser.userId())) {
                     throw new IllegalArgumentException("제보 ID " + reportId + "는 본인의 제보가 아니거나 존재하지 않습니다.");
                 }
             }
