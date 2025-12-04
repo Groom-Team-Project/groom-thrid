@@ -18,3 +18,4 @@ public record UpdateReportRequest(
     String imageUrl
 ) {
 }
+
