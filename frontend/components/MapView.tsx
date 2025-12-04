@@ -7,6 +7,7 @@ import { getReviewsByStation, deleteReview, type Review } from '@/lib/reviews'
 import { saveAlert } from '@/lib/alerts'
 import StarRating from './StarRating'
 import styles from './MapView.module.css'
+import { useLocation } from '@/providers/LocationProvider';
 
 interface MapViewProps {
   selectedCategory: 'charging' | 'restroom' | null
@@ -27,7 +28,6 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     const markersRef = useRef<any[]>([])
     const userMarkerRef = useRef<any>(null)
 
-    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
     const [stations, setStations] = useState<ChargingStation[]>([])
     const [selectedStation, setSelectedStation] = useState<ChargingStation | null>(null)
     const [mapLoaded, setMapLoaded] = useState(false)
@@ -37,6 +37,9 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     const [userType, setUserType] = useState<string | null>(null)
 
     const apiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY ?? ''
+
+    const location = useLocation();
+    const { lat, lng, timestamp } = location;
 
     // 카카오 지도 로드
     useEffect(() => {
@@ -58,25 +61,25 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         }
     }, [apiKey, mapLoaded])
 
-    // 사용자 위치 가져오기
-    useEffect(() => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    setUserLocation({
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude,
-                    })
-                },
-                () => {
-                    // 기본 위치 (서울 시청)
-                    setUserLocation({ lat: 37.5665, lng: 126.9780 })
-            }
-          )
-        } else {
-          setUserLocation({ lat: 37.5665, lng: 126.9780 })
-        }
-    }, [])
+    // // 사용자 위치 가져오기
+    // useEffect(() => {
+    //     if (navigator.geolocation) {
+    //         navigator.geolocation.getCurrentPosition(
+    //             (position) => {
+    //                 setUserLocation({
+    //                     lat: position.coords.latitude,
+    //                     lng: position.coords.longitude,
+    //                 })
+    //             },
+    //             () => {
+    //                 // 기본 위치 (서울 시청)
+    //                 setUserLocation({ lat: 37.5665, lng: 126.9780 })
+    //         }
+    //       )
+    //     } else {
+    //       setUserLocation({ lat: 37.5665, lng: 126.9780 })
+    //     }
+    // }, [])
 
     // 사용자 타입 확인
     useEffect(() => {
@@ -86,7 +89,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
 
     // 충전소 데이터 로드
     useEffect(() => {
-        if (selectedCategory === 'charging' && userLocation) {
+        if (selectedCategory === 'charging') {
             const stations = getStations()
             setStations(stations)
 
@@ -110,15 +113,15 @@ export default function MapView({ selectedCategory }: MapViewProps) {
             setStations([])
             setSelectedStation(null)
         }
-    }, [selectedCategory, userLocation, searchParams])
+    }, [selectedCategory, searchParams])
 
     // 카카오맵 초기화
     useEffect(() => {
-        if (!mapLoaded || !mapRef.current || !userLocation) return
+        if (!mapLoaded || !mapRef.current || !lat || !lng) return
 
         const container = mapRef.current
         const options = {
-            center: new window.kakao.maps.LatLng(userLocation.lat, userLocation.lng),
+            center: new window.kakao.maps.LatLng(lat, lng),
             level: 3, // 확대 레벨
         }
 
@@ -131,9 +134,9 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         })
 
         // 사용자 위치 마커 생성
-        createUserMarker(map, userLocation)
+        createUserMarker(map, { lat, lng })
 
-    }, [mapLoaded, userLocation])
+    }, [mapLoaded, lat, lng])
 
     // 사용자 위치 마커 생성
     const createUserMarker = (map: any, location: { lat: number; lng: number }) => {
@@ -271,7 +274,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
 
     const handleSetEnd = () => {
         if (!checkLogin()) return
-        if (selectedStation && userLocation) {
+        if (selectedStation) {
             // 지도에 표시된 충전소만 도착지로 설정 가능
             const isStationOnMap = stations.some(s => s.id === selectedStation.id)
             if (isStationOnMap) {
@@ -286,7 +289,15 @@ export default function MapView({ selectedCategory }: MapViewProps) {
                     localStorage.removeItem('startStationName')
                 } else {
                     // 출발지가 없으면 현재 위치를 출발지로 사용
-                    router.push(`/directions?endId=${selectedStation.id}`)
+                    router.push(
+                        `/directions?start-lat=${lat}` +
+                        `&start-lng=${lng}` +
+                        `&end-lat=${selectedStation.lat}` +
+                        `&end-lng=${selectedStation.lng}` +
+                        `&start-name=현재 위치` +
+                        `&end-name=${encodeURIComponent(selectedStation.name)}`
+                    )
+
                 }
             }
         }
@@ -296,18 +307,12 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         if (navigator.geolocation && kakaoMapRef.current) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    const newLocation = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude,
-                    }
-                    setUserLocation(newLocation)
-
-                    // 지도 중심 이동
-                    const moveLatLon = new window.kakao.maps.LatLng(newLocation.lat, newLocation.lng)
+                    const moveLatLon = new window.kakao.maps.LatLng(position.coords.latitude, position.coords.longitude)
                     kakaoMapRef.current.panTo(moveLatLon)
-
-                    // 사용자 마커 업데이트
-                    createUserMarker(kakaoMapRef.current, newLocation)
+                    createUserMarker(kakaoMapRef.current, {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    })
                 }
             )
         }
