@@ -3,14 +3,15 @@ package groom.backend.domain.users.service.impl;
 import groom.backend.common.exception.UserNotFoundException;
 import groom.backend.domain.users.dto.request.UpdateUserRequest;
 import groom.backend.domain.users.dto.response.UserResponse;
-import groom.backend.domain.users.entity.Role;
 import groom.backend.domain.users.entity.User;
+import groom.backend.domain.users.entity.UserCredential;
 import groom.backend.domain.users.mapper.UserMapper;
 import groom.backend.domain.users.repository.impl.UserCredentialRepositoryImpl;
 import groom.backend.domain.users.repository.impl.UserRepositoryImpl;
 import groom.backend.domain.users.service.spec.UserService;
 import jakarta.transaction.Transactional;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse getUserById(UUID id) {
-        User user = userRepository.findById(id)
+        User user = userRepository.findUserById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
         return UserMapper.toDto(user);
     }
@@ -38,24 +39,38 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse updateUser(UUID id, UpdateUserRequest request) {
-        return null;
+        User user = userRepository.findUserById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
+
+        // Mapper로 엔티티 업데이트
+        UserMapper.updateEntity(user, request);
+
+        return UserMapper.toDto(user);
     }
 
     @Override
     public void deleteUser(UUID id) {
-
-    }
-
-    @Override
-    public UserResponse updateUserRole(UUID id, Role role) {
-        return null;
+        User user = userRepository.findUserById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
+        userRepository.deleteById(user.getId());
     }
 
     // ================= 내부 api용 ===================
+
+
     @Override
-    public User findUserEntityById(UUID id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(id));
+    public User saveUser(User user) {
+        return userRepository.save(user);
+    }
+
+    @Override
+    public Optional<UserCredential> findUserCredentialByEmail(String email) {
+        return userCredentialRepository.findUserCredentialByEmail(email);
+    }
+
+    @Override
+    public Optional<User> findUserById(UUID id) {
+        return userRepository.findUserById(id);
     }
 
     @Override

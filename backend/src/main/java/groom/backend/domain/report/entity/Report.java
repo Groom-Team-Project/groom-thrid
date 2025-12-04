@@ -51,3 +51,4 @@ public class Report extends BaseEntity {
         this.status = status;
     }
 }
+

@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,6 +29,7 @@ public class ReviewController {
     }
 
     @PostMapping("/place/{placeId}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'PROTECTOR')")
     @Operation(
             summary = "리뷰 생성",
             description = "장소별 새로운 리뷰를 생성합니다",
@@ -44,6 +46,7 @@ public class ReviewController {
     }
 
     @GetMapping("/{reviewId}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'PROTECTOR')")
     @Operation(
             summary = "리뷰 조회",
             description = "ID로 리뷰를 조회합니다",
@@ -58,6 +61,7 @@ public class ReviewController {
     }
 
     @GetMapping("/place/{placeId}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'PROTECTOR')")
     @Operation(
             summary = "장소별 리뷰 목록 조회",
             description = "장소 ID로 해당 장소의 모든 리뷰를 조회합니다",
@@ -71,6 +75,7 @@ public class ReviewController {
     }
 
     @PutMapping("/{reviewId}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'PROTECTOR')")
     @Operation(
             summary = "리뷰 수정",
             description = "리뷰를 수정합니다",
@@ -88,6 +93,7 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{reviewId}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'PROTECTOR')")
     @Operation(
             summary = "리뷰 삭제",
             description = "리뷰를 삭제합니다",
@@ -101,3 +107,4 @@ public class ReviewController {
         reviewService.deleteReview(reviewId);
     }
 }
+
