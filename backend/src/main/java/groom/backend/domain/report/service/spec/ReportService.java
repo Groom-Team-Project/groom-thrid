@@ -47,5 +47,20 @@ public interface ReportService {
      * 관리자가 모든 제보 목록을 조회합니다
      */
     List<ReportResponseDto> getAllReports();
+
+    /**
+     * 관리자가 제보를 수정합니다
+     */
+    ReportResponseDto updateReport(Long reportId, UpdateReportRequest request);
+
+    /**
+     * 관리자가 제보를 삭제합니다
+     */
+    void deleteReport(Long reportId);
+
+    /**
+     * 관리자가 제보들을 일괄 삭제합니다
+     */
+    void deleteReports(List<Long> reportIds);
 }
 

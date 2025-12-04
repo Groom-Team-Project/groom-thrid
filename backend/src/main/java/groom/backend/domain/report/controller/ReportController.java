@@ -164,5 +164,56 @@ public class ReportController {
             @Valid @RequestBody UpdateReportStatusRequest request) {
         return reportService.updateReportStatus(reportId, request);
     }
+
+    @PutMapping("/admin/{reportId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "제보 수정 (관리자)",
+            description = "관리자가 사용자 제보를 수정합니다",
+            security = {@SecurityRequirement(name = "bearerAuth")}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "수정 성공"),
+            @ApiResponse(responseCode = "404", description = "제보를 찾을 수 없음"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    public ReportResponseDto updateReport(
+            @PathVariable Long reportId,
+            @Valid @RequestBody UpdateReportRequest request) {
+        return reportService.updateReport(reportId, request);
+    }
+
+    @DeleteMapping("/admin/{reportId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "제보 삭제 (관리자)",
+            description = "관리자가 제보를 삭제합니다",
+            security = {@SecurityRequirement(name = "bearerAuth")}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "삭제 성공"),
+            @ApiResponse(responseCode = "404", description = "제보를 찾을 수 없음"),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    public void deleteReport(@PathVariable Long reportId) {
+        reportService.deleteReport(reportId);
+    }
+
+    @DeleteMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "제보들 일괄 삭제 (관리자)",
+            description = "관리자가 여러 제보를 한 번에 삭제합니다",
+            security = {@SecurityRequirement(name = "bearerAuth")}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "삭제 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    public void deleteReports(@Valid @RequestBody DeleteReportsRequest request) {
+        reportService.deleteReports(request.reportIds());
+    }
 }
 

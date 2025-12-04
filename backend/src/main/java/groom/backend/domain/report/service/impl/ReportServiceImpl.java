@@ -121,5 +121,41 @@ public class ReportServiceImpl implements ReportService {
         List<Report> reports = reportRepository.findAll();
         return ReportMapper.toResponseDtoList(reports);
     }
+
+    @Override
+    @Transactional
+    public ReportResponseDto updateReport(Long reportId, UpdateReportRequest request) {
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new IllegalArgumentException("제보를 찾을 수 없습니다. ID: " + reportId));
+        
+        // 제보 수정
+        report.update(request.content(), request.imageUrl());
+        
+        Report savedReport = reportRepository.save(report);
+        return ReportMapper.toResponseDto(savedReport);
+    }
+
+    @Override
+    @Transactional
+    public void deleteReport(Long reportId) {
+        if (!reportRepository.existsById(reportId)) {
+            throw new IllegalArgumentException("제보를 찾을 수 없습니다. ID: " + reportId);
+        }
+        
+        reportRepository.deleteById(reportId);
+    }
+
+    @Override
+    @Transactional
+    public void deleteReports(List<Long> reportIds) {
+        // 모든 제보가 존재하는지 확인
+        for (Long reportId : reportIds) {
+            if (!reportRepository.existsById(reportId)) {
+                throw new IllegalArgumentException("제보 ID " + reportId + "를 찾을 수 없습니다.");
+            }
+        }
+        
+        reportRepository.deleteAllById(reportIds);
+    }
 }
 
