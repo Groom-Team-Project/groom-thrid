@@ -4,7 +4,9 @@ import groom.backend.domain.users.dto.request.UpdateUserRequest;
 import groom.backend.domain.users.dto.response.UserResponse;
 import groom.backend.domain.users.entity.Role;
 import groom.backend.domain.users.entity.User;
+import groom.backend.domain.users.entity.UserCredential;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface UserService {
@@ -38,13 +40,15 @@ public interface UserService {
 
     // ================= 내부 api용 ===================
 
-    /**
-     * ID로 User Entity 조회 (내부 도메인용)
-     */
-    User findUserEntityById(UUID id);
+    // User 엔티티로 사용자 생성
+    User saveUser(User user);
 
-    /**
-     * 이메일 중복 확인 (회원가입 시 사용)
-     */
+    // ID로 User Entity 조회
+    Optional<User> findUserById(UUID id);
+
+    // 이메일 중복 확인 (회원가입 시 사용)
     boolean existsByEmail(String email);
+
+    // 로그인시 UserCredential에서 이메일 확인
+    Optional<UserCredential> findUserCredentialByEmail(String email);
 }

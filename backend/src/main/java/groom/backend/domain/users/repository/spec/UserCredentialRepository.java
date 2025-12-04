@@ -7,7 +7,7 @@ import java.util.Optional;
 public interface UserCredentialRepository {
 
     // Form 용
-    Optional<UserCredential> findByEmail(String email);
+    Optional<UserCredential> findUserCredentialByEmail(String email);
 
     // OAuth용
     Optional<UserCredential> findByProviderIdAndProvider(String providerId, Provider provider);
