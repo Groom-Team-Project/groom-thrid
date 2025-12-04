@@ -91,7 +91,20 @@
 
 ## 🔧 개발용 실행 순서
 
-1. Docker 컨테이너 실행
-   -> docker compose --env-file .env.dev up --build : 처음 빌드시만 실행
-   -> docker compose --env-file .env.dev up -d : 이후 다시키는 경우 이렇게 하면 더 빠름
+1. Docker 컨테이너 실행 (dev)
+```shell
+# 처음 빌드 시
+docker compose -f docker-compose.dev.yml --env-file .env.dev up --build
+# 빌드 이후
+docker compose -f docker-compose.dev.yml --env-file .env.dev up --d
+```
+
+(prod)
+```shell
+# 처음 빌드 시
+docker compose -f docker-compose.prod.yml --env-file .env.dev up --build
+# 빌드 이후
+docker compose -f docker-compose.prod.yml --env-file .env.dev up --d
+```
+
 2. Spring Boot 백엔드 서버 로컬 실행
