@@ -2,7 +2,6 @@ package groom.backend.domain.users.service.spec;
 
 import groom.backend.domain.users.dto.request.UpdateUserRequest;
 import groom.backend.domain.users.dto.response.UserResponse;
-import groom.backend.domain.users.entity.Role;
 import groom.backend.domain.users.entity.User;
 import groom.backend.domain.users.entity.UserCredential;
 import java.util.List;
@@ -13,30 +12,17 @@ public interface UserService {
 
     // ========== Controller용 메서드 (DTO 반환) ==========
 
-    /**
-     * 사용자 ID로 조회
-     */
+    // 사용자 ID로 조회
     UserResponse getUserById(UUID id);
 
-    /**
-     * 전체 사용자 목록 조회
-     */
+    // 전체 사용자 목록 조회
     List<UserResponse> getAllUsers();
 
-    /**
-     * 사용자 프로필 수정
-     */
+    // 사용자 프로필 수정
     UserResponse updateUser(UUID id, UpdateUserRequest request);
 
-    /**
-     * 사용자 삭제
-     */
+    // 사용자 삭제
     void deleteUser(UUID id);
-
-    /**
-     * 역할 변경
-     */
-    UserResponse updateUserRole(UUID id, Role role);
 
     // ================= 내부 api용 ===================
 
