@@ -8,17 +8,29 @@ interface PathNode {
   lng: number;
 }
 interface PathSummary {
-  distance: number;   // total distance in meters
-  duration: number;   // total duration in seconds
+  distance: number;
+  duration: number;
 }
-interface PathResponse {
+interface InternalPathResponse {
   pathNodeList: PathNode[];
   pathSummary: PathSummary;
 }
+interface FallbackPathResponse {
+  status: string;
+  code: number;
+  message: string;
+  data: {
+    uri: string;
+  };
+}
+
+type PathData = InternalPathResponse | FallbackPathResponse;
 
 const DirectionsPage: React.FC = () => {
   const searchParams = useSearchParams();
-  const [pathData, setPathData] = useState<PathResponse | null>(null);
+  const [pathData, setPathData] = useState<PathData | null>(null);
+  const [startCoord, setStartCoord] = useState<PathNode | null>(null);
+  const [endCoord, setEndCoord] = useState<PathNode | null>(null);
 
   useEffect(() => {
     const startLatStr = searchParams.get('start-lat');
@@ -26,24 +38,25 @@ const DirectionsPage: React.FC = () => {
     const endLatStr = searchParams.get('end-lat');
     const endLngStr = searchParams.get('end-lng');
     const startName = searchParams.get('start-name');
-    const endName = searchParams.get('end-name'); // TODO: mock 데이터에서 추출한 이름, 이후 실제 데이터 반영 필요
+    const endName = searchParams.get('end-name');
 
-    if (!startLatStr || !startLngStr || !endLatStr || !endLngStr || !startName || !endName) {
-      return;
-    }
+    if (!startLatStr || !startLngStr || !endLatStr || !endLngStr || !startName || !endName) return;
 
     const startLat = Number(startLatStr);
     const startLng = Number(startLngStr);
     const endLat = Number(endLatStr);
     const endLng = Number(endLngStr);
 
+    setStartCoord({ lat: startLat, lng: startLng });
+    setEndCoord({ lat: endLat, lng: endLng });
+
     const requestBody = {
       startY: startLat,
       startX: startLng,
       endY: endLat,
       endX: endLng,
-      startName,
-      endName
+      startName: startName,
+      endName: endName
     };
 
     const fetchPath = async () => {
@@ -53,14 +66,10 @@ const DirectionsPage: React.FC = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(requestBody)
         });
-        if (!res.ok) {
-          console.error("Failed to fetch path data");
-          return;
-        }
-        const data: PathResponse = await res.json();
+        const data = await res.json();
         setPathData(data);
       } catch (error) {
-        console.error("Error fetching path data:", error);
+        console.error("경로 데이터를 불러오는 중 오류 발생:", error);
       }
     };
 
@@ -68,58 +77,55 @@ const DirectionsPage: React.FC = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    if (!pathData) return;
-    const { pathNodeList } = pathData;
+    if (!pathData || !startCoord || !endCoord) return;
+    const mapContainer = document.getElementById("map");
+    if (!mapContainer) return;
 
     const drawMap = () => {
-      if (!pathNodeList || pathNodeList.length === 0) return;
-      const mapContainer = document.getElementById("map");
-      if (!mapContainer) return;
-
       const kakaoMaps = (window as any).kakao.maps;
-      const startCoord = new kakaoMaps.LatLng(pathNodeList[0].lat, pathNodeList[0].lng);
-      const mapOptions = { center: startCoord, level: 5 };
-      const map = new kakaoMaps.Map(mapContainer, mapOptions);
-
-      new kakaoMaps.Marker({ position: startCoord, map });
-      const endCoord = new kakaoMaps.LatLng(pathNodeList[pathNodeList.length - 1].lat, pathNodeList[pathNodeList.length - 1].lng);
-      new kakaoMaps.Marker({ position: endCoord, map });
-
-      const linePath = pathNodeList.map(node => new kakaoMaps.LatLng(node.lat, node.lng));
-      new kakaoMaps.Polyline({
-        path: linePath,
-        strokeWeight: 5,
-        strokeColor: "#005AFF",
-        strokeOpacity: 0.8,
-        strokeStyle: "solid",
-        map
+      const map = new kakaoMaps.Map(mapContainer, {
+        center: new kakaoMaps.LatLng(startCoord.lat, startCoord.lng),
+        level: 5
       });
 
-      const bounds = new kakaoMaps.LatLngBounds();
-      linePath.forEach(point => bounds.extend(point));
-      map.setBounds(bounds);
+      new kakaoMaps.Marker({ position: new kakaoMaps.LatLng(startCoord.lat, startCoord.lng), map });
+      new kakaoMaps.Marker({ position: new kakaoMaps.LatLng(endCoord.lat, endCoord.lng), map });
+
+      if ('pathNodeList' in pathData) {
+        const linePath = pathData.pathNodeList.map(node => new kakaoMaps.LatLng(node.lat, node.lng));
+        new kakaoMaps.Polyline({
+          path: linePath,
+          strokeWeight: 5,
+          strokeColor: "#005AFF",
+          strokeOpacity: 0.8,
+          strokeStyle: "solid",
+          map
+        });
+        const bounds = new kakaoMaps.LatLngBounds();
+        linePath.forEach(point => bounds.extend(point));
+        map.setBounds(bounds);
+      } else {
+        const bounds = new kakaoMaps.LatLngBounds();
+        bounds.extend(new kakaoMaps.LatLng(startCoord.lat, startCoord.lng));
+        bounds.extend(new kakaoMaps.LatLng(endCoord.lat, endCoord.lng));
+        map.setBounds(bounds);
+      }
     };
 
     if (!(window as any).kakao || !(window as any).kakao.maps) {
       const script = document.createElement("script");
       const kakaoApiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
-      if (!kakaoApiKey) {
-        console.error("Kakao Maps API key is missing.");
-        return;
-      }
-      script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${kakaoApiKey}&autoload=false`;
-      script.onload = () => {
-        (window as any).kakao.maps.load(drawMap);
-      };
+      script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${kakaoApiKey || ""}&autoload=false`;
+      script.onload = () => (window as any).kakao.maps.load(drawMap);
       document.head.appendChild(script);
     } else {
       (window as any).kakao.maps.load(drawMap);
     }
-  }, [pathData]);
+  }, [pathData, startCoord, endCoord]);
 
   let distanceStr = "";
   let timeStr = "";
-  if (pathData?.pathSummary) {
+  if (pathData && 'pathSummary' in pathData) {
     const { distance, duration } = pathData.pathSummary;
     distanceStr = distance >= 1000 ? `${(distance / 1000).toFixed(1)} km` : `${distance} m`;
     const hours = Math.floor(duration / 3600);
@@ -130,9 +136,19 @@ const DirectionsPage: React.FC = () => {
   return (
       <div>
         <div id="map" style={{ width: "100%", height: "80vh" }} />
-        {distanceStr && timeStr && (
+        {pathData && 'pathSummary' in pathData && (
             <div style={{ padding: "10px", fontSize: "16px" }}>
               <p>총 거리: <strong>{distanceStr}</strong>, 예상 소요 시간: <strong>{timeStr}</strong></p>
+            </div>
+        )}
+        {pathData && 'data' in pathData && (
+            <div style={{ padding: "10px", fontSize: "16px" }}>
+              <p style={{ marginBottom: "8px" }}>⚠️ 해당 구간은 서비스 제공 구역이 아니거나 너무 멉니다.
+                <br />
+                카카오맵 외부 경로로 안내됩니다.</p>
+              <a href={pathData.data.uri} target="_blank" rel="noopener noreferrer" style={{ color: '#005AFF', textDecoration: 'underline' }}>
+                카카오맵에서 경로 보기
+              </a>
             </div>
         )}
       </div>
