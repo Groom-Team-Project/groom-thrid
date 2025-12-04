@@ -134,15 +134,36 @@ const DirectionsPage: React.FC = () => {
   }
 
   return (
-      <div>
-        <div id="map" style={{ width: "100%", height: "80vh" }} />
+      <div style={{ position: "relative", width: "100%", height: "100vh" }}>
+        <div id="map" style={{ width: "100%", height: "100%" }} />
         {pathData && 'pathSummary' in pathData && (
-            <div style={{ padding: "10px", fontSize: "16px" }}>
+            <div
+                style={{
+                  position: "absolute",
+                  bottom: "10px",
+                  left: "0",
+                  width: "100%",
+                  padding: "12px",
+                  zIndex: 10,
+                  boxSizing: "border-box",
+                  borderTop: "1px solid #ccc",
+                }}>
               <p>총 거리: <strong>{distanceStr}</strong>, 예상 소요 시간: <strong>{timeStr}</strong></p>
             </div>
         )}
         {pathData && 'data' in pathData && (
-            <div style={{ padding: "10px", fontSize: "16px" }}>
+            <div
+                style={{
+                  position: "absolute",
+                  bottom: "10px",
+                  left: "0",
+                  width: "100%",
+                  padding: "12px",
+                  backgroundColor: "#FEEDBE",
+                  zIndex: 10,
+                  boxSizing: "border-box",
+                  borderTop: "1px solid #ccc",
+                }}>
               <p style={{ marginBottom: "8px" }}>⚠️ 해당 구간은 서비스 제공 구역이 아니거나 너무 멉니다.
                 <br />
                 카카오맵 외부 경로로 안내됩니다.</p>
