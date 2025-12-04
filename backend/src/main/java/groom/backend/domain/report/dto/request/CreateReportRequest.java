@@ -23,3 +23,4 @@ public record CreateReportRequest(
     String imageUrl
 ) {
 }
+

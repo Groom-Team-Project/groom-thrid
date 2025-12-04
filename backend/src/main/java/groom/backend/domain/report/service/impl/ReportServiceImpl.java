@@ -93,3 +93,4 @@ public class ReportServiceImpl implements ReportService {
         reportRepository.deleteAllById(reportIds);
     }
 }
+
