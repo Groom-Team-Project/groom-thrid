@@ -10,3 +10,4 @@ public interface JpaReportRepository extends JpaRepository<Report, Long> {
     List<Report> findByPlaceId(Long placeId);
     List<Report> findByAuthorAndPlaceId(String author, Long placeId);
 }
+

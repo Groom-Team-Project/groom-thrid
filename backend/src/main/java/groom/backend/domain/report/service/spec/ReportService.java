@@ -37,3 +37,4 @@ public interface ReportService {
      */
     void deleteMyReports(List<Long> reportIds, String author);
 }
+

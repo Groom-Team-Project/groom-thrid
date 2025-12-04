@@ -16,3 +16,4 @@ public interface ReportRepository {
     boolean existsById(Long id);
     boolean existsByIdAndAuthor(Long id, String author);
 }
+
