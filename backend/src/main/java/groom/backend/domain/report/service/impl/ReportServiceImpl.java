@@ -3,7 +3,7 @@ package groom.backend.domain.report.service.impl;
 import groom.backend.domain.report.dto.request.CreateReportRequest;
 import groom.backend.domain.report.dto.request.UpdateReportRequest;
 import groom.backend.domain.report.dto.request.UpdateReportStatusRequest;
-import groom.backend.domain.report.dto.response.ReportResponse;
+import groom.backend.domain.report.dto.response.ReportResponseDto;
 import groom.backend.domain.report.entity.Report;
 import groom.backend.domain.report.entity.ReportStatus;
 import groom.backend.domain.report.mapper.ReportMapper;
@@ -23,22 +23,22 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     @Transactional
-    public ReportResponse createReport(Long placeId, CreateReportRequest request) {
+    public ReportResponseDto createReport(Long placeId, CreateReportRequest request) {
         Report report = ReportMapper.toEntity(placeId, request);
         Report savedReport = reportRepository.save(report);
-        return ReportMapper.toResponse(savedReport);
+        return ReportMapper.toResponseDto(savedReport);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ReportResponse> getMyReports(String author) {
+    public List<ReportResponseDto> getMyReports(String author) {
         List<Report> reports = reportRepository.findByAuthor(author);
-        return ReportMapper.toResponseList(reports);
+        return ReportMapper.toResponseDtoList(reports);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ReportResponse getMyReport(Long reportId, String author) {
+    public ReportResponseDto getMyReport(Long reportId, String author) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new IllegalArgumentException("제보를 찾을 수 없습니다. ID: " + reportId));
         
@@ -47,12 +47,12 @@ public class ReportServiceImpl implements ReportService {
             throw new IllegalArgumentException("본인의 제보만 조회할 수 있습니다.");
         }
         
-        return ReportMapper.toResponse(report);
+        return ReportMapper.toResponseDto(report);
     }
 
     @Override
     @Transactional
-    public ReportResponse updateMyReport(Long reportId, String author, UpdateReportRequest request) {
+    public ReportResponseDto updateMyReport(Long reportId, String author, UpdateReportRequest request) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new IllegalArgumentException("제보를 찾을 수 없습니다. ID: " + reportId));
         
@@ -65,7 +65,7 @@ public class ReportServiceImpl implements ReportService {
         report.update(request.content(), request.imageUrl());
         
         Report savedReport = reportRepository.save(report);
-        return ReportMapper.toResponse(savedReport);
+        return ReportMapper.toResponseDto(savedReport);
     }
 
     @Override
@@ -97,7 +97,7 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     @Transactional
-    public ReportResponse updateReportStatus(Long reportId, UpdateReportStatusRequest request) {
+    public ReportResponseDto updateReportStatus(Long reportId, UpdateReportStatusRequest request) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new IllegalArgumentException("제보를 찾을 수 없습니다. ID: " + reportId));
 
@@ -112,14 +112,14 @@ public class ReportServiceImpl implements ReportService {
         report.updateStatusWithReply(request.status(), request.adminReply());
 
         Report savedReport = reportRepository.save(report);
-        return ReportMapper.toResponse(savedReport);
+        return ReportMapper.toResponseDto(savedReport);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ReportResponse> getAllReports() {
+    public List<ReportResponseDto> getAllReports() {
         List<Report> reports = reportRepository.findAll();
-        return ReportMapper.toResponseList(reports);
+        return ReportMapper.toResponseDtoList(reports);
     }
 }
 

@@ -4,7 +4,7 @@ import groom.backend.domain.report.dto.request.CreateReportRequest;
 import groom.backend.domain.report.dto.request.DeleteReportsRequest;
 import groom.backend.domain.report.dto.request.UpdateReportRequest;
 import groom.backend.domain.report.dto.request.UpdateReportStatusRequest;
-import groom.backend.domain.report.dto.response.ReportResponse;
+import groom.backend.domain.report.dto.response.ReportResponseDto;
 import groom.backend.domain.report.service.spec.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -40,7 +40,7 @@ public class ReportController {
             @ApiResponse(responseCode = "201", description = "생성 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청")
     })
-    public ReportResponse createReport(
+    public ReportResponseDto createReport(
             @PathVariable Long placeId,
             @Valid @RequestBody CreateReportRequest request) {
         return reportService.createReport(placeId, request);
@@ -55,7 +55,7 @@ public class ReportController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공")
     })
-    public List<ReportResponse> getMyReports(@RequestParam String author) {
+    public List<ReportResponseDto> getMyReports(@RequestParam String author) {
         return reportService.getMyReports(author);
     }
 
@@ -70,7 +70,7 @@ public class ReportController {
             @ApiResponse(responseCode = "404", description = "제보를 찾을 수 없음"),
             @ApiResponse(responseCode = "403", description = "권한 없음")
     })
-    public ReportResponse getMyReport(
+    public ReportResponseDto getMyReport(
             @PathVariable Long reportId,
             @RequestParam String author) {
         return reportService.getMyReport(reportId, author);
@@ -88,7 +88,7 @@ public class ReportController {
             @ApiResponse(responseCode = "403", description = "권한 없음"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청")
     })
-    public ReportResponse updateMyReport(
+    public ReportResponseDto updateMyReport(
             @PathVariable Long reportId,
             @RequestParam String author,
             @Valid @RequestBody UpdateReportRequest request) {
@@ -142,7 +142,7 @@ public class ReportController {
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "403", description = "권한 없음")
     })
-    public List<ReportResponse> getAllReports() {
+    public List<ReportResponseDto> getAllReports() {
         return reportService.getAllReports();
     }
 
@@ -159,7 +159,7 @@ public class ReportController {
             @ApiResponse(responseCode = "400", description = "잘못된 요청 (승인/반려 시 답변 필수)"),
             @ApiResponse(responseCode = "403", description = "권한 없음")
     })
-    public ReportResponse updateReportStatus(
+    public ReportResponseDto updateReportStatus(
             @PathVariable Long reportId,
             @Valid @RequestBody UpdateReportStatusRequest request) {
         return reportService.updateReportStatus(reportId, request);

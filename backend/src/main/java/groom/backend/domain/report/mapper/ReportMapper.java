@@ -1,7 +1,7 @@
 package groom.backend.domain.report.mapper;
 
 import groom.backend.domain.report.dto.request.CreateReportRequest;
-import groom.backend.domain.report.dto.response.ReportResponse;
+import groom.backend.domain.report.dto.response.ReportResponseDto;
 import groom.backend.domain.report.entity.Report;
 import groom.backend.domain.report.entity.ReportStatus;
 import org.springframework.stereotype.Component;
@@ -21,8 +21,8 @@ public class ReportMapper {
                 .build();
     }
 
-    public static ReportResponse toResponse(Report report) {
-        return new ReportResponse(
+    public static ReportResponseDto toResponseDto(Report report) {
+        return new ReportResponseDto(
                 report.getId(),
                 report.getPlaceId(),
                 report.getContent(),
@@ -35,9 +35,9 @@ public class ReportMapper {
         );
     }
 
-    public static List<ReportResponse> toResponseList(List<Report> reports) {
+    public static List<ReportResponseDto> toResponseDtoList(List<Report> reports) {
         return reports.stream()
-                .map(ReportMapper::toResponse)
+                .map(ReportMapper::toResponseDto)
                 .toList();
     }
 }

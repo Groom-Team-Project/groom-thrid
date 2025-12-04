@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
     description = "제보 응답 DTO",
     example = "{\"id\": 1, \"placeId\": 1, \"content\": \"장소에 문제가 있습니다!\", \"author\": \"홍길동\", \"status\": \"대기 중\", \"imageUrl\": \"https://example.com/image.jpg\", \"adminReply\": \"제보해주셔서 감사합니다.\", \"createdAt\": \"2025-01-20T10:30:00\", \"updatedAt\": \"2025-01-20T10:30:00\"}"
 )
-public class ReportResponse {
+public class ReportResponseDto {
 
     @Schema(description = "제보 ID", example = "1")
     private Long id;
@@ -36,9 +36,9 @@ public class ReportResponse {
     @Schema(description = "수정 시간", example = "2025-01-20T10:30:00")
     private LocalDateTime updatedAt;
 
-    public ReportResponse() {}
+    public ReportResponseDto() {}
 
-    public ReportResponse(Long id, Long placeId, String content, String author, 
+    public ReportResponseDto(Long id, Long placeId, String content, String author, 
                          String status, String imageUrl, String adminReply,
                          LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
