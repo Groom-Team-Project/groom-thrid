@@ -2,8 +2,10 @@ package groom.backend.domain.report.service.impl;
 
 import groom.backend.domain.report.dto.request.CreateReportRequest;
 import groom.backend.domain.report.dto.request.UpdateReportRequest;
+import groom.backend.domain.report.dto.request.UpdateReportStatusRequest;
 import groom.backend.domain.report.dto.response.ReportResponse;
 import groom.backend.domain.report.entity.Report;
+import groom.backend.domain.report.entity.ReportStatus;
 import groom.backend.domain.report.mapper.ReportMapper;
 import groom.backend.domain.report.repository.spec.ReportRepository;
 import groom.backend.domain.report.service.spec.ReportService;
@@ -91,6 +93,33 @@ public class ReportServiceImpl implements ReportService {
         }
         
         reportRepository.deleteAllById(reportIds);
+    }
+
+    @Override
+    @Transactional
+    public ReportResponse updateReportStatus(Long reportId, UpdateReportStatusRequest request) {
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new IllegalArgumentException("제보를 찾을 수 없습니다. ID: " + reportId));
+
+        // 승인 또는 반려 시 답변 필수
+        if ((request.status() == ReportStatus.APPROVED || request.status() == ReportStatus.REJECTED)) {
+            if (request.adminReply() == null || request.adminReply().isBlank()) {
+                throw new IllegalArgumentException("승인 또는 반려 시 관리자 답변은 필수입니다.");
+            }
+        }
+
+        // 상태 변경 및 답변 설정
+        report.updateStatusWithReply(request.status(), request.adminReply());
+
+        Report savedReport = reportRepository.save(report);
+        return ReportMapper.toResponse(savedReport);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ReportResponse> getAllReports() {
+        List<Report> reports = reportRepository.findAll();
+        return ReportMapper.toResponseList(reports);
     }
 }
 

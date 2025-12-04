@@ -15,5 +15,6 @@ public interface ReportRepository {
     void deleteAllById(List<Long> ids);
     boolean existsById(Long id);
     boolean existsByIdAndAuthor(Long id, String author);
+    List<Report> findAll();
 }
 

@@ -9,5 +9,6 @@ public interface JpaReportRepository extends JpaRepository<Report, Long> {
     List<Report> findByAuthor(String author);
     List<Report> findByPlaceId(Long placeId);
     List<Report> findByAuthorAndPlaceId(String author, Long placeId);
+    List<Report> findAll();
 }
 

@@ -64,5 +64,10 @@ public class ReportRepositoryImpl implements ReportRepository {
                    .map(report -> report.getAuthor().equals(author))
                    .orElse(false);
     }
+
+    @Override
+    public List<Report> findAll() {
+        return jpaReportRepository.findAll();
+    }
 }
 

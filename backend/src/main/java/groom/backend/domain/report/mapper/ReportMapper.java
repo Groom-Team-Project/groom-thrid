@@ -29,6 +29,7 @@ public class ReportMapper {
                 report.getAuthor(),
                 report.getStatus().getDescription(),
                 report.getImageUrl(),
+                report.getAdminReply(),
                 report.getCreatedAt(),
                 report.getUpdatedAt()
         );

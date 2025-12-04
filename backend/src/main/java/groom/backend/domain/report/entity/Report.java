@@ -40,6 +40,10 @@ public class Report extends BaseEntity {
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
+    // 관리자 답변 (승인/반려 시 사용자에게 전달)
+    @Column(name = "admin_reply", length = 2000)
+    private String adminReply;
+
     // 제보 수정 메서드
     public void update(String content, String imageUrl) {
         this.content = content;
@@ -49,6 +53,12 @@ public class Report extends BaseEntity {
     // 상태 변경 메서드
     public void changeStatus(ReportStatus status) {
         this.status = status;
+    }
+
+    // 관리자 상태 변경 및 답변 메서드
+    public void updateStatusWithReply(ReportStatus status, String adminReply) {
+        this.status = status;
+        this.adminReply = adminReply;
     }
 }
 

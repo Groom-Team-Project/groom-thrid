@@ -3,6 +3,7 @@ package groom.backend.domain.report.controller;
 import groom.backend.domain.report.dto.request.CreateReportRequest;
 import groom.backend.domain.report.dto.request.DeleteReportsRequest;
 import groom.backend.domain.report.dto.request.UpdateReportRequest;
+import groom.backend.domain.report.dto.request.UpdateReportStatusRequest;
 import groom.backend.domain.report.dto.response.ReportResponse;
 import groom.backend.domain.report.service.spec.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -125,6 +127,42 @@ public class ReportController {
             @RequestParam String author,
             @Valid @RequestBody DeleteReportsRequest request) {
         reportService.deleteMyReports(request.reportIds(), author);
+    }
+
+    // ========== 관리자용 API ==========
+
+    @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "모든 제보 목록 조회 (관리자)",
+            description = "관리자가 모든 제보 목록을 조회합니다",
+            security = {@SecurityRequirement(name = "bearerAuth")}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    public List<ReportResponse> getAllReports() {
+        return reportService.getAllReports();
+    }
+
+    @PutMapping("/admin/{reportId}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "제보 상태 변경 (관리자)",
+            description = "관리자가 제보 상태를 변경합니다. 승인 또는 반려 시 답변을 함께 전달합니다.",
+            security = {@SecurityRequirement(name = "bearerAuth")}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "상태 변경 성공"),
+            @ApiResponse(responseCode = "404", description = "제보를 찾을 수 없음"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 (승인/반려 시 답변 필수)"),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
+    })
+    public ReportResponse updateReportStatus(
+            @PathVariable Long reportId,
+            @Valid @RequestBody UpdateReportStatusRequest request) {
+        return reportService.updateReportStatus(reportId, request);
     }
 }
 
