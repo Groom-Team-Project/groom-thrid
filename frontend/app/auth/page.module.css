@@ -9,20 +9,18 @@
 .header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 24px 16px;
+  justify-content: space-between;
+  padding: 16px;
   border-bottom: 1px solid #e0e0e0;
 }
 
 .title {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: #333;
 }
 
 .backButton {
-  position: absolute;
-  left: 16px;
   width: 40px;
   height: 40px;
   display: flex;
@@ -41,93 +39,129 @@
 
 .content {
   flex: 1;
-  padding: 40px 24px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  overflow-y: auto;
 }
 
-.subtitle {
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 32px;
-  text-align: center;
-}
-
-.typeButtons {
+.form {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  width: 100%;
-  max-width: 400px;
+  flex: 1;
 }
 
-.typeButton {
-  width: 100%;
-  padding: 24px;
-  background: white;
+.roleSelector {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.roleButton {
+  flex: 1;
+  padding: 12px;
   border: 2px solid #e0e0e0;
-  border-radius: 16px;
+  border-radius: 8px;
+  background: white;
+  font-size: 15px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.roleButton:hover {
+  border-color: #333;
+}
+
+.roleButton.active {
+  border-color: #333;
+  background: #333;
+  color: white;
+}
+
+.inputGroup {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 12px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+.input {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 15px;
+  background: white;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #333;
+}
+
+.error {
+  color: #ff3b30;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.submitButton {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  background: #333;
+  color: white;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background 0.3s ease;
+  margin-top: 8px;
 }
 
-.typeButton:hover {
-  border-color: #007AFF;
-  background: #f0f7ff;
+.submitButton:hover {
+  background: #000;
 }
 
-.typeButton:active {
+.submitButton:active {
   transform: scale(0.98);
 }
 
-.typeIcon {
-  font-size: 48px;
+.submitButton:disabled {
+  background: #ccc;
+  cursor: not-allowed;
 }
 
-.typeLabel {
-  font-size: 20px;
-  font-weight: 700;
-  color: #333;
+.switchContainer {
+  margin-top: auto;
+  padding-top: 24px;
+  padding-bottom: env(safe-area-inset-bottom);
+  text-align: center;
+  border-top: 1px solid #e0e0e0;
 }
 
-.typeDescription {
+.switchText {
   font-size: 14px;
   color: #666;
 }
 
-.modeButtons {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-  max-width: 400px;
-}
-
-.modeButton {
-  width: 100%;
-  padding: 16px;
-  background: #007AFF;
-  color: white;
-  font-size: 16px;
+.switchLink {
+  color: #333;
   font-weight: 600;
-  border: none;
-  border-radius: 12px;
+  text-decoration: underline;
   cursor: pointer;
-  transition: background 0.3s ease;
+  margin-left: 4px;
 }
 
-.modeButton:hover {
-  background: #0056b3;
-}
-
-.modeButton:active {
-  transform: scale(0.98);
+.switchLink:hover {
+  color: #000;
 }
 

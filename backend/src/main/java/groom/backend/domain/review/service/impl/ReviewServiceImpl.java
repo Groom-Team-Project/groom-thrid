@@ -10,14 +10,13 @@ import groom.backend.domain.review.repository.spec.ReviewRepository;
 import groom.backend.domain.review.service.spec.ReviewService;
 import groom.backend.domain.users.entity.User;
 import groom.backend.domain.users.repository.spec.UserRepository;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -63,10 +62,10 @@ public class ReviewServiceImpl implements ReviewService {
     public ReviewResponse updateReview(Long reviewId, UpdateReviewRequest request) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다. ID: " + reviewId));
-        
+
         // 엔티티의 update 메서드 호출 (BaseEntity의 @LastModifiedDate가 자동으로 updatedAt 업데이트)
         review.update(request.content(), request.rating(), request.imageUrl());
-        
+
         Review savedReview = reviewRepository.save(review);
         return ReviewMapper.toResponse(savedReview);
     }
