@@ -61,10 +61,10 @@ public class GlobalExceptionHandler {
 
     // BusinessException 처리 (비즈니스 로직 예외)
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException e) {
+    public ResponseEntity<ApiResponse<Object>> handleBusinessException(BusinessException e) {
         ErrorCode errorCode = e.getErrorCode();
 
-        ApiResponse<Void> response = ApiResponse.error(
+        ApiResponse<Object> response = ApiResponse.error(
                 errorCode.getStatus(),
                 errorCode.getMessage(),
                 List.of(new ErrorDetail(
@@ -72,8 +72,10 @@ public class GlobalExceptionHandler {
                         null,
                         e.getMessage(),
                         errorCode.getCode()
-                ))
+                )),
+                e.getData()
         );
+
 
         return ResponseEntity
                 .status(errorCode.getStatus())
