@@ -97,6 +97,8 @@
 docker compose -f docker-compose.dev.yml --env-file .env.dev up --build
 # 빌드 이후
 docker compose -f docker-compose.dev.yml --env-file .env.dev up --d
+# 컨테이너 종료
+docker compose -f docker-compose.dev.yml down
 ```
 
 (prod)
@@ -105,6 +107,8 @@ docker compose -f docker-compose.dev.yml --env-file .env.dev up --d
 docker compose -f docker-compose.prod.yml --env-file .env.dev up --build
 # 빌드 이후
 docker compose -f docker-compose.prod.yml --env-file .env.dev up --d
+# 컨테이너 종료
+docker compose -f docker-compose.prod.yml down
 ```
 
 2. Spring Boot 백엔드 서버 로컬 실행
