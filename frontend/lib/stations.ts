@@ -13,6 +13,7 @@ export const getStations = (): ChargingStation[] => {
     { id: '2', name: '홍대 충전소', lat: 37.5563, lng: 126.9236, address: '서울시 마포구 홍익로 456' },
     { id: '3', name: '잠실 충전소', lat: 37.5133, lng: 127.1028, address: '서울시 송파구 올림픽로 789' },
     { id: '4', name: '여의도 충전소', lat: 37.5219, lng: 126.9242, address: '서울시 영등포구 여의대로 321' },
+    { id: '5', name: '여의도 충전소', lat: 34.8132592, lng: 126.4171085, address: '서울시 영등포구 여의대로 321' },
   ]
 }
 
