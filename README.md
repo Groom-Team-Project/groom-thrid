@@ -91,7 +91,32 @@
 
 ## 🔧 개발용 실행 순서
 
-1. Docker 컨테이너 실행 (dev)
+### bash 파일을 이용한 실행 및 종료
+
+- 개발 : dev.sh
+- 배포 : prod.sh
+
+```shell
+# (리눅스) 권한 허용
+chmod +x dev.sh
+
+# 빌드 후 실행
+./dev.sh build
+
+# 실행
+./dev.sh up
+
+# 백그라운드 실행
+./dev.sh detach
+
+# 종료
+./dev.sh down
+```
+
+
+### 수동
+
+1. dev 프로필 실행
 ```shell
 # 처음 빌드 시
 docker compose -f docker-compose.dev.yml --env-file .env.dev up --build
@@ -101,7 +126,7 @@ docker compose -f docker-compose.dev.yml --env-file .env.dev up --d
 docker compose -f docker-compose.dev.yml down
 ```
 
-(prod)
+2. prod 프로필 실행
 ```shell
 # 처음 빌드 시
 docker compose -f docker-compose.prod.yml --env-file .env.dev up --build
