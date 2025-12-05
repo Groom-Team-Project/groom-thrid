@@ -1,0 +1,322 @@
+.container {
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  padding-bottom: 80px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+  position: relative;
+}
+
+.backButton {
+  position: absolute;
+  left: 16px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #333;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  border-radius: 50%;
+}
+
+.backButton:hover {
+  background: #f5f5f5;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.placeholder {
+  width: 40px;
+}
+
+.menuContainer {
+  position: absolute;
+  right: 16px;
+}
+
+.menuButton {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #333;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  border-radius: 50%;
+  line-height: 1;
+}
+
+.menuButton:hover {
+  background: #f5f5f5;
+}
+
+.menuOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+}
+
+.menu {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 120px;
+  overflow: hidden;
+}
+
+.menuItem {
+  width: 100%;
+  padding: 12px 16px;
+  text-align: left;
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.menuItem:hover {
+  background: #f5f5f5;
+}
+
+.deleteMenuItem {
+  color: #ff3b30;
+}
+
+.deleteMenuItem:hover {
+  background: #ffe5e5;
+}
+
+.content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.reviewCard {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+}
+
+.reviewHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.authorInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.authorName {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.reviewDate {
+  font-size: 12px;
+  color: #999;
+}
+
+.reviewContent {
+  margin-bottom: 20px;
+}
+
+.reviewText {
+  font-size: 16px;
+  color: #333;
+  line-height: 1.6;
+  margin: 0 0 16px 0;
+  white-space: pre-wrap;
+}
+
+.photoContainer {
+  margin-top: 16px;
+}
+
+.reviewPhoto {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.stationInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.stationLabel {
+  font-size: 12px;
+  color: #666;
+  font-weight: 600;
+}
+
+.stationName {
+  font-size: 14px;
+  color: #333;
+  font-weight: 600;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modalContent {
+  background: white;
+  border-radius: 16px;
+  max-width: 400px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modalHeader h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+}
+
+.closeButton {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 50%;
+  font-size: 18px;
+  color: #666;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.closeButton:hover {
+  background: #e0e0e0;
+}
+
+.modalBody {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.deleteMessage {
+  font-size: 16px;
+  color: #333;
+  font-weight: 600;
+  margin: 0;
+  text-align: center;
+}
+
+.deleteWarning {
+  font-size: 14px;
+  color: #ff3b30;
+  margin: 0;
+  text-align: center;
+}
+
+.modalButtons {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.cancelButton {
+  flex: 1;
+  padding: 12px;
+  background: #f5f5f5;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.cancelButton:hover {
+  background: #e0e0e0;
+}
+
+.deleteConfirmButton {
+  flex: 1;
+  padding: 12px;
+  background: #ff3b30;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.deleteConfirmButton:hover {
+  background: #d32f2f;
+}
+

@@ -1,6 +1,6 @@
 package groom.backend.domain.location.repository.impl;
 
-import groom.backend.domain.location.service.spec.LocationService;
+import groom.backend.domain.location.repository.spec.LocationRepository;
 
-public class LocationRespositoryImpl implements LocationService {
+public class LocationRespositoryImpl implements LocationRepository {
 }

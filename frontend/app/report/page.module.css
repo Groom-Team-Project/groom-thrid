@@ -1,0 +1,187 @@
+.container {
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  padding-bottom: 80px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.cancelButton {
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #666;
+  cursor: pointer;
+}
+
+.cancelButton:hover {
+  color: #333;
+}
+
+.subtitle {
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #666;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.form {
+  flex: 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.input {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 16px;
+  background: white;
+  transition: border-color 0.3s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-bottom-color: #007AFF;
+}
+
+.textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 120px;
+  background: white;
+  transition: border-color 0.3s ease;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: #007AFF;
+}
+
+.photoUpload {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  border: 2px dashed #e0e0e0;
+  border-radius: 8px;
+  background: #f9f9f9;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.photoUpload:hover {
+  border-color: #007AFF;
+  background: #f0f7ff;
+}
+
+.fileInput {
+  display: none;
+}
+
+.uploadText {
+  font-size: 16px;
+  color: #666;
+  font-weight: 600;
+}
+
+.photoPreview {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+}
+
+.previewImage {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.removePhotoButton {
+  margin-top: 8px;
+  padding: 8px 16px;
+  background: #ff3b30;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.removePhotoButton:hover {
+  background: #d32f2f;
+}
+
+.error {
+  color: #ff3b30;
+  font-size: 14px;
+  margin-top: -16px;
+}
+
+.submitButton {
+  width: 100%;
+  padding: 16px;
+  background: #007AFF;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  margin-top: auto;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.submitButton:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.submitButton:active:not(:disabled) {
+  transform: scale(0.98);
+}
+

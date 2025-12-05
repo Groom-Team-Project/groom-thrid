@@ -29,13 +29,32 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.flywaydb:flyway-core'
+
+    // Swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
+
+    // Flyway
+    implementation 'org.flywaydb:flyway-core:8.5.13'
+    testAnnotationProcessor 'org.projectlombok:lombok' // 테스트를 위한 세팅
+    testImplementation 'org.projectlombok:lombok' // 테스트를 위한 세팅
+
+    // Security
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
+    // Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
     compileOnly 'org.projectlombok:lombok'
+    runtimeOnly 'org.postgresql:postgresql'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    implementation 'org.locationtech.proj4j:proj4j:1.2.2'
+    implementation 'org.locationtech.proj4j:proj4j-epsg:1.4.1'
 }
 
 tasks.named('test') {

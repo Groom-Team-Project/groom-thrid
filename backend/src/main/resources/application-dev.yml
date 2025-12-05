@@ -1,15 +1,46 @@
 spring:
   datasource:
-    url:
-    username:
-    password:
-    driver-class-name:
+    url: jdbc:postgresql://localhost:5432/groom_third
+    username: dev
+    password: dev123
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: create-drop # 개발용, 실행 시 테이블 초기화
+      ddl-auto: update
     show-sql: true # 개발용, 런타임에서 로그 보기 어려우면 false로 비활성화
 
   flyway:
-    enabled: true
+    enabled: false  # 개발 환경에서 Hibernate 자동 스키마 업데이트를 위해 일시적으로 비활성화
     locations: classpath:db/migration
+
+  springdoc:
+    swagger-ui:
+      enabled: true
+      path: /swagger-ui.html
+      operations-sorter: method
+      tags-sorter: alpha
+    api-docs:
+      path: /v3/api-doc
+    enabled: true
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+  address: 0.0.0.0
+
+# Redis 설정
+redis:
+  host: localhost
+  port: 6379
+  password:
+  timeout: 3000ms
+  lettuce:
+    pool:
+      max-active: 10
+      max-idle: 10
+      min-idle: 2
+      max-wait: -1ms
+
+# API 키는 application-secret.yml에 정의되어 있음
