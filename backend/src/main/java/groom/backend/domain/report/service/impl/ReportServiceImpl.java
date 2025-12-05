@@ -31,7 +31,7 @@ public class ReportServiceImpl implements ReportService {
     @Transactional
     public ReportResponseDto createReport(Long placeId, CreateReportRequest request, AuthUser authUser) {
         // 현재 인증된 사용자 조회
-        User user = userRepository.findById(authUser.userId())
+        User user = userRepository.findUserById(authUser.userId())
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. ID: " + authUser.userId()));
         
         Report report = ReportMapper.toEntity(placeId, request, user);
