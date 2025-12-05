@@ -35,7 +35,7 @@ public class ReviewServiceImpl implements ReviewService {
         UUID userId = authUser.userId();
 
         // User 엔티티 조회
-        User user = userRepository.findById(userId)
+        User user = userRepository.findUserById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. ID: " + userId));
 
         Review review = ReviewMapper.toEntity(placeId, request, user);
@@ -80,4 +80,5 @@ public class ReviewServiceImpl implements ReviewService {
         reviewRepository.deleteById(reviewId);
     }
 }
+
 
