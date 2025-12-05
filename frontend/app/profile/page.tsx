@@ -10,6 +10,7 @@ export default function ProfilePage() {
   const router = useRouter()
   const [userName, setUserName] = useState('')
   const [userEmail, setUserEmail] = useState('')
+  const [userRole, setUserRole] = useState('')
   const [guardianEmail, setGuardianEmail] = useState('')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userType, setUserType] = useState<string | null>(null)
@@ -21,11 +22,14 @@ export default function ProfilePage() {
       setIsLoggedIn(true)
       setUserName(localStorage.getItem('userName') || '')
       setUserEmail(localStorage.getItem('userEmail') || '')
+      setUserRole(localStorage.getItem('userRole') || '')
       setGuardianEmail(localStorage.getItem('guardianEmail') || '')
-      
-      const type = localStorage.getItem('userType')
+
+      // userRole을 기반으로 userType 설정
+      const role = localStorage.getItem('userRole')
+      const type = role === 'GUARDIAN' ? 'guardian' : 'user'
       setUserType(type)
-      
+
       // 보호자 타입인 경우 연동된 사용자 목록 가져오기
       if (type === 'guardian') {
         const guardianEmail = localStorage.getItem('userEmail') || ''
@@ -69,6 +73,12 @@ export default function ProfilePage() {
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>이메일</span>
               <span className={styles.infoValue}>{userEmail || '미설정'}</span>
+            </div>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>권한</span>
+              <span className={styles.infoValue}>
+                {userRole === 'GUARDIAN' ? '🛡️ 보호자' : userRole === 'USER' ? '👤 사용자' : '미설정'}
+              </span>
             </div>
           </div>
         </div>
