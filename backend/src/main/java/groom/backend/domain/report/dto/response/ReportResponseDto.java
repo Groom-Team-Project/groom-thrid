@@ -1,34 +1,34 @@
-package groom.backend.domain.review.dto.response;
+package groom.backend.domain.report.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 
 @Schema(
-    description = "리뷰 응답 DTO",
-    example = "{\"id\": 1, \"placeId\": 1, \"content\": \"좋은 장소입니다!\", \"rating\": 4.5, \"author\": \"홍길동\", \"imageUrl\": \"https://example.com/image.jpg\", \"isActive\": true, \"createdAt\": \"2025-01-20T10:30:00\", \"updatedAt\": \"2025-01-20T10:30:00\"}"
+    description = "제보 응답 DTO",
+    example = "{\"id\": 1, \"placeId\": 1, \"content\": \"장소에 문제가 있습니다!\", \"author\": \"홍길동\", \"status\": \"대기 중\", \"imageUrl\": \"https://example.com/image.jpg\", \"adminReply\": \"제보해주셔서 감사합니다.\", \"createdAt\": \"2025-01-20T10:30:00\", \"updatedAt\": \"2025-01-20T10:30:00\"}"
 )
-public class ReviewResponse {
+public class ReportResponseDto {
 
-    @Schema(description = "리뷰 ID", example = "1")
+    @Schema(description = "제보 ID", example = "1")
     private Long id;
 
     @Schema(description = "장소 ID", example = "1")
     private Long placeId;
 
-    @Schema(description = "리뷰 내용", example = "좋은 장소입니다!")
+    @Schema(description = "제보 내용", example = "장소에 문제가 있습니다!")
     private String content;
-
-    @Schema(description = "평점", example = "4.5")
-    private Double rating;
 
     @Schema(description = "작성자", example = "홍길동")
     private String author;
 
+    @Schema(description = "제보 상태", example = "대기 중")
+    private String status;
+
     @Schema(description = "이미지 URL", example = "https://example.com/image.jpg")
     private String imageUrl;
 
-    @Schema(description = "활성화 여부", example = "true")
-    private Boolean isActive;
+    @Schema(description = "관리자 답변", example = "제보해주셔서 감사합니다. 검토 후 조치하겠습니다.")
+    private String adminReply;
 
     @Schema(description = "생성 시간", example = "2025-01-20T10:30:00")
     private LocalDateTime createdAt;
@@ -36,17 +36,18 @@ public class ReviewResponse {
     @Schema(description = "수정 시간", example = "2025-01-20T10:30:00")
     private LocalDateTime updatedAt;
 
-    public ReviewResponse() {}
+    public ReportResponseDto() {}
 
-    public ReviewResponse(Long id, Long placeId, String content, Double rating, String author, 
-                         String imageUrl, Boolean isActive, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public ReportResponseDto(Long id, Long placeId, String content, String author, 
+                         String status, String imageUrl, String adminReply,
+                         LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.placeId = placeId;
         this.content = content;
-        this.rating = rating;
         this.author = author;
+        this.status = status;
         this.imageUrl = imageUrl;
-        this.isActive = isActive;
+        this.adminReply = adminReply;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -75,20 +76,20 @@ public class ReviewResponse {
         this.content = content;
     }
 
-    public Double getRating() {
-        return rating;
-    }
-
-    public void setRating(Double rating) {
-        this.rating = rating;
-    }
-
     public String getAuthor() {
         return author;
     }
 
     public void setAuthor(String author) {
         this.author = author;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public String getImageUrl() {
@@ -99,12 +100,12 @@ public class ReviewResponse {
         this.imageUrl = imageUrl;
     }
 
-    public Boolean getIsActive() {
-        return isActive;
+    public String getAdminReply() {
+        return adminReply;
     }
 
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
+    public void setAdminReply(String adminReply) {
+        this.adminReply = adminReply;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -123,5 +124,4 @@ public class ReviewResponse {
         this.updatedAt = updatedAt;
     }
 }
-
 
