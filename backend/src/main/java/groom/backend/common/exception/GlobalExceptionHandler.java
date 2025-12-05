@@ -102,6 +102,48 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 제보 NotFoundException 처리 (404 Not Found)
+     */
+    @ExceptionHandler(ReportNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleReportNotFoundException(ReportNotFoundException e) {
+        ApiResponse<Void> response = ApiResponse.error(
+                StatusCodeMessage.NOT_FOUND.getCode(),
+                StatusCodeMessage.NOT_FOUND.getMessage(),
+                List.of(new ErrorDetail(
+                        null,
+                        null,
+                        e.getMessage(),
+                        "R_001"  // Report not found error
+                ))
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(response);
+    }
+
+    /**
+     * 리뷰 NotFoundException 처리 (404 Not Found)
+     */
+    @ExceptionHandler(ReviewNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleReviewNotFoundException(ReviewNotFoundException e) {
+        ApiResponse<Void> response = ApiResponse.error(
+                StatusCodeMessage.NOT_FOUND.getCode(),
+                StatusCodeMessage.NOT_FOUND.getMessage(),
+                List.of(new ErrorDetail(
+                        null,
+                        null,
+                        e.getMessage(),
+                        "V_001"  // Review not found error
+                ))
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(response);
+    }
+
+    /**
      * 모든 예외의 기본 처리
      */
     @ExceptionHandler(Exception.class)

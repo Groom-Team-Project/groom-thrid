@@ -44,6 +44,7 @@ public class UserController {
     }
 
     @PatchMapping("/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public UserResponse update(@PathVariable("userId") UUID userId, @Valid UpdateUserRequest req) {
 
         UserResponse updateUser = userService.updateUser(userId, req);
