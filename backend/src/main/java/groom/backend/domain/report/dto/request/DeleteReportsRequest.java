@@ -15,3 +15,5 @@ public record DeleteReportsRequest(
     List<Long> reportIds
 ) {
 }
+
+

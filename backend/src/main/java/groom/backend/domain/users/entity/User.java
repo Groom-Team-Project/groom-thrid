@@ -67,7 +67,9 @@ public class User extends BaseEntity {
 
     // role 변경
     public void changeRole(Role role) {
-        this.role = role;
+        if (role != null) {
+            this.role = role;
+        }
     }
 
     // 계정 비활성화

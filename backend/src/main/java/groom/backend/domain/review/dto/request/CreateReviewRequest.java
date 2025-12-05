@@ -5,7 +5,7 @@ import jakarta.validation.constraints.*;
 
 @Schema(
     description = "리뷰 생성 요청 DTO",
-    example = "{\"content\": \"좋은 장소입니다!\", \"rating\": 4.5, \"author\": \"홍길동\", \"imageUrl\": \"https://example.com/image.jpg\"}"
+    example = "{\"content\": \"좋은 장소입니다!\", \"rating\": 4.5, \"imageUrl\": \"https://example.com/image.jpg\"}"
 )
 public record CreateReviewRequest(
     @Schema(description = "리뷰 내용", example = "좋은 장소입니다!")
@@ -20,13 +20,10 @@ public record CreateReviewRequest(
     @RatingValidator
     Double rating,
 
-    @Schema(description = "작성자", example = "홍길동")
-    @NotBlank(message = "작성자는 필수입니다")
-    @Size(max = 100, message = "작성자명은 100자 이하여야 합니다")
-    String author,
-
     @Schema(description = "이미지 URL", example = "https://example.com/image.jpg")
     @Size(max = 500, message = "이미지 URL은 500자 이하여야 합니다")
     String imageUrl
 ) {
 }
+
+
