@@ -37,7 +37,6 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     const [reviews, setReviews] = useState<Review[]>([])
     const [userType, setUserType] = useState<string | null>(null)
     const [showSearchButton, setShowSearchButton] = useState(false)
-    const [mapMoved, setMapMoved] = useState(false)
 
     // 에러 상태 추가
     const [error, setError] = useState<string | null>(null)
@@ -87,7 +86,6 @@ export default function MapView({ selectedCategory }: MapViewProps) {
             setStations([])
             setSelectedStation(null)
             setShowSearchButton(false)
-            setMapMoved(false)
             setError(null)
             // 기존 마커들 제거
             markersRef.current.forEach(marker => marker.setMap(null))
@@ -114,7 +112,6 @@ export default function MapView({ selectedCategory }: MapViewProps) {
                 if (!mounted) return
 
                 setStations(stationsResult)
-                setMapMoved(false)
                 setShowSearchButton(false)
                 setError(null) // 성공 시 에러 초기화
             } catch (error) {
@@ -151,7 +148,6 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         // 지도 이동 이벤트 - 검색 버튼 표시
         window.kakao.maps.event.addListener(map, 'dragend', () => {
             if (selectedCategoryRef.current === 'charging') {
-                setMapMoved(true)
                 setShowSearchButton(true)
             }
         })
@@ -159,7 +155,6 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         // 지도 줌 변경 이벤트 - 검색 버튼 표시
         window.kakao.maps.event.addListener(map, 'zoom_changed', () => {
             if (selectedCategoryRef.current === 'charging') {
-                setMapMoved(true)
                 setShowSearchButton(true)
             }
         })
@@ -424,7 +419,6 @@ export default function MapView({ selectedCategory }: MapViewProps) {
             )
             setStations(stationsResult)
             setShowSearchButton(false)
-            setMapMoved(false)
             setError(null) // 성공 시 에러 초기화
         } catch (error) {
             console.error('충전소 데이터 로드 오류:', error)
