@@ -39,10 +39,20 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     const [showSearchButton, setShowSearchButton] = useState(false)
     const [mapMoved, setMapMoved] = useState(false)
 
+    // 에러 상태 추가
+    const [error, setError] = useState<string | null>(null)
+
     const apiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY ?? ''
 
     const location = useLocation();
     const { lat, lng, timestamp } = location;
+
+    // 에러 자동 해제 (5초)
+    useEffect(() => {
+        if (!error) return
+        const t = setTimeout(() => setError(null), 5000)
+        return () => clearTimeout(t)
+    }, [error])
 
     // 카카오 지도 로드
     useEffect(() => {
@@ -78,6 +88,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
             setSelectedStation(null)
             setShowSearchButton(false)
             setMapMoved(false)
+            setError(null)
             // 기존 마커들 제거
             markersRef.current.forEach(marker => marker.setMap(null))
             markersRef.current = []
@@ -102,9 +113,10 @@ export default function MapView({ selectedCategory }: MapViewProps) {
                 setStations(stationsResult)
                 setMapMoved(false)
                 setShowSearchButton(false)
+                setError(null) // 성공 시 에러 초기화
             } catch (error) {
                 console.error('충전소 데이터 로드 오류:', error)
-
+                setError('충전소 로드에 실패했습니다. 잠시 후 다시 시도해주세요.')
             }
         }
 
@@ -407,8 +419,10 @@ export default function MapView({ selectedCategory }: MapViewProps) {
             setStations(stationsResult)
             setShowSearchButton(false)
             setMapMoved(false)
+            setError(null) // 성공 시 에러 초기화
         } catch (error) {
             console.error('충전소 데이터 로드 오류:', error)
+            setError('현 주소 검색 중 오류가 발생했습니다. 잠시 후 다시 시도하세요.')
         }
     }
 
@@ -440,6 +454,17 @@ export default function MapView({ selectedCategory }: MapViewProps) {
 
   return (
     <div className={styles.mapContainer}>
+        {/* 에러 배너 */}
+        {error && (
+            <div
+                role="alert"
+                onClick={() => setError(null)}
+                className={styles.errorBanner}
+            >
+                {error}
+            </div>
+        )}
+
         <div ref={mapRef} className={styles.map} />
       
       {/* 긴급 버튼 - 사용자 타입일 때만 표시 */}
