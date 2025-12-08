@@ -328,7 +328,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
                         `&end-lat=${selectedStation.lat}` +
                         `&end-lng=${selectedStation.lng}` +
                         `&start-name=현재 위치` +
-                        `&end-name=${encodeURIComponent(selectedStation.facilityName )}`
+                        `&end-name=${encodeURIComponent(selectedStation.facilityName)}`
                     )
 
                 }
