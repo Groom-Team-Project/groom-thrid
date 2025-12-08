@@ -1,10 +1,7 @@
 package groom.backend.domain.opendata.entity;
 
 import groom.backend.common.entity.BaseEntity;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,7 +11,13 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-@Entity(name = "charger_location")
+@Entity
+@Table(
+        name = "charger_location",
+        indexes = {
+                @Index(name = "idx_charger_location", columnList = "lat, lng"),
+        }
+)
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

@@ -1,6 +1,10 @@
 package groom.backend.domain.opendata.repository.impl;
 
+import groom.backend.domain.opendata.dto.request.NearbyRequest;
+import groom.backend.domain.opendata.dto.request.ViewportRequest;
+import groom.backend.domain.opendata.dto.response.ChargerLocationResponse;
 import groom.backend.domain.opendata.entity.ChargerLocation;
+import groom.backend.domain.opendata.mapper.ChargerLocationMapper;
 import groom.backend.domain.opendata.repository.spec.ChargerLocationRepository;
 import groom.backend.domain.opendata.repository.spec.jpa.JpaChargerLocationRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -134,5 +138,33 @@ public class ChargerLocationRepositoryImpl implements ChargerLocationRepository 
                 }
             });
         }
+    }
+
+    @Override
+    public List<ChargerLocationResponse> findByLatBetweenAndLngBetween(ViewportRequest viewportRequest) {
+        List<ChargerLocation> chargerLocationList = jpaChargerLocationRepository.findByLatBetweenAndLngBetween(viewportRequest);
+        return ChargerLocationMapper.toResponseList(chargerLocationList);
+    }
+
+    @Override
+    public List<ChargerLocationResponse> findNearbyChargers(NearbyRequest nearbyRequest) {
+        List<ChargerLocation> chargerLocationList = jpaChargerLocationRepository.findNearbyChargers(nearbyRequest);
+        return ChargerLocationMapper.toResponseList(chargerLocationList);
+    }
+
+    @Override
+    public List<ChargerLocationResponse> findAll() {
+        List<ChargerLocation> chargerLocationList = jpaChargerLocationRepository.findAll();
+        return ChargerLocationMapper.toResponseList(chargerLocationList);
+    }
+
+    @Override
+    public ChargerLocationResponse findById(Long id) {
+        ChargerLocation chargerLocation = jpaChargerLocationRepository.findById(id).orElse(null);
+        if (chargerLocation == null) {
+            throw new IllegalArgumentException("해당 ID의 충전소를 찾을 수 없습니다: " + id);
+        }
+
+        return ChargerLocationMapper.toResponse(chargerLocation);
     }
 }

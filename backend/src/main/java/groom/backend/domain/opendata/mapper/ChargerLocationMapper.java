@@ -1,6 +1,7 @@
 package groom.backend.domain.opendata.mapper;
 
 import groom.backend.domain.opendata.dto.OpenDataCharger;
+import groom.backend.domain.opendata.dto.response.ChargerLocationResponse;
 import groom.backend.domain.opendata.entity.ChargerLocation;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +23,7 @@ public class ChargerLocationMapper {
                         .lng(dto.getLongitude())
                         .description(dto.getInstlLcDesc())
                         .weekdayStart(dto.getWeekdayOperOpenHhmm())
-                        .weekdayEnd(dto.getWeekdayOperCloseHhmm())
+                        .weekdayEnd(dto.getWeekdayOperColseHhmm())
                         .saturdayStart(dto.getSatOperOperOpenHhmm())
                         .saturdayEnd(dto.getSatOperCloseHhmm())
                         .holidayStart(dto.getHolidayOperOpenHhmm())
@@ -38,6 +39,41 @@ public class ChargerLocationMapper {
                         .crs("EPSG:4326")
                         .build())
                 .toList();
+    }
+
+    public static List<ChargerLocationResponse> toResponseList(List<ChargerLocation> entityList) {
+        return entityList.stream()
+                .map(entity -> toResponse(entity))
+                .toList();
+    }
+
+    public static ChargerLocationResponse toResponse(ChargerLocation entity) {
+        return ChargerLocationResponse.builder()
+                .placeId(entity.getPlaceId())
+                .facilityName(entity.getFacilityName())
+                .cityName(entity.getCityName())
+                .districtName(entity.getDistrictName())
+                .districtCode(entity.getDistrictCode())
+                .roadAddr(entity.getRoadAddr())
+                .landAddr(entity.getLandAddr())
+                .lat(entity.getLat())
+                .lng(entity.getLng())
+                .description(entity.getDescription())
+                .weekdayStart(entity.getWeekdayStart())
+                .weekdayEnd(entity.getWeekdayEnd())
+                .saturdayStart(entity.getSaturdayStart())
+                .saturdayEnd(entity.getSaturdayEnd())
+                .holidayStart(entity.getHolidayStart())
+                .holidayEnd(entity.getHolidayEnd())
+                .capacity(entity.getCapacity())
+                .isAirPump(entity.getIsAirPump())
+                .isCharger(entity.getIsCharger())
+                .manageOrgName(entity.getManageOrgName())
+                .manageOrgContact(entity.getManageOrgContact())
+                .dataUpdated(entity.getDataUpdated())
+                .providerCode(entity.getProviderCode())
+                .providerName(entity.getProviderName())
+                .build();
     }
 
 }
