@@ -67,8 +67,8 @@ public class AuthServiceImpl implements AuthService {
         // 6. DB 저장
         User newUser = userService.saveUser(user);
 
-        // 7. JWT 토큰 생성 (userId + role 포함)
-        String accessToken = jwtUtil.generateAccessToken(newUser.getId(), newUser.getRole());
+        // 7. JWT 토큰 생성 (userId + role + name 포함)
+        String accessToken = jwtUtil.generateAccessToken(newUser.getId(), newUser.getRole(), newUser.getName());
         String refreshTokenString = jwtUtil.generateRefreshToken(newUser.getId());
 
         // 8. RefreshToken Redis에 저장 (TTL 자동 적용)
@@ -98,8 +98,8 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(ErrorCode.DEACTIVATED_USER);
         }
 
-        // 5. JWT 토큰 생성 (userId + role 포함)
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getRole());
+        // 5. JWT 토큰 생성 (userId + role + name 포함)
+        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getRole(), user.getName());
         String refreshTokenString = jwtUtil.generateRefreshToken(user.getId());
 
         // 6. RefreshToken Redis에 저장 (TTL 자동 적용)
@@ -110,11 +110,7 @@ public class AuthServiceImpl implements AuthService {
         return new CommonAuthResponse(accessToken, refreshTokenString);
     }
 
-    /**
-     * 로그아웃 (현재 기기) - RefreshToken을 Redis에서 삭제하여 무효화 - Access Token은 만료 시간까지 유효 (단기간이므로 문제 없음)
-     *
-     * @param refreshTokenString Refresh Token 문자열
-     */
+    // 로그아웃 (현재 기기) - RefreshToken을 Redis에서 삭제하여 무효화 - Access Token은 만료 시간까지 유효 (단기간이므로 문제 없음)
     @Override
     public void logout(String refreshTokenString) {
         // RefreshToken 존재 여부 확인 후 삭제
@@ -124,12 +120,7 @@ public class AuthServiceImpl implements AuthService {
         // 존재하지 않아도 예외 발생 안함 (이미 로그아웃되었거나 만료됨)
     }
 
-    /**
-     * Access Token 갱신 - Refresh Token으로 새로운 Access Token 발급 - Refresh Token도 새로 발급하여 Rotation 적용 (보안 강화)
-     *
-     * @param refreshTokenString Refresh Token 문자열
-     * @return 새로운 Access Token + Refresh Token
-     */
+    // Access Token 갱신 - Refresh Token으로 새로운 Access Token 발급 - Refresh Token도 새로 발급하여 Rotation 적용 (보안 강화)
     @Override
     public CommonAuthResponse refreshToken(String refreshTokenString) {
         // 1. RefreshToken Redis에서 조회
@@ -153,8 +144,8 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(ErrorCode.DEACTIVATED_USER);
         }
 
-        // 5. 새로운 Access Token 생성 (최신 role 반영)
-        String newAccessToken = jwtUtil.generateAccessToken(user.getId(), user.getRole());
+        // 5. 새로운 Access Token 생성 (최신 role, name 반영)
+        String newAccessToken = jwtUtil.generateAccessToken(user.getId(), user.getRole(), user.getName());
 
         // 6. 새로운 Refresh Token 생성 (Refresh Token Rotation)
         String newRefreshTokenString = jwtUtil.generateRefreshToken(user.getId());

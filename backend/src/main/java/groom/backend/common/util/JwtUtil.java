@@ -28,14 +28,15 @@ public class JwtUtil {
         this.refreshTokenExpiration = refreshTokenExpiration;
     }
 
-    // Access Token 생성 (userId + role 포함)
-    public String generateAccessToken(UUID userId, Role role) {
+    // Access Token 생성 (userId + role + name 포함)
+    public String generateAccessToken(UUID userId, Role role, String name) {
         Date now = new Date();
         Date expiration = new Date(now.getTime() + accessTokenExpiration);
 
         return Jwts.builder()
                 .subject(userId.toString())
                 .claim("role", role.name())  // RBAC을 위한 role 추가
+                .claim("name", name)  // 사용자 이름 추가
                 .issuedAt(now)
                 .expiration(expiration)
                 .signWith(secretKey)
@@ -66,6 +67,12 @@ public class JwtUtil {
         Claims claims = parseToken(token);
         String roleString = claims.get("role", String.class);
         return Role.valueOf(roleString);
+    }
+
+    // 토큰에서 사용자 이름 추출
+    public String getNameFromToken(String token) {
+        Claims claims = parseToken(token);
+        return claims.get("name", String.class);
     }
     
 

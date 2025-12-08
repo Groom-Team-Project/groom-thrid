@@ -1,20 +1,116 @@
 // 충전소 데이터 공유용
 export interface ChargingStation {
-  id: string
-  name: string
-  lat: number
-  lng: number
-  address: string
+    placeId: number
+    facilityName: string
+    cityName: string
+    districtName: string
+    districtCode: number
+    roadAddr: string
+    landAddr: string
+    lat: number
+    lng: number
+    description: string
+    weekdayStart: string
+    weekdayEnd: string
+    saturdayStart: string
+    saturdayEnd: string
+    holidayStart: string
+    holidayEnd: string
+    capacity: number
+    isAirPump: boolean
+    isCharger: boolean
+    manageOrgName: string
+    manageOrgContact: string
+    dataUpdated: string
+    providerCode: string
+    providerName: string
 }
 
-export const getStations = (): ChargingStation[] => {
-  return [
-    { id: '1', name: '강남 충전소', lat: 37.4979, lng: 127.0276, address: '서울시 강남구 테헤란로 123' },
-    { id: '2', name: '홍대 충전소', lat: 37.5563, lng: 126.9236, address: '서울시 마포구 홍익로 456' },
-    { id: '3', name: '잠실 충전소', lat: 37.5133, lng: 127.1028, address: '서울시 송파구 올림픽로 789' },
-    { id: '4', name: '여의도 충전소', lat: 37.5219, lng: 126.9242, address: '서울시 영등포구 여의대로 321' },
-    { id: '5', name: '여의도 충전소', lat: 34.8132592, lng: 126.4171085, address: '서울시 영등포구 여의대로 321' },
-  ]
+// ===== 1. API 클라이언트 =====
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'
+
+async function parseJsonOrThrow(response: Response): Promise<any> {
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    return response.json()
+}
+
+export const chargerApi = {
+    // 전략 1: 전체 로드 (Redis 캐싱)
+    getAllChargers: async (): Promise<ChargingStation[]> => {
+        console.log('🔵 전략 1: 전체 충전소 로드 (Redis 캐싱)')
+        try {
+            const response = await fetch(`${API_BASE_URL}/opendata/chargers`)
+            const data = await parseJsonOrThrow(response)
+            return data?.data ?? []
+        } catch (error) {
+            console.error('getAllChargers error:', error)
+            throw error
+        }
+
+    },
+
+    // 전략 2: Viewport 기반 로드
+    getChargersInViewport: async (
+        minLat: number,
+        maxLat: number,
+        minLng: number,
+        maxLng: number
+    ): Promise<ChargingStation[]> => {
+        console.log('🟢 전략 2: Viewport 기반 로드')
+        try {
+            const params = new URLSearchParams({
+                minLat: minLat.toString(),
+                maxLat: maxLat.toString(),
+                minLng: minLng.toString(),
+                maxLng: maxLng.toString(),
+            })
+            const response = await fetch(`${API_BASE_URL}/opendata/chargers/viewport?${params}`)
+            const data = await parseJsonOrThrow(response)
+            return data?.data ?? []
+        } catch (err) {
+            console.error('getChargersInViewport error:', err)
+            throw err
+        }
+
+    },
+
+    // 전략 3: 주변 검색 (반경 기반)
+    getNearbyChargers: async (
+        lat: number,
+        lng: number,
+        radiusKm: number = 5.0
+    ): Promise<ChargingStation[]> => {
+        console.log('🟡 전략 3: 주변 충전소 검색 (반경 기반)')
+        try {
+            const params = new URLSearchParams({
+                lat: lat.toString(),
+                lng: lng.toString(),
+                radiusKm: radiusKm.toString(),
+            })
+            const response = await fetch(`${API_BASE_URL}/opendata/chargers/nearby?${params}`)
+            const data = await parseJsonOrThrow(response)
+            return data?.data ?? []
+        } catch (error) {
+            console.error('getNearbyChargers error:', error)
+            throw error
+        }
+
+    },
+
+    // 충전소 상세 조회
+    getChargerById: async (id: number): Promise<ChargingStation> => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/opendata/chargers/${id}`)
+            const data = await parseJsonOrThrow(response)
+            return data.data
+        } catch (err) {
+            console.error('getChargerById error:', err)
+            throw err
+        }
+
+    },
 }
 
 // 두 지점 간 거리 계산 (Haversine 공식)

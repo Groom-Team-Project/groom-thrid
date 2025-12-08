@@ -28,9 +28,9 @@ export default function GuardianPage() {
   useEffect(() => {
     // 로그인 및 사용자 타입 확인
     const loggedIn = localStorage.getItem('isLoggedIn')
-    const userType = localStorage.getItem('userType')
-    
-    if (loggedIn !== 'true' || userType !== 'guardian') {
+    const userRole = localStorage.getItem('userRole')
+
+    if (loggedIn !== 'true' || userRole !== 'GUARDIAN') {
       // 로그인하지 않았거나 보호자 타입이 아니면 인증 페이지로 리다이렉트
       router.push('/auth')
       return
