@@ -262,8 +262,8 @@ const DirectionsPage: React.FC = () => {
               borderTop: "1px solid #ccc",
             }}>
               <p style={{ marginBottom: "8px" }}>
-                ⚠️ 해당 구간은 서비스 제공 구역이 아니거나 너무 멉니다.<br />
-                카카오맵 외부 경로로 안내됩니다.
+                ⚠️ 다음 오류로 인해 기능을 사용할 수 없습니다. 카카오맵을 이용해주십시오.<br />
+                {pathData.message}
               </p>
               <a href={pathData.data.uri} target="_blank" rel="noopener noreferrer" style={{ color: "#005AFF", textDecoration: "underline" }}>
                 카카오맵에서 경로 보기
