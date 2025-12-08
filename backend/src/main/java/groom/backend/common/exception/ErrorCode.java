@@ -45,6 +45,8 @@ public enum ErrorCode {
     // Path Domain Error
     PATH_SERVICE_UNAVAILABLE_AREA(400, "P_001", "길찾기 서비스를 제공할 수 없는 구간입니다. 너무 멀거나 제공할 수 없습니다."),
     PATH_FIND_UNAVAILABLE(500, "P_002", "길찾기 기능을 이용할 수 없습니다."),
+    PATH_TMAP_API_ERROR(500, "P_003", "Tmap 길찾기 api를 사용할 수 없습니다."),
+    PATH_KAKAO_API_ERROR(500, "P_004", "Kakao 주소변환 api를 사용할 수 없습니다."),
 
     // Server 에러 (S_xxx)
     INTERNAL_SERVER_ERROR(500, "S_001", "서버 내부 오류가 발생했습니다"),
