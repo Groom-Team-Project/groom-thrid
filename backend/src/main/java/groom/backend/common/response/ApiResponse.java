@@ -36,4 +36,15 @@ public class ApiResponse<T> {
         response.errors = errors;
         return response;
     }
+
+    // 실패 응답 with Data
+    public static <T> ApiResponse<T> error(int code, String message, List<ErrorDetail> errors, T data) {
+        ApiResponse<T> response = new ApiResponse<>();
+        response.status = "error";
+        response.code = code;
+        response.message = message;
+        response.data = data;
+        response.errors = errors;
+        return response;
+    }
 }
