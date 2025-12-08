@@ -32,7 +32,7 @@ public class OpenDataCharger {
     // 평일운영시작시각
     private LocalTime weekdayOperOpenHhmm;
     // 평일운영종료시각
-    private LocalTime weekdayOperCloseHhmm;
+    private LocalTime weekdayOperColseHhmm;
     // 토요일운영시작시각
     private LocalTime satOperOperOpenHhmm;
     // 토요일운영종료시각
