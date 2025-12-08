@@ -29,13 +29,26 @@ export interface ChargingStation {
 // ===== 1. API 클라이언트 =====
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'
 
+async function parseJsonOrThrow(response: Response): Promise<any> {
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    return response.json()
+}
+
 export const chargerApi = {
     // 전략 1: 전체 로드 (Redis 캐싱)
     getAllChargers: async (): Promise<ChargingStation[]> => {
         console.log('🔵 전략 1: 전체 충전소 로드 (Redis 캐싱)')
-        const response = await fetch(`${API_BASE_URL}/opendata/chargers`)
-        const data = await response.json()
-        return data.data
+        try {
+            const response = await fetch(`${API_BASE_URL}/opendata/chargers`)
+            const data = await parseJsonOrThrow(response)
+            return data?.data ?? []
+        } catch (error) {
+            console.error('getAllChargers error:', error)
+            throw error
+        }
+
     },
 
     // 전략 2: Viewport 기반 로드
@@ -46,15 +59,21 @@ export const chargerApi = {
         maxLng: number
     ): Promise<ChargingStation[]> => {
         console.log('🟢 전략 2: Viewport 기반 로드')
-        const params = new URLSearchParams({
-            minLat: minLat.toString(),
-            maxLat: maxLat.toString(),
-            minLng: minLng.toString(),
-            maxLng: maxLng.toString(),
-        })
-        const response = await fetch(`${API_BASE_URL}/opendata/chargers/viewport?${params}`)
-        const data = await response.json()
-        return data?.data ?? []
+        try {
+            const params = new URLSearchParams({
+                minLat: minLat.toString(),
+                maxLat: maxLat.toString(),
+                minLng: minLng.toString(),
+                maxLng: maxLng.toString(),
+            })
+            const response = await fetch(`${API_BASE_URL}/opendata/chargers/viewport?${params}`)
+            const data = await parseJsonOrThrow(response)
+            return data?.data ?? []
+        } catch (err) {
+            console.error('getChargersInViewport error:', err)
+            throw err
+        }
+
     },
 
     // 전략 3: 주변 검색 (반경 기반)
@@ -64,21 +83,33 @@ export const chargerApi = {
         radiusKm: number = 5.0
     ): Promise<ChargingStation[]> => {
         console.log('🟡 전략 3: 주변 충전소 검색 (반경 기반)')
-        const params = new URLSearchParams({
-            lat: lat.toString(),
-            lng: lng.toString(),
-            radiusKm: radiusKm.toString(),
-        })
-        const response = await fetch(`${API_BASE_URL}/opendata/chargers/nearby?${params}`)
-        const data = await response.json()
-        return data.data
+        try {
+            const params = new URLSearchParams({
+                lat: lat.toString(),
+                lng: lng.toString(),
+                radiusKm: radiusKm.toString(),
+            })
+            const response = await fetch(`${API_BASE_URL}/opendata/chargers/nearby?${params}`)
+            const data = await parseJsonOrThrow(response)
+            return data?.data ?? []
+        } catch (error) {
+            console.error('getNearbyChargers error:', error)
+            throw error
+        }
+
     },
 
     // 충전소 상세 조회
     getChargerById: async (id: number): Promise<ChargingStation> => {
-        const response = await fetch(`${API_BASE_URL}/opendata/chargers/${id}`)
-        const data = await response.json()
-        return data.data
+        try {
+            const response = await fetch(`${API_BASE_URL}/opendata/chargers/${id}`)
+            const data = await parseJsonOrThrow(response)
+            return data.data
+        } catch (err) {
+            console.error('getChargerById error:', err)
+            throw err
+        }
+
     },
 }
 
