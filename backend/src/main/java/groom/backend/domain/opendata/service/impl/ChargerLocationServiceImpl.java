@@ -224,7 +224,7 @@ public class ChargerLocationServiceImpl implements ChargerLocationService {
      */
     @Override
     public List<ChargerLocationResponse> getChargerLocationsByViewport(ViewportRequest viewportRequest) {
-        log.info("DB에서 Viewport 기반 충전소 조회: {}", viewportRequest);
+        log.info("DB에서 Viewport 기반 충전소 조회: {}", viewportRequest.toString());
 
         int precision = 4; // 또는 5
         double minLat = floorToPrecision(viewportRequest.getMinLat(), precision);

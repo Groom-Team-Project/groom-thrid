@@ -26,4 +26,14 @@ public class ViewportRequest {
 
     @Schema(description = "최대 경도", example = "127.0")
     private Double maxLng;
+
+    @Override
+    public String toString() {
+        return "ViewportRequest{" +
+                "minLat=" + minLat +
+                ", maxLat=" + maxLat +
+                ", minLng=" + minLng +
+                ", maxLng=" + maxLng +
+                '}';
+    }
 }
