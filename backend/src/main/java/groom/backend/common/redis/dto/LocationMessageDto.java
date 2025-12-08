@@ -18,9 +18,10 @@ public class LocationMessageDto implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
-  private UUID userId;   // 위치 발신 사용자 id
+  private Long relId;   // 위치 발신 시 사용하는 사용자-보호자 관계 id
   private double currentX;
   private double currentY;
   private double destX;
   private double destY;
+  private String destName; // 도착지 명
 }
