@@ -60,8 +60,7 @@ public class PathServiceImpl implements PathService {
               kakaoApiClient.pathFindUrlScheme(
                       pathFindRequest.getStartX(), pathFindRequest.getStartY(),
                       pathFindRequest.getEndX(), pathFindRequest.getEndY()
-              ));
-      log.info("Exception occurred by : {}", e.toString());
+              )));
     }
 
     // 반환
