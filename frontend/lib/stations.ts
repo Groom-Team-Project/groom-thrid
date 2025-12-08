@@ -1,6 +1,6 @@
 // 충전소 데이터 공유용
 export interface ChargingStation {
-    placeId: string
+    placeId: number
     facilityName: string
     cityName: string
     districtName: string
