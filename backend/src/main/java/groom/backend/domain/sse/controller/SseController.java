@@ -1,6 +1,7 @@
 package groom.backend.domain.sse.controller;
 
 import groom.backend.common.security.AuthUser;
+import groom.backend.domain.sse.service.impl.SseServiceImpl;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
