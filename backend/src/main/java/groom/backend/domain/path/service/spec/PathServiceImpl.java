@@ -1,5 +1,8 @@
 package groom.backend.domain.path.service.spec;
 
+import groom.backend.common.redis.RedisPublisher;
+import groom.backend.common.redis.dto.LocationMessageDto;
+import groom.backend.common.security.AuthUser;
 import groom.backend.domain.path.dto.request.PathFindRequest;
 import groom.backend.domain.path.dto.response.PathAddressResponse;
 import groom.backend.domain.path.dto.response.PathFindResponse;
@@ -14,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -21,8 +26,13 @@ public class PathServiceImpl implements PathService {
   private final TmapApiClient tmapApiClient;
   private final KakaoApiClient kakaoApiClient;
 
+  private final RedisPublisher redisPublisher;  // 위치 갱신 Pub
+
   @Override
-  public PathFindResponse findPath(PathFindRequest pathFindRequest)  {
+  public PathFindResponse findPath(PathFindRequest pathFindRequest, AuthUser principal)  {
+    // 사용자 위치 및 도착지 publish
+    publishUserLocation(pathFindRequest, principal);
+
     // 서비스 제공 구역인지 검사 (시작점, 종료점 각각 검사)
     // 서비스 제공 구역 여부를 검사하는 것이므로, 두 검증에서 모두 false가 나와야 한다. 시도 단위로 제공 시 시군구 단위 정보를 제공하지 않음.
     if(!isProvisionArea(pathFindRequest.getStartX(), pathFindRequest.getStartY()) &&
@@ -79,4 +89,28 @@ public class PathServiceImpl implements PathService {
     }
     return false;
   }
+
+  /**
+   * 사용자 위치를 Redis Pub/Sub 로 발행하는 기능
+   * 기존 findPath 서비스 흐름에는 영향 없음.
+   */
+  private void publishUserLocation(PathFindRequest req, AuthUser principal) {
+
+    if (principal == null) {
+      log.warn("UserId is null : location Publish unavailable");
+      return;
+    }
+
+    LocationMessageDto dto = new LocationMessageDto(
+            principal.userId(),
+            req.getStartX(), req.getStartY(),
+            req.getEndX(), req.getEndY(),
+            req.getEndName()
+    );
+
+    log.info("Publishing location update to Redis for user {}", principal.userId());
+
+    redisPublisher.publishLocation(principal.userId(), dto);
+  }
+
 }

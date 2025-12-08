@@ -1,5 +1,6 @@
 package groom.backend.domain.path.controller;
 
+import groom.backend.common.security.AuthUser;
 import groom.backend.domain.path.dto.request.PathFindRequest;
 import groom.backend.domain.path.dto.response.PathFindResponse;
 import groom.backend.domain.path.service.impl.PathService;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -27,10 +29,11 @@ public class PathController {
   @ApiResponses(value = {
           @ApiResponse(responseCode = "200", description = "조회 성공"),
   })
-  public PathFindResponse pathFind(@Valid @RequestBody PathFindRequest pathFindRequest) {
+  public PathFindResponse pathFind(@Valid @RequestBody PathFindRequest pathFindRequest,
+                                   @AuthenticationPrincipal AuthUser principal) {
     // 입력 DTO 유효성 검사 (필드에서 검증)
 
-    return pathService.findPath(pathFindRequest);
+    return pathService.findPath(pathFindRequest, principal);
   }
 
 }
