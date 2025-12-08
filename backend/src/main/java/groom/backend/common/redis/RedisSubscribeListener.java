@@ -27,8 +27,8 @@ public class RedisSubscribeListener implements MessageListener {
       // publishLocation() 에서 보낸 DTO로 역직렬화
       LocationMessageDto dto = objectMapper.readValue(json, LocationMessageDto.class);
 
-      log.info("SUB | User: {} | Current({}, {}) → Dest({}, {})",
-              dto.getUserId(), dto.getCurrentX(), dto.getCurrentY(),
+      log.info("SUB | Relation: {} | Current({}, {}) → Dest({}, {})",
+              dto.getRelId(), dto.getCurrentX(), dto.getCurrentY(),
               dto.getDestX(), dto.getDestY());
 
       // TODO: 위치 기반 업데이트 로직 수행
