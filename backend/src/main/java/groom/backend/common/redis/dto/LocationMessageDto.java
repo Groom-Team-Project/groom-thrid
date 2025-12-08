@@ -23,4 +23,5 @@ public class LocationMessageDto implements Serializable {
   private double currentY;
   private double destX;
   private double destY;
+  private String destName; // 도착지 명
 }
