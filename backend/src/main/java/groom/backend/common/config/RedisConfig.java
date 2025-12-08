@@ -58,11 +58,21 @@ public class RedisConfig {
 
     /**
      * Redis pub/sub 메시지 처리 Listener
+     * - LocationSubscriber를 location:* 채널에 등록
      */
     @Bean
-    public RedisMessageListenerContainer redisMessageListener(RedisConnectionFactory connectionFactory) {
+    public RedisMessageListenerContainer redisMessageListener(
+        RedisConnectionFactory connectionFactory,
+        groom.backend.domain.location.subscriber.LocationSubscriber locationSubscriber) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
+
+        // location:* 채널에 LocationSubscriber 등록
+        container.addMessageListener(
+            locationSubscriber,
+            new org.springframework.data.redis.listener.PatternTopic("location:*")
+        );
+
         return container;
     }
 }

@@ -5,6 +5,7 @@ import java.util.UUID;
 
 public record AuthUser(
         UUID userId,
-        Role role
+        Role role,
+        Long relationId
 ) {
 }

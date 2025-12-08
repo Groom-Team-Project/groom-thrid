@@ -2,7 +2,7 @@ package groom.backend.domain.auth.service.impl;
 
 import groom.backend.common.exception.BusinessException;
 import groom.backend.common.exception.ErrorCode;
-import groom.backend.common.util.JwtUtil;
+import groom.backend.common.security.JwtUtil;
 import groom.backend.domain.auth.dto.request.FormLoginAuthRequest;
 import groom.backend.domain.auth.dto.request.FormSignupAuthRequest;
 import groom.backend.domain.auth.dto.response.CommonAuthResponse;
@@ -13,6 +13,8 @@ import groom.backend.domain.auth.service.spec.AuthService;
 import groom.backend.domain.auth.vo.RefreshTokenValue;
 import groom.backend.domain.users.entity.User;
 import groom.backend.domain.users.entity.UserCredential;
+import groom.backend.domain.users.entity.UserRelation;
+import groom.backend.domain.users.repository.impl.UserRelationRepositoryImpl;
 import groom.backend.domain.users.service.impl.UserServiceImpl;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,7 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenRedisRepositoryImpl refreshTokenRedisRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final UserRelationRepositoryImpl userRelationRepository;
 
     // secret에서 만료시간 가져오기
     @Value("${jwt.refresh-token-expiration}")
@@ -67,8 +70,8 @@ public class AuthServiceImpl implements AuthService {
         // 6. DB 저장
         User newUser = userService.saveUser(user);
 
-        // 7. JWT 토큰 생성 (userId + role + name 포함)
-        String accessToken = jwtUtil.generateAccessToken(newUser.getId(), newUser.getRole(), newUser.getName());
+        // 7. JWT 토큰 생성 (userId + role + name + relationId:null 포함)
+        String accessToken = jwtUtil.generateAccessToken(newUser.getId(), newUser.getRole(), newUser.getName(), null);
         String refreshTokenString = jwtUtil.generateRefreshToken(newUser.getId());
 
         // 8. RefreshToken Redis에 저장 (TTL 자동 적용)
@@ -99,7 +102,10 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // 5. JWT 토큰 생성 (userId + role + name 포함)
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getRole(), user.getName());
+        Long relationId = userRelationRepository.findByUserId(user.getId())
+                .map(UserRelation::getId)
+                .orElse(null);
+        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getRole(), user.getName(), relationId);
         String refreshTokenString = jwtUtil.generateRefreshToken(user.getId());
 
         // 6. RefreshToken Redis에 저장 (TTL 자동 적용)
@@ -145,7 +151,10 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // 5. 새로운 Access Token 생성 (최신 role, name 반영)
-        String newAccessToken = jwtUtil.generateAccessToken(user.getId(), user.getRole(), user.getName());
+        Long relationId = userRelationRepository.findByUserId(user.getId())
+                .map(UserRelation::getId)
+                .orElse(null);
+        String newAccessToken = jwtUtil.generateAccessToken(user.getId(), user.getRole(), user.getName(), relationId);
 
         // 6. 새로운 Refresh Token 생성 (Refresh Token Rotation)
         String newRefreshTokenString = jwtUtil.generateRefreshToken(user.getId());

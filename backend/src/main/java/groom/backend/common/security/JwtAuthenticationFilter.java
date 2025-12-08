@@ -1,6 +1,5 @@
 package groom.backend.common.security;
 
-import groom.backend.common.util.JwtUtil;
 import groom.backend.domain.users.entity.Role;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -19,9 +18,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-/**
- * JWT 인증 필터 모든 요청에서 JWT 토큰을 검증하고 SecurityContext에 인증 정보를 설정
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -42,14 +38,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // 2. 토큰이 있고 유효한 경우
             if (token != null && jwtUtil.validateToken(token)) {
+
                 // 3. 토큰에서 사용자 정보 추출
-                UUID userId = jwtUtil.getUserIdFromToken(token);
-                Role role = jwtUtil.getRoleFromToken(token);
+                AuthUser userInfo = jwtUtil.getUserInfoFromToken(token);
+
+                UUID userId = userInfo.userId();
+                Role role = userInfo.role();
+                Long relationId = userInfo.relationId();
 
                 // 4. Spring Security 인증 객체 생성
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
-                                new AuthUser(userId, role),
+                                new AuthUser(userId, role, relationId),
                                 null,    // credentials (비밀번호는 불필요)
                                 List.of(new SimpleGrantedAuthority("ROLE_" + role))
                         );
@@ -62,7 +62,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // 6. SecurityContext에 인증 정보 저장
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                log.debug("JWT 인증 성공 - userId: {}, role: {}", userId, role);
+                log.debug("JWT 인증 성공 - userId: {}, role: {}, relationId: {}", userId, role, relationId);
             }
 
         } catch (Exception e) {
@@ -75,17 +75,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    /**
-     * Authorization 헤더에서 Bearer 토큰 추출
-     *
-     * @param request HTTP 요청
-     * @return JWT 토큰 (없으면 null)
-     */
+    // Authorization 헤더에서 Bearer 토큰만 추출
     private String extractTokenFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
 
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7); // "Bearer " 제거
+            return bearerToken.substring(7); // "Bearer " 문자 제거
         }
 
         return null;

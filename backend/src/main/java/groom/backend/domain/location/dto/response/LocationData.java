@@ -1,14 +1,14 @@
 package groom.backend.domain.location.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import groom.backend.domain.location.dto.request.LocationUpdateRequest;
 import java.time.LocalDateTime;
-import java.util.UUID;
 import lombok.Builder;
 
 @Builder
 public record LocationData(
 
-        UUID userId,
+        Long relationId,
 
         Double lat,
 
@@ -18,11 +18,10 @@ public record LocationData(
         LocalDateTime time
 ) {
 
-    public static LocationData of(UUID userId, String userName, Double latitude, Double longitude) {
+    public static LocationData of(LocationUpdateRequest req) {
         return LocationData.builder()
-                .userId(userId)
-                .lat(latitude)
-                .lng(longitude)
+                .lat(req.lat())
+                .lng(req.lat())
                 .time(LocalDateTime.now())
                 .build();
     }

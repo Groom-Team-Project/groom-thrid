@@ -29,11 +29,11 @@ public class LocationController {
             @AuthenticationPrincipal AuthUser user,
             @Valid @RequestBody LocationUpdateRequest request) {
 
-        log.info("위치 정보 업데이트 요청: userId={}, lat={}, lng={}",
-                user.userId(), request.getLatitude(), request.getLongitude());
+        log.info("위치 정보 업데이트 요청: userId={}, lat={}, lng={}, timestamp={}",
+                user.relationId(), request.lat(), request.lng(), request.time());
 
         locationService.updateLocation(
-                user.userId(),
+                user.relationId(),
                 request
         );
     }
