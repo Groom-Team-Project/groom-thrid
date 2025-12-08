@@ -104,9 +104,12 @@ export default function MapView({ selectedCategory }: MapViewProps) {
             const bounds = kakaoMapRef.current.getBounds?.()
             if (!bounds) return
 
+            const sw = bounds.getSouthWest();
+            const ne = bounds.getNorthEast();
+
             try {
                 const stationsResult = await chargerApi.getChargersInViewport(
-                    bounds.qa, bounds.pa, bounds.ha, bounds.oa
+                    sw.getLat(), ne.getLat(), sw.getLat(), ne.getLng()
                 )
                 if (!mounted) return
 
@@ -412,9 +415,12 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         const bounds = kakaoMapRef.current.getBounds()
         if (!bounds) return
 
+        const sw = bounds.getSouthWest();
+        const ne = bounds.getNorthEast();
+
         try {
             const stationsResult = await chargerApi.getChargersInViewport(
-                bounds.qa, bounds.pa, bounds.ha, bounds.oa
+                sw.getLat(), ne.getLat(), sw.getLat(), ne.getLng()
             )
             setStations(stationsResult)
             setShowSearchButton(false)
