@@ -263,13 +263,6 @@ public class ChargerLocationServiceImpl implements ChargerLocationService {
     }
 
     /**
-     * ID로 충전소 조회
-     */
-    public ChargerLocationResponse findById(Long id) {
-        return repository.findById(id);
-    }
-
-    /**
      * 모든 캐시 삭제 (관리자용)
      */
     @CacheEvict(value = "chargers", allEntries = true)
