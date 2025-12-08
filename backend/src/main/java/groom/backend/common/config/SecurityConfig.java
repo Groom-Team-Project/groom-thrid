@@ -44,7 +44,7 @@ public class SecurityConfig {
                         // Swagger UI - 개발환경에서만 허용
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         // 나머지 모든 요청 - 인증 필요
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
 
                 // JWT 인증 필터를 UsernamePasswordAuthenticationFilter 이전에 추가

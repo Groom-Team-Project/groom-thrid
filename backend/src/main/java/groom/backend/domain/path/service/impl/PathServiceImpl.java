@@ -1,4 +1,4 @@
-package groom.backend.domain.path.service.spec;
+package groom.backend.domain.path.service.impl;
 
 import groom.backend.common.exception.BusinessException;
 import groom.backend.common.exception.ErrorCode;
@@ -7,7 +7,7 @@ import groom.backend.domain.path.dto.response.PathAddressResponse;
 import groom.backend.domain.path.dto.response.PathFindResponse;
 import groom.backend.domain.path.enums.ProvisionCity;
 import groom.backend.domain.path.enums.ProvisionDistrict;
-import groom.backend.domain.path.service.impl.PathService;
+import groom.backend.domain.path.service.spec.PathService;
 import groom.backend.interfaces.kakao.KakaoApiClient;
 import groom.backend.interfaces.kakao.mapper.KakaoAddressMapper;
 import groom.backend.interfaces.tmap.TmapApiClient;
