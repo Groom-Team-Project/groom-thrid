@@ -35,6 +35,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 
 @Slf4j
 @Service
@@ -225,12 +226,13 @@ public class ChargerLocationServiceImpl implements ChargerLocationService {
     public List<ChargerLocationResponse> getChargerLocationsByViewport(ViewportRequest viewportRequest) {
         log.info("DB에서 Viewport 기반 충전소 조회: {}", viewportRequest);
 
-        String cacheKey = CACHE_KEY_VIEWPORT +
-                viewportRequest.getMinLat() + ":" +
-                viewportRequest.getMaxLat() + ":" +
-                viewportRequest.getMinLng() + ":" +
-                viewportRequest.getMaxLng();
+        int precision = 4; // 또는 5
+        double minLat = floorToPrecision(viewportRequest.getMinLat(), precision);
+        double maxLat = ceilToPrecision(viewportRequest.getMaxLat(), precision);
+        double minLng = floorToPrecision(viewportRequest.getMinLng(), precision);
+        double maxLng = ceilToPrecision(viewportRequest.getMaxLng(), precision);
 
+        String cacheKey = buildViewportCacheKey(minLat, maxLat, minLng, maxLng, precision);
         @SuppressWarnings("unchecked")
         List<ChargerLocationResponse> cached = (List<ChargerLocationResponse>) redisTemplate.opsForValue().get(cacheKey);
 
@@ -239,13 +241,31 @@ public class ChargerLocationServiceImpl implements ChargerLocationService {
             return cached;
         }
 
-        List<ChargerLocationResponse> chargers = repository.findByLatBetweenAndLngBetween(viewportRequest);
+        ViewportRequest normalized = new ViewportRequest(minLat, maxLat, minLng, maxLng);
+        List<ChargerLocationResponse> chargers = repository.findByLatBetweenAndLngBetween(normalized);
 
         // 5분간 캐싱
         redisTemplate.opsForValue().set(cacheKey, chargers, Duration.ofMinutes(5));
 
         log.info("Viewport 조회 완료: {}개", chargers.size());
         return chargers;
+    }
+
+    // 소수점 precision으로 내림(확장 방향: 더 넓게)
+    private static double floorToPrecision(double value, int precision) {
+        double factor = Math.pow(10, precision);
+        return Math.floor(value * factor) / factor;
+    }
+
+    // 소수점 precision으로 올림(확장 방향: 더 넓게)
+    private static double ceilToPrecision(double value, int precision) {
+        double factor = Math.pow(10, precision);
+        return Math.ceil(value * factor) / factor;
+    }
+
+    private String buildViewportCacheKey(double minLat, double maxLat, double minLng, double maxLng, int precision) {
+        String fmt = "%s%." + precision + "f:%." + precision + "f:%." + precision + "f:%." + precision + "f";
+        return String.format(Locale.ROOT, fmt, CACHE_KEY_VIEWPORT, minLat, maxLat, minLng, maxLng);
     }
 
     /**
