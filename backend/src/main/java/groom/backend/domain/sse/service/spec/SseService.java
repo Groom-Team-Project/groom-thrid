@@ -11,5 +11,5 @@ public interface SseService {
 
     boolean isConnect(UUID userId);
 
-    void send(UUID userId, Object data);
+    void send(Integer relationId, Object data);
 }

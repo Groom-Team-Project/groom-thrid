@@ -7,9 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-/**
- * UserRelation JPA Repository - Spring Data JPA 내부 인터페이스
- */
 public interface JpaUserRelationRepository extends JpaRepository<UserRelation, Integer> {
 
     // 사용자 ID로 관계 조회 (보호자 정보 포함 FETCH JOIN)
