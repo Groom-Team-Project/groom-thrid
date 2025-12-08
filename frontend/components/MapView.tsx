@@ -107,7 +107,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
 
             try {
                 const stationsResult = await chargerApi.getChargersInViewport(
-                    sw.getLat(), ne.getLat(), sw.getLat(), ne.getLng()
+                    sw.getLat(), ne.getLat(), sw.getLng(), ne.getLng()
                 )
                 if (!mounted) return
 
@@ -415,7 +415,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
 
         try {
             const stationsResult = await chargerApi.getChargersInViewport(
-                sw.getLat(), ne.getLat(), sw.getLat(), ne.getLng()
+                sw.getLat(), ne.getLat(), sw.getLng(), ne.getLng()
             )
             setStations(stationsResult)
             setShowSearchButton(false)
@@ -451,6 +451,39 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     ]
     return positions[index % positions.length]
   }
+
+    const formatTime = (value?: string | number | null): string => {
+        if (value === null || value === undefined) return '-'
+        const raw = String(value).trim()
+        if (!raw) return '-'
+
+        // 이미 HH:mm 형식이면 간단히 정규화
+        if (raw.includes(':')) {
+            const [h, m] = raw.split(':')
+            return `${h.padStart(2, '0')}:${(m || '00').padStart(2, '0')}`
+        }
+
+        // 숫자만 추출
+        let digits = raw.replace(/\D/g, '')
+        if (!digits) return '-'
+
+        // 너무 길면 뒤 4자리 사용
+        if (digits.length > 4) digits = digits.slice(-4)
+
+        if (digits.length === 1 || digits.length === 2) {
+            return `${digits.padStart(2, '0')}:00`
+        }
+
+        let hour: string, minute: string
+        if (digits.length === 3) {
+            hour = digits.slice(0, 1)
+            minute = digits.slice(1)
+        } else { // 4
+            hour = digits.slice(0, 2)
+            minute = digits.slice(2, 4)
+        }
+        return `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
+    }
 
   return (
     <div className={styles.mapContainer}>
@@ -513,7 +546,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
           <div className={styles.stationHeader}>
             <div className={styles.stationInfoText}>
               <h3 className={styles.stationName}>{selectedStation.facilityName}</h3>
-              <p className={styles.stationAddress}>{selectedStation.districtName}</p>
+              <p className={styles.stationAddress}>{selectedStation.cityName}, {selectedStation.districtName}</p>
             </div>
             <div className={styles.actionButtons}>
               <button className={styles.guideButton} onClick={handleGuide}>
@@ -538,14 +571,67 @@ export default function MapView({ selectedCategory }: MapViewProps) {
               리뷰
             </button>
           </div>
-          <div className={styles.panelContent}>
+          <div className={styles.infoContent}>
             {activeTab === 'info' ? (
-              <div className={styles.infoContent}>
-                <div className={styles.stationInfo}>
-                  <p>운영시간: 24시간</p>
-                  <p>충전기 타입: 급속/완속</p>
-                  <p>이용 가능: 4대</p>
-                </div>
+              <div className={styles.infoScroll}>
+
+                  <section className={styles.section}>
+                      <h4 className={styles.sectionTitle}>설치장소</h4>
+                      <p className={styles.textPrimary}>{selectedStation.roadAddr}</p>
+                      {selectedStation.landAddr && <p className={styles.textSecondary}>({selectedStation.landAddr})</p>}
+                      {selectedStation.description && <p className={styles.description}>{selectedStation.description}</p>}
+                  </section>
+
+                  <section className={styles.section}>
+                      <h4 className={styles.sectionTitle}>운영 정보</h4>
+                      <div className={styles.infoGrid}>
+                          <div className={styles.infoItem}>
+                              <span className={styles.infoLabel}>평일</span>
+                              <span className={styles.infoValue}>{formatTime(selectedStation.weekdayStart)} ~ {formatTime(selectedStation.weekdayEnd)}</span>
+                          </div>
+                          <div className={styles.infoItem}>
+                              <span className={styles.infoLabel}>토요일</span>
+                              <span className={styles.infoValue}>{formatTime(selectedStation.saturdayStart)} ~ {formatTime(selectedStation.saturdayEnd)}</span>
+                          </div>
+                          <div className={styles.infoItem}>
+                              <span className={styles.infoLabel}>공휴일</span>
+                              <span className={styles.infoValue}>{formatTime(selectedStation.holidayStart)} ~ {formatTime(selectedStation.holidayEnd)}</span>
+                          </div>
+                      </div>
+                  </section>
+
+                  <section className={styles.section}>
+                      <h4 className={styles.sectionTitle}>설비</h4>
+                      <div className={styles.features}>
+                          <div className={styles.featureCard}>
+                              <div className={styles.featureTitle}>동시사용</div>
+                              <div className={styles.featureValue}>{selectedStation.capacity ?? '-'}</div>
+                          </div>
+                          <div className={styles.featureCard}>
+                              <div className={styles.featureTitle}>공기주입</div>
+                              <div className={styles.featureValue}>{selectedStation.isAirPump ? 'Y' : 'N'}</div>
+                          </div>
+                          <div className={styles.featureCard}>
+                              <div className={styles.featureTitle}>충전기</div>
+                              <div className={styles.featureValue}>{selectedStation.isCharger ? 'Y' : 'N'}</div>
+                          </div>
+                      </div>
+                  </section>
+
+                  <section className={styles.section}>
+                      <h4 className={styles.sectionTitle}>관리정보</h4>
+                      <p className={styles.textPrimary}>{selectedStation.manageOrgName ?? '-'}</p>
+                      <p className={styles.textSecondary}>{selectedStation.manageOrgContact ?? '-'}</p>
+                  </section>
+
+                  <section className={styles.section}>
+                      <h4 className={styles.sectionTitle}>출처</h4>
+                      <p className={styles.smallText}>전국전동휠체어급속충전기표준데이터</p>
+                      <p className={styles.smallText}>지방자치단체, 보건복지부</p>
+                      <br/>
+                      <p className={styles.smallText}>데이터 제공기관: {selectedStation.providerName} ({selectedStation.providerCode})</p>
+                      <p className={styles.smallText}>데이터 기준일자: {selectedStation.dataUpdated}</p>
+                  </section>
               </div>
             ) : activeTab === 'review' ? (
               <div className={styles.reviewSection}>
