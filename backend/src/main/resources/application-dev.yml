@@ -42,5 +42,8 @@ redis:
       max-idle: 10
       min-idle: 2
       max-wait: -1ms
+  cache:
+    time-to-live: 1800000ms # 30분 (밀리초)
+    cache-null-values: false
 
 # API 키는 application-secret.yml에 정의되어 있음
