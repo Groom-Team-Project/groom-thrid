@@ -1,14 +1,16 @@
-package groom.backend.domain.path.service.spec;
+package groom.backend.domain.path.service.impl;
 
 import groom.backend.common.redis.RedisPublisher;
 import groom.backend.common.redis.dto.LocationMessageDto;
 import groom.backend.common.security.AuthUser;
+import groom.backend.common.exception.BusinessException;
+import groom.backend.common.exception.ErrorCode;
 import groom.backend.domain.path.dto.request.PathFindRequest;
 import groom.backend.domain.path.dto.response.PathAddressResponse;
 import groom.backend.domain.path.dto.response.PathFindResponse;
 import groom.backend.domain.path.enums.ProvisionCity;
 import groom.backend.domain.path.enums.ProvisionDistrict;
-import groom.backend.domain.path.service.impl.PathService;
+import groom.backend.domain.path.service.spec.PathService;
 import groom.backend.interfaces.kakao.KakaoApiClient;
 import groom.backend.interfaces.kakao.mapper.KakaoAddressMapper;
 import groom.backend.interfaces.tmap.TmapApiClient;
@@ -16,8 +18,6 @@ import groom.backend.interfaces.tmap.mapper.TmapToPathMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -38,11 +38,11 @@ public class PathServiceImpl implements PathService {
     if(!isProvisionArea(pathFindRequest.getStartX(), pathFindRequest.getStartY()) &&
             !isProvisionArea(pathFindRequest.getEndX(), pathFindRequest.getEndY()) ) {
       log.info("서비스 미제공 구역입니다.");
-      return new PathFindResponse(null, null,
+      throw new BusinessException(ErrorCode.PATH_SERVICE_UNAVAILABLE_AREA, (Object) new PathFindResponse(null, null,
               kakaoApiClient.pathFindUrlScheme(
                       pathFindRequest.getStartX(), pathFindRequest.getStartY(),
                       pathFindRequest.getEndX(), pathFindRequest.getEndY()
-              ));
+              )));
     }
 
     // API 호출, 값 구해오기
@@ -55,12 +55,12 @@ public class PathServiceImpl implements PathService {
       log.info("response: {}", response);
     } catch (Exception e) {
       // 4xx 또는 5xx 에러 발생
-      response = new PathFindResponse(null, null,
+      log.info("Exception occurred by : {}", e.toString());
+      throw new BusinessException(ErrorCode.PATH_SERVICE_UNAVAILABLE_AREA, (Object) new PathFindResponse(null, null,
               kakaoApiClient.pathFindUrlScheme(
                       pathFindRequest.getStartX(), pathFindRequest.getStartY(),
                       pathFindRequest.getEndX(), pathFindRequest.getEndY()
-              ));
-      log.info("Exception occurred by : {}", e.toString());
+              )));
     }
 
     // 반환
