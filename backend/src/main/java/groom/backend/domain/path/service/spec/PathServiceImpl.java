@@ -101,8 +101,9 @@ public class PathServiceImpl implements PathService {
       return;
     }
 
+    // TODO : this is mock data
     LocationMessageDto dto = new LocationMessageDto(
-            principal.userId(),
+            1L,
             req.getStartX(), req.getStartY(),
             req.getEndX(), req.getEndY(),
             req.getEndName()
@@ -110,7 +111,8 @@ public class PathServiceImpl implements PathService {
 
     log.info("Publishing location update to Redis for user {}", principal.userId());
 
-    redisPublisher.publishLocation(principal.userId(), dto);
+    // TODO : this is mock data
+    redisPublisher.publishLocation(1L, dto);
   }
 
 }

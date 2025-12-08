@@ -16,10 +16,10 @@ public class RedisPublisher {
   }
 
   /**
-   * 사용자 UUID 기반 위치 데이터 publish
+   * 사용자-보호자 관계 기반 위치 데이터 publish
    */
-  public void publishLocation(UUID userId, LocationMessageDto locationMessage) {
-    String topic = "location:" + userId;
+  public void publishLocation(Long relId, LocationMessageDto locationMessage) {
+    String topic = "location:" + relId;
     template.convertAndSend(topic, locationMessage);
   }
 }
