@@ -41,7 +41,7 @@ public class ChargerLocationMapper {
                 .toList();
     }
 
-    public static List<ChargerLocationResponse> toReponseList(List<ChargerLocation> entityList) {
+    public static List<ChargerLocationResponse> toResponseList(List<ChargerLocation> entityList) {
         return entityList.stream()
                 .map(entity -> toResponse(entity))
                 .toList();

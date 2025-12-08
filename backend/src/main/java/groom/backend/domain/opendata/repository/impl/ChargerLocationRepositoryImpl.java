@@ -143,19 +143,19 @@ public class ChargerLocationRepositoryImpl implements ChargerLocationRepository 
     @Override
     public List<ChargerLocationResponse> findByLatBetweenAndLngBetween(ViewportRequest viewportRequest) {
         List<ChargerLocation> chargerLocationList = jpaChargerLocationRepository.findByLatBetweenAndLngBetween(viewportRequest);
-        return ChargerLocationMapper.toReponseList(chargerLocationList);
+        return ChargerLocationMapper.toResponseList(chargerLocationList);
     }
 
     @Override
     public List<ChargerLocationResponse> findNearbyChargers(NearbyRequest nearbyRequest) {
         List<ChargerLocation> chargerLocationList = jpaChargerLocationRepository.findNearbyChargers(nearbyRequest);
-        return ChargerLocationMapper.toReponseList(chargerLocationList);
+        return ChargerLocationMapper.toResponseList(chargerLocationList);
     }
 
     @Override
     public List<ChargerLocationResponse> findAll() {
         List<ChargerLocation> chargerLocationList = jpaChargerLocationRepository.findAll();
-        return ChargerLocationMapper.toReponseList(chargerLocationList);
+        return ChargerLocationMapper.toResponseList(chargerLocationList);
     }
 
     @Override
