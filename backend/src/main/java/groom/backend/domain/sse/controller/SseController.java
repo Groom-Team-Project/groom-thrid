@@ -2,7 +2,6 @@ package groom.backend.domain.sse.controller;
 
 import groom.backend.common.security.AuthUser;
 import groom.backend.domain.sse.service.impl.SseServiceImpl;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,15 +20,16 @@ public class SseController {
     @GetMapping("/connect")
     public SseEmitter connect(@AuthenticationPrincipal AuthUser user) {
 
-        UUID userId = user.userId();
+        Long relationId = user.relationId();
 
-        return sseService.connect(userId);
+        return sseService.connect(relationId);
     }
 
     @PostMapping("/disconnect")
     public void disconnect(@AuthenticationPrincipal AuthUser user) {
-        UUID userId = user.userId();
 
-        sseService.disconnect(userId);
+        Long relationId = user.relationId();
+
+        sseService.disconnect(relationId);
     }
 }

@@ -3,11 +3,9 @@ package groom.backend.domain.sse.service.impl;
 import groom.backend.common.exception.BusinessException;
 import groom.backend.common.exception.ErrorCode;
 import groom.backend.domain.sse.service.spec.SseService;
-import groom.backend.domain.users.entity.UserRelation;
 import groom.backend.domain.users.repository.impl.UserRelationRepositoryImpl;
 import java.io.IOException;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,29 +24,29 @@ public class SseServiceImpl implements SseService {
     private static final Long DEFAULT_TIMEOUT = 60L * 1000 * 10;
 
     // 사용자별 SseEmitter 저장소 (Key: relationId, Value: SseEmitter)
-    private final Map<Integer, SseEmitter> emitters = new ConcurrentHashMap<>();
+    private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
 
     UserRelationRepositoryImpl userRelationRepository;
 
     // SSE 연결 생성 - 새로운 SseEmitter 생성 및 저장 - 타임아웃/에러/완료 시 연결 해제
     @Override
-    public SseEmitter connect(UUID userId) {
+    public SseEmitter connect(Long relationId) {
 
-        UserRelation userRelation = userRelationRepository
-                .findByUserId(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.RELATION_NOT_FOUND));
-
-        Integer relationId = userRelation.getId();
+        if (relationId == null) {
+            throw new BusinessException(ErrorCode.RELATION_NOT_FOUND);
+        }
 
         // 기존 연결이 있으면 제거
         if (emitters.containsKey(relationId)) {
-            log.info("기존 SSE 연결 제거: userId={}", relationId);
+            log.info("기존 SSE 연결 제거: relationId={}", relationId);
             emitters.get(relationId).complete();
             emitters.remove(relationId);
         }
 
         // 새로운 Emitter 생성
         SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
+
+        // relationId 기반 생성
         emitters.put(relationId, emitter);
         log.info("SSE 연결 생성: userId={}, timeout={}ms", relationId, DEFAULT_TIMEOUT);
 
@@ -87,13 +85,7 @@ public class SseServiceImpl implements SseService {
 
     // SSE 연결 해제 - 명시적으로 연결을 종료할 때 사용
     @Override
-    public void disconnect(UUID userId) {
-
-        UserRelation userRelation = userRelationRepository
-                .findByUserId(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.RELATION_NOT_FOUND));
-
-        Integer relationId = userRelation.getId();
+    public void disconnect(Long relationId) {
 
         SseEmitter emitter = emitters.get(relationId);
         if (emitter != null) {
@@ -107,22 +99,16 @@ public class SseServiceImpl implements SseService {
 
     // SSE 연결 상태 확인
     @Override
-    public boolean isConnect(UUID userId) {
-
-        UserRelation userRelation = userRelationRepository
-                .findByUserId(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.RELATION_NOT_FOUND));
-
-        Integer relationId = userRelation.getId();
+    public boolean isConnect(Long relationId) {
 
         boolean connected = emitters.containsKey(relationId);
-        log.debug("SSE 연결 상태 확인: userId={}, connected={}", relationId, connected);
+        log.debug("SSE 연결 상태 확인: relationId={}, connected={}", relationId, connected);
         return connected;
     }
 
     // 특정 사용자에게 데이터 전송 - Redis Pub/Sub Subscriber에서 호출 - 보호자에게 위치 정보 전송
     @Override
-    public void send(Integer relationId, Object data) {
+    public void send(Long relationId, Object data) {
 
         SseEmitter emitter = emitters.get(relationId);
 
