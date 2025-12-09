@@ -18,10 +18,11 @@ public record LocationData(
         LocalDateTime time
 ) {
 
-    public static LocationData of(LocationUpdateRequest req) {
+    public static LocationData of(Long relationId, LocationUpdateRequest req) {
         return LocationData.builder()
+                .relationId(relationId)
                 .lat(req.lat())
-                .lng(req.lat())
+                .lng(req.lng())
                 .time(LocalDateTime.now())
                 .build();
     }
