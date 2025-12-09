@@ -2,7 +2,7 @@ package groom.backend.domain.location.controller;
 
 import groom.backend.common.security.AuthUser;
 import groom.backend.domain.location.dto.request.LocationUpdateRequest;
-import groom.backend.domain.location.service.impl.LocationServiceImpl;
+import groom.backend.domain.location.service.spec.LocationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class LocationController {
 
-    private final LocationServiceImpl locationService;
+    private final LocationService locationService;
 
     // 위치 정보 업데이트
     @PostMapping

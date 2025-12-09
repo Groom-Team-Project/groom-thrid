@@ -3,7 +3,6 @@ package groom.backend.domain.location.redis.subscriber;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import groom.backend.domain.location.dto.request.LocationUpdateRequest;
 import groom.backend.domain.sse.service.spec.SseService;
-import groom.backend.domain.users.repository.spec.UserRelationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Component;
 public class LocationSubscriber implements MessageListener {
 
     private final SseService sseService;
-    private final UserRelationRepository userRelationRepository;
     private final ObjectMapper objectMapper;
 
     // Redis 메시지 수신 처리 - 메시지: LocationData (JSON) - 채널: location:{relationId}

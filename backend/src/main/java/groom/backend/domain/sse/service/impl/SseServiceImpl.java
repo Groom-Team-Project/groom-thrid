@@ -3,7 +3,7 @@ package groom.backend.domain.sse.service.impl;
 import groom.backend.common.exception.BusinessException;
 import groom.backend.common.exception.ErrorCode;
 import groom.backend.domain.sse.service.spec.SseService;
-import groom.backend.domain.users.repository.impl.UserRelationRepositoryImpl;
+import groom.backend.domain.users.repository.spec.UserRelationRepository;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,7 +26,7 @@ public class SseServiceImpl implements SseService {
     // 사용자별 SseEmitter 저장소 (Key: relationId, Value: SseEmitter)
     private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
 
-    UserRelationRepositoryImpl userRelationRepository;
+    private final UserRelationRepository userRelationRepository;
 
     // SSE 연결 생성 - 새로운 SseEmitter 생성 및 저장 - 타임아웃/에러/완료 시 연결 해제
     @Override

@@ -8,14 +8,14 @@ import groom.backend.domain.auth.dto.request.FormSignupAuthRequest;
 import groom.backend.domain.auth.dto.response.CommonAuthResponse;
 import groom.backend.domain.auth.dto.response.SignupAuthResponse;
 import groom.backend.domain.auth.mapper.AuthMapper;
-import groom.backend.domain.auth.repository.impl.RefreshTokenRedisRepositoryImpl;
+import groom.backend.domain.auth.repository.spec.RefreshTokenRedisRepository;
 import groom.backend.domain.auth.service.spec.AuthService;
 import groom.backend.domain.auth.vo.RefreshTokenValue;
 import groom.backend.domain.users.entity.User;
 import groom.backend.domain.users.entity.UserCredential;
 import groom.backend.domain.users.entity.UserRelation;
-import groom.backend.domain.users.repository.impl.UserRelationRepositoryImpl;
-import groom.backend.domain.users.service.impl.UserServiceImpl;
+import groom.backend.domain.users.repository.spec.UserRelationRepository;
+import groom.backend.domain.users.service.spec.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,11 +27,11 @@ import org.springframework.stereotype.Service;
 @Transactional
 public class AuthServiceImpl implements AuthService {
 
-    private final UserServiceImpl userService;
-    private final RefreshTokenRedisRepositoryImpl refreshTokenRedisRepository;
+    private final UserService userService;
+    private final RefreshTokenRedisRepository refreshTokenRedisRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
-    private final UserRelationRepositoryImpl userRelationRepository;
+    private final UserRelationRepository userRelationRepository;
 
     // secret에서 만료시간 가져오기
     @Value("${jwt.refresh-token-expiration}")

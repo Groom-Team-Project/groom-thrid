@@ -1,7 +1,7 @@
 package groom.backend.domain.sse.controller;
 
 import groom.backend.common.security.AuthUser;
-import groom.backend.domain.sse.service.impl.SseServiceImpl;
+import groom.backend.domain.sse.service.spec.SseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,7 +15,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RequiredArgsConstructor
 public class SseController {
 
-    private final SseServiceImpl sseService;
+    private final SseService sseService;
 
     @GetMapping("/connect")
     public SseEmitter connect(@AuthenticationPrincipal AuthUser user) {
