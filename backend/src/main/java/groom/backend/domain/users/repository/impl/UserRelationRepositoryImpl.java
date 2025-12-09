@@ -18,6 +18,11 @@ public class UserRelationRepositoryImpl implements UserRelationRepository {
     private final JpaUserRelationRepository jpaUserRelationRepository;
 
     @Override
+    public Optional<UserRelation> findById(Long relationId) {
+        return jpaUserRelationRepository.findById(relationId);
+    }
+
+    @Override
     public Optional<UserRelation> findByUserId(UUID userId) {
         return jpaUserRelationRepository.findByUserIdWithProtector(userId);
     }

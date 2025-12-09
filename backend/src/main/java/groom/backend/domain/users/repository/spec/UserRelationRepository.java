@@ -6,6 +6,8 @@ import java.util.UUID;
 
 public interface UserRelationRepository {
 
+    Optional<UserRelation> findById(Long id);
+
     // 사용자 ID로 관계 조회
     Optional<UserRelation> findByUserId(UUID userId);
 
