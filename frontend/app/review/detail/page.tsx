@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getReviewById, deleteReview, type Review } from '@/lib/reviews'
+import { chargerApi } from '@/lib/stations'
 import StarRating from '@/components/StarRating'
 import BottomNav from '@/components/BottomNav'
 import styles from './page.module.css'
@@ -15,31 +16,55 @@ export default function ReviewDetailPage() {
   const [review, setReview] = useState<Review | null>(null)
   const [showMenu, setShowMenu] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const loggedIn = localStorage.getItem('isLoggedIn')
-    if (loggedIn !== 'true') {
-      router.push('/auth')
-      return
+    const loadReview = async () => {
+      const loggedIn = localStorage.getItem('isLoggedIn')
+      if (loggedIn !== 'true') {
+        router.push('/auth')
+        return
+      }
+
+      if (!reviewId) {
+        router.push('/')
+        return
+      }
+
+      try {
+        // 먼저 리뷰 정보를 가져옴
+        const reviewData = await getReviewById(reviewId)
+        
+        // 충전소 정보를 가져와서 stationName 설정
+        if (reviewData.stationId) {
+          try {
+            const placeId = parseInt(reviewData.stationId)
+            const station = await chargerApi.getChargerById(placeId)
+            // 충전소명으로 업데이트
+            reviewData.stationName = station.facilityName
+          } catch (stationErr) {
+            console.error('충전소 정보 로드 실패:', stationErr)
+            // 충전소 정보를 가져오지 못해도 리뷰는 표시
+          }
+        }
+        
+        setReview(reviewData)
+      } catch (err) {
+        console.error('리뷰 로드 실패:', err)
+        alert('리뷰를 찾을 수 없습니다.')
+        router.push('/')
+      } finally {
+        setLoading(false)
+      }
     }
 
-    if (!reviewId) {
-      router.push('/')
-      return
-    }
-
-    const reviewData = getReviewById(reviewId)
-    if (!reviewData) {
-      alert('리뷰를 찾을 수 없습니다.')
-      router.push('/')
-      return
-    }
-
-    setReview(reviewData)
+    loadReview()
   }, [router, reviewId])
 
-  const userId = localStorage.getItem('userEmail') || ''
-  const isOwner = review?.userId === userId
+  // 백엔드에서 userId를 제공하지 않으므로 작성자 이름으로만 확인
+  // 실제 권한 체크는 백엔드에서 처리됨
+  const userName = localStorage.getItem('userName') || ''
+  const isOwner = review?.userName === userName
 
   const handleEdit = () => {
     if (review) {
@@ -51,16 +76,43 @@ export default function ReviewDetailPage() {
     setShowDeleteModal(true)
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (review) {
-      deleteReview(review.id)
-      alert('리뷰가 삭제되었습니다.')
-      router.push(`/?stationId=${review.stationId}&tab=review`)
+      try {
+        await deleteReview(review.id)
+        alert('리뷰가 삭제되었습니다.')
+        // placeId를 사용하여 리다이렉트
+        const placeId = parseInt(review.stationId)
+        router.push(`/?stationId=${placeId}&tab=review`)
+      } catch (err) {
+        console.error('리뷰 삭제 실패:', err)
+        if (err instanceof Error) {
+          alert(err.message || '리뷰 삭제에 실패했습니다.')
+        } else {
+          alert('리뷰 삭제에 실패했습니다.')
+        }
+      }
     }
   }
 
   const cancelDelete = () => {
     setShowDeleteModal(false)
+  }
+
+  if (loading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <button className={styles.backButton} onClick={() => router.back()}>
+            ←
+          </button>
+          <h1 className={styles.title}>리뷰 상세</h1>
+          <div className={styles.placeholder} />
+        </div>
+        <div style={{ padding: '20px', textAlign: 'center' }}>로딩 중...</div>
+        <BottomNav />
+      </div>
+    )
   }
 
   if (!review) {
