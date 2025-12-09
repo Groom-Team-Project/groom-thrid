@@ -335,18 +335,8 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     }
 
     const handleMyLocation = () => {
-        if (navigator.geolocation && kakaoMapRef.current) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const moveLatLon = new window.kakao.maps.LatLng(position.coords.latitude, position.coords.longitude)
-                    kakaoMapRef.current.panTo(moveLatLon)
-                    createUserMarker(kakaoMapRef.current, {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    })
-                }
-            )
-        }
+        const moveLatLon = new window.kakao.maps.LatLng(lat, lng)
+        kakaoMapRef.current.panTo(moveLatLon)
     }
 
     const handleEmergencyClick = () => {
