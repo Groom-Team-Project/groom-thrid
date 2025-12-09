@@ -209,12 +209,17 @@ export default function MapView({ selectedCategory }: MapViewProps) {
 
             // 마커 이미지 설정
             const imageSrc = selectedStation?.placeId === station.placeId
-                ? 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png'
-                : 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png'
+                ? 'https://img.icons8.com/external-phatplus-lineal-color-phatplus/64/external-point-ev-car-phatplus-lineal-color-phatplus.png'
+                : 'https://img.icons8.com/external-phatplus-lineal-phatplus/64/external-point-ev-car-phatplus-lineal-phatplus.png'
 
-            const imageSize = new window.kakao.maps.Size(24, 35)
-            const markerImage = new window.kakao.maps.MarkerImage(imageSrc, imageSize)
 
+            const imageSize = new window.kakao.maps.Size(36, 36)
+            const imageOptions = { offset: new window.kakao.maps.Point(18, 30) }
+            const markerImage = new window.kakao.maps.MarkerImage(
+                imageSrc,
+                imageSize,
+                imageOptions
+            )
             const marker = new window.kakao.maps.Marker({
                 position: markerPosition,
                 image: markerImage,
@@ -230,47 +235,39 @@ export default function MapView({ selectedCategory }: MapViewProps) {
             marker.setMap(kakaoMapRef.current)
             markersRef.current.push(marker)
 
-            // 커스텀 오버레이로 라벨 추가
-            const content = `
-        <div style="
-          padding: 5px 10px;
-          background: white;
-          border: 2px solid #4A90E2;
-          border-radius: 15px;
-          font-size: 12px;
-          font-weight: bold;
-          color: #333;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          white-space: nowrap;
-          cursor: pointer;
-        ">
-          ${station.facilityName}
-        </div>
-      `
-
-            const labelPosition = new window.kakao.maps.LatLng(
-                station.lat + 0.0008, // 라벨을 마커 위에 표시
-                station.lng
-            )
-
-            const customOverlay = new window.kakao.maps.CustomOverlay({
-                position: labelPosition,
-                content: content,
-                yAnchor: 1
-            })
-
-            customOverlay.setMap(kakaoMapRef.current)
-            markersRef.current.push(customOverlay)
         })
 
     }, [stations, selectedStation, mapLoaded, selectedCategory])
 
     // 선택된 충전소로 지도 이동
     useEffect(() => {
-        if (selectedStation && kakaoMapRef.current) {
-            const moveLatLon = new window.kakao.maps.LatLng(selectedStation.lat, selectedStation.lng)
-            kakaoMapRef.current.panTo(moveLatLon)
-        }
+        if (!selectedStation || !kakaoMapRef.current) return
+
+        const map = kakaoMapRef.current
+
+        // 마커의 좌표
+        const markerPosition = new window.kakao.maps.LatLng(
+            selectedStation.lat,
+            selectedStation.lng
+        )
+
+        // 마커를 화면의 특정 위치(중앙보다 위쪽)에 배치
+        // 지도를 이동시켜서 마커가 패널에 가려지지 않게 함
+        const projection = map.getProjection()
+        const point = projection.pointFromCoords(markerPosition)
+
+        // 패널 높이만큼 아래로 이동 (픽셀 단위, 줌 레벨 무관)
+        // 패널이 하단 40% 차지한다고 가정, 지도 높이의 20% 위치로 조정
+        const mapHeight = map.getNode().offsetHeight
+        const panelOffset = mapHeight * 0.2  // 픽셀 단위
+
+        point.y += panelOffset  // y축 아래로 이동 (마커를 위로 올림)
+
+        // 조정된 포인트를 좌표로 변환
+        const newCenter = projection.coordsFromPoint(point)
+
+        map.panTo(newCenter)
+
     }, [selectedStation])
 
     // 디버그: MapView 내부에 추가
