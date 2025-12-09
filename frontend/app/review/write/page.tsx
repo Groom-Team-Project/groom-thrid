@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { saveReview, updateReview, getReviewById, type Review } from '@/lib/reviews'
-import { getStations } from '@/lib/stations'
+import { createReview, updateReview, getReviewById, type Review } from '@/lib/reviews'
+import { chargerApi, type ChargingStation } from '@/lib/stations'
 import StarRating from '@/components/StarRating'
 import BottomNav from '@/components/BottomNav'
 import styles from './page.module.css'
@@ -23,65 +23,94 @@ export default function WriteReviewPage() {
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const loggedIn = localStorage.getItem('isLoggedIn')
-    if (loggedIn !== 'true') {
-      router.push('/auth')
-      return
+    const loadData = async () => {
+      const loggedIn = localStorage.getItem('isLoggedIn')
+      if (loggedIn !== 'true') {
+        router.push('/auth')
+        return
+      }
+
+      try {
+        // 수정 모드인 경우 기존 리뷰 데이터 로드
+        if (reviewId) {
+          const review = await getReviewById(reviewId)
+          
+          if (review) {
+            setRating(review.rating)
+            setContent(review.content)
+            setStationName(review.stationName)
+            setStationId(review.stationId)
+            // S3 URL이거나 base64 이미지 모두 표시 가능
+            if (review.photoUrl) {
+              setPhotoPreview(review.photoUrl)
+            }
+            setIsEditMode(true)
+          } else {
+            setError('리뷰를 찾을 수 없습니다.')
+            router.push('/')
+          }
+        } else if (stationIdParam) {
+          // 작성 모드: 충전소 정보 로드
+          try {
+            const placeId = parseInt(stationIdParam)
+            const station = await chargerApi.getChargerById(placeId)
+            setStationName(station.facilityName)
+            setStationId(stationIdParam)
+          } catch (err) {
+            console.error('충전소 정보 로드 실패:', err)
+            setError('충전소 정보를 불러올 수 없습니다.')
+          }
+        } else {
+          router.push('/')
+          return
+        }
+      } catch (err) {
+        console.error('데이터 로드 실패:', err)
+        if (err instanceof Error) {
+          setError(err.message)
+        } else {
+          setError('데이터를 불러오는 중 오류가 발생했습니다.')
+        }
+        router.push('/')
+      } finally {
+        setLoading(false)
+      }
     }
 
-    // 수정 모드인 경우 기존 리뷰 데이터 로드
-    if (reviewId) {
-      const review = getReviewById(reviewId)
-      const userId = localStorage.getItem('userEmail') || ''
-      
-      if (!review) {
-        router.push('/')
-        return
-      }
-      
-      // 본인 리뷰인지 확인
-      if (review.userId !== userId) {
-        alert('본인의 리뷰만 수정할 수 있습니다.')
-        router.push('/')
-        return
-      }
-      
-      setRating(review.rating)
-      setContent(review.content)
-      setStationName(review.stationName)
-      setStationId(review.stationId)
-      if (review.photoUrl) {
-        setPhotoPreview(review.photoUrl)
-      }
-      setIsEditMode(true)
-    } else if (stationIdParam) {
-      // 작성 모드: 충전소 정보 로드
-      const stations = getStations()
-      const station = stations.find(s => s.id === stationIdParam)
-      if (station) {
-        setStationName(station.name)
-        setStationId(stationIdParam)
-      } else {
-        router.push('/')
-      }
-    } else {
-      router.push('/')
-    }
+    loadData()
   }, [router, stationIdParam, reviewId])
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setError('사진 크기는 5MB 이하여야 합니다.')
+      // 파일 크기 검증 (3MB 제한 - base64로 변환하면 약 4MB가 되므로 원본을 더 작게 제한)
+      if (file.size > 3 * 1024 * 1024) {
+        setError('사진 크기는 3MB 이하여야 합니다.')
         return
       }
+      
+      // 이미지 파일 타입 검증
+      if (!file.type.startsWith('image/')) {
+        setError('이미지 파일만 업로드 가능합니다.')
+        return
+      }
+      
       setPhoto(file)
+      setError('') // 에러 초기화
+      
+      // FileReader로 base64 변환 (백엔드 S3Service가 base64를 받아서 S3에 업로드)
       const reader = new FileReader()
       reader.onloadend = () => {
+        // data:image/jpeg;base64,... 형식으로 변환됨
         setPhotoPreview(reader.result as string)
+      }
+      reader.onerror = () => {
+        setError('이미지 파일을 읽는 중 오류가 발생했습니다.')
+        setPhoto(null)
+        setPhotoPreview(null)
       }
       reader.readAsDataURL(file)
     }
@@ -101,67 +130,70 @@ export default function WriteReviewPage() {
       return
     }
 
+    if (!stationId) {
+      setError('충전소 정보가 없습니다.')
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
-      const userId = localStorage.getItem('userEmail') || ''
-      const userName = localStorage.getItem('userName') || '사용자'
       let photoUrl: string | undefined
 
-      // 사진이 있으면 base64로 저장 (실제로는 서버에 업로드)
-      if (photoPreview) {
-        photoUrl = photoPreview
+      // 사진이 있으면 base64 문자열 전송 (백엔드 S3Service가 S3에 업로드 후 URL 반환)
+      // photoPreview는 data:image/jpeg;base64,... 형식 또는 이미 S3 URL일 수 있음
+      if (photoPreview && photoPreview.trim().length > 0) {
+        photoUrl = photoPreview.trim()
       }
 
+      const placeId = parseInt(stationId)
+
       if (isEditMode && reviewId) {
-        // 수정
-        const updated = updateReview(reviewId, {
-          rating,
+        // 수정: 백엔드에서 기존 S3 이미지 삭제 후 새 이미지 업로드
+        await updateReview(reviewId, {
+          rating: Number(rating),
           content: content.trim(),
-          photoUrl,
+          imageUrl: photoUrl,
         })
         
-        if (updated) {
-          alert('리뷰가 수정되었습니다.')
-          router.push(`/?stationId=${stationId || updated.stationId}&tab=review`)
-        } else {
-          setError('리뷰 수정에 실패했습니다.')
-        }
+        alert('리뷰가 수정되었습니다.')
+        router.push(`/?stationId=${placeId}&tab=review`)
       } else {
-        // 작성
-        if (!stationId) {
-          setError('충전소 정보가 없습니다.')
-          setIsSubmitting(false)
-          return
-        }
-
-        const stations = getStations()
-        const station = stations.find(s => s.id === stationId)
-        if (!station) {
-          setError('충전소를 찾을 수 없습니다.')
-          setIsSubmitting(false)
-          return
-        }
-
-        saveReview({
-          stationId,
-          stationName: station.name,
-          userId,
-          userName,
-          rating,
+        // 작성: 백엔드에서 base64를 S3에 업로드하고 URL을 받아서 저장
+        await createReview(placeId, {
+          rating: Number(rating),
           content: content.trim(),
-          photoUrl,
+          imageUrl: photoUrl,
         })
 
         alert('리뷰가 작성되었습니다.')
-        router.push(`/?stationId=${stationId}&tab=review`)
+        router.push(`/?stationId=${placeId}&tab=review`)
       }
     } catch (err) {
-      setError('리뷰 작성 중 오류가 발생했습니다.')
-      console.error(err)
+      console.error('리뷰 제출 실패:', err)
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError('리뷰 작성 중 오류가 발생했습니다.')
+      }
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (loading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <button className={styles.backButton} onClick={() => router.back()}>
+            ←
+          </button>
+          <h1 className={styles.title}>{isEditMode ? '리뷰 수정' : '리뷰 작성'}</h1>
+          <div className={styles.placeholder} />
+        </div>
+        <div style={{ padding: '20px', textAlign: 'center' }}>로딩 중...</div>
+      </div>
+    )
   }
 
   return (

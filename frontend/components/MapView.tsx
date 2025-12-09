@@ -37,6 +37,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     const [reviews, setReviews] = useState<Review[]>([])
     const [userType, setUserType] = useState<string | null>(null)
     const [showSearchButton, setShowSearchButton] = useState(false)
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
     // 에러 상태 추가
     const [error, setError] = useState<string | null>(null)
@@ -276,11 +277,16 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     }, [selectedCategory])
 
 
-    const handleStationClick = (station: ChargingStation) => {
+    const handleStationClick = async (station: ChargingStation) => {
         setSelectedStation(station)
-        // 리뷰 데이터 로드
-        const stationReviews = getReviewsByStation(station.placeId)
-        setReviews(stationReviews)
+        // 리뷰 데이터 로드 (충전소명 전달)
+        try {
+            const stationReviews = await getReviewsByStation(station.placeId, station.facilityName)
+            setReviews(stationReviews)
+        } catch (error) {
+            console.error('리뷰 로드 실패:', error)
+            setReviews([])
+        }
     }
 
     const checkLogin = () => {
@@ -643,8 +649,46 @@ export default function MapView({ selectedCategory }: MapViewProps) {
                     </div>
                   ) : (
                     reviews.map((review) => {
-                      const userId = localStorage.getItem('userEmail') || ''
-                      const isOwner = review.userId === userId
+                      // 백엔드에서 userId를 제공하지 않으므로 작성자 이름으로 확인
+                      const userName = localStorage.getItem('userName') || ''
+                      const isOwner = review.userName === userName
+                      const isMenuOpen = openMenuId === review.id
+                      
+                      const handleMenuClick = (e: React.MouseEvent) => {
+                        e.stopPropagation()
+                        setOpenMenuId(isMenuOpen ? null : review.id)
+                      }
+                      
+                      const handleEdit = (e: React.MouseEvent) => {
+                        e.stopPropagation()
+                        setOpenMenuId(null)
+                        if (selectedStation) {
+                          router.push(`/review/write?reviewId=${review.id}&stationId=${selectedStation.placeId}`)
+                        }
+                      }
+                      
+                      const handleDelete = async (e: React.MouseEvent) => {
+                        e.stopPropagation()
+                        setOpenMenuId(null)
+                        if (confirm('정말로 이 리뷰를 삭제하시겠습니까?')) {
+                          try {
+                            await deleteReview(review.id)
+                            alert('리뷰가 삭제되었습니다.')
+                            // 리뷰 목록 새로고침
+                            if (selectedStation) {
+                              const stationReviews = await getReviewsByStation(selectedStation.placeId, selectedStation.facilityName)
+                              setReviews(stationReviews)
+                            }
+                          } catch (err) {
+                            console.error('리뷰 삭제 실패:', err)
+                            if (err instanceof Error) {
+                              alert(err.message || '리뷰 삭제에 실패했습니다.')
+                            } else {
+                              alert('리뷰 삭제에 실패했습니다.')
+                            }
+                          }
+                        }
+                      }
                       
                       return (
                         <div 
@@ -668,10 +712,33 @@ export default function MapView({ selectedCategory }: MapViewProps) {
                               >
                                 <button
                                   className={styles.menuIcon}
-                                  onClick={() => router.push(`/review/detail?reviewId=${review.id}`)}
+                                  onClick={handleMenuClick}
+                                  title="메뉴"
                                 >
                                   ⋯
                                 </button>
+                                {isMenuOpen && (
+                                  <>
+                                    <div 
+                                      className={styles.menuOverlay}
+                                      onClick={() => setOpenMenuId(null)}
+                                    />
+                                    <div className={styles.menu}>
+                                      <button 
+                                        className={styles.menuItem}
+                                        onClick={handleEdit}
+                                      >
+                                        수정
+                                      </button>
+                                      <button 
+                                        className={`${styles.menuItem} ${styles.deleteMenuItem}`}
+                                        onClick={handleDelete}
+                                      >
+                                        삭제
+                                      </button>
+                                    </div>
+                                  </>
+                                )}
                               </div>
                             )}
                           </div>
