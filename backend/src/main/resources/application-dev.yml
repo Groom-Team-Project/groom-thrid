@@ -7,7 +7,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     show-sql: true # 개발용, 런타임에서 로그 보기 어려우면 false로 비활성화
 
   flyway:
