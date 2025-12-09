@@ -1,14 +1,16 @@
-package groom.backend.domain.path.service.spec;
+package groom.backend.domain.path.service.impl;
 
 import groom.backend.common.redis.RedisPublisher;
 import groom.backend.common.redis.dto.LocationMessageDto;
 import groom.backend.common.security.AuthUser;
+import groom.backend.common.exception.BusinessException;
+import groom.backend.common.exception.ErrorCode;
 import groom.backend.domain.path.dto.request.PathFindRequest;
 import groom.backend.domain.path.dto.response.PathAddressResponse;
 import groom.backend.domain.path.dto.response.PathFindResponse;
 import groom.backend.domain.path.enums.ProvisionCity;
 import groom.backend.domain.path.enums.ProvisionDistrict;
-import groom.backend.domain.path.service.impl.PathService;
+import groom.backend.domain.path.service.spec.PathService;
 import groom.backend.interfaces.kakao.KakaoApiClient;
 import groom.backend.interfaces.kakao.mapper.KakaoAddressMapper;
 import groom.backend.interfaces.tmap.TmapApiClient;
@@ -16,8 +18,7 @@ import groom.backend.interfaces.tmap.mapper.TmapToPathMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
+import org.springframework.web.client.ResourceAccessException;
 
 @Service
 @RequiredArgsConstructor
@@ -35,14 +36,23 @@ public class PathServiceImpl implements PathService {
 
     // 서비스 제공 구역인지 검사 (시작점, 종료점 각각 검사)
     // 서비스 제공 구역 여부를 검사하는 것이므로, 두 검증에서 모두 false가 나와야 한다. 시도 단위로 제공 시 시군구 단위 정보를 제공하지 않음.
-    if(!isProvisionArea(pathFindRequest.getStartX(), pathFindRequest.getStartY()) &&
-            !isProvisionArea(pathFindRequest.getEndX(), pathFindRequest.getEndY()) ) {
-      log.info("서비스 미제공 구역입니다.");
-      return new PathFindResponse(null, null,
+    try {
+      if(!isProvisionArea(pathFindRequest.getStartX(), pathFindRequest.getStartY()) &&
+              !isProvisionArea(pathFindRequest.getEndX(), pathFindRequest.getEndY()) ) {
+        log.info("서비스 미제공 구역입니다.");
+        throw new BusinessException(ErrorCode.PATH_SERVICE_UNAVAILABLE_AREA, (Object) new PathFindResponse(null, null,
+                kakaoApiClient.pathFindUrlScheme(
+                        pathFindRequest.getStartX(), pathFindRequest.getStartY(),
+                        pathFindRequest.getEndX(), pathFindRequest.getEndY()
+                )));
+      }
+    }  catch(ResourceAccessException e) {
+      log.info("connection timeout : {}", e.toString());
+      throw new BusinessException(ErrorCode.PATH_KAKAO_API_ERROR, (Object) new PathFindResponse(null, null,
               kakaoApiClient.pathFindUrlScheme(
                       pathFindRequest.getStartX(), pathFindRequest.getStartY(),
                       pathFindRequest.getEndX(), pathFindRequest.getEndY()
-              ));
+              )));
     }
 
     // API 호출, 값 구해오기
@@ -53,14 +63,21 @@ public class PathServiceImpl implements PathService {
               tmapApiClient.tmapApiPathFind(
                       TmapToPathMapper.toTmapPathFindRequestDto(pathFindRequest)));
       log.info("response: {}", response);
-    } catch (Exception e) {
-      // 4xx 또는 5xx 에러 발생
-      response = new PathFindResponse(null, null,
+    } catch(ResourceAccessException e) {
+      log.info("connection timeout : {}", e.toString());
+      throw new BusinessException(ErrorCode.PATH_TMAP_API_ERROR, (Object) new PathFindResponse(null, null,
               kakaoApiClient.pathFindUrlScheme(
                       pathFindRequest.getStartX(), pathFindRequest.getStartY(),
                       pathFindRequest.getEndX(), pathFindRequest.getEndY()
-              ));
+              )));
+    } catch (Exception e) {
+      // 4xx 또는 5xx 에러 발생
       log.info("Exception occurred by : {}", e.toString());
+      throw new BusinessException(ErrorCode.PATH_SERVICE_UNAVAILABLE_AREA, (Object) new PathFindResponse(null, null,
+              kakaoApiClient.pathFindUrlScheme(
+                      pathFindRequest.getStartX(), pathFindRequest.getStartY(),
+                      pathFindRequest.getEndX(), pathFindRequest.getEndY()
+              )));
     }
 
     // 반환
@@ -74,8 +91,9 @@ public class PathServiceImpl implements PathService {
    * @return
    */
   private Boolean isProvisionArea(Double lng, Double lat) {
+    PathAddressResponse address = null;
     // find
-    PathAddressResponse address = KakaoAddressMapper.toDomain(kakaoApiClient.transferToAddress(lng, lat));
+    address = KakaoAddressMapper.toDomain(kakaoApiClient.transferToAddress(lng, lat));
 
     // TODO : 시도, 시군구의 매칭 검증
 

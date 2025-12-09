@@ -1,11 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-
-/* -----------------------------
-   PathNode 타입 정의 (수정된 버전)
------------------------------ */
+import { useSearchParams, useRouter } from "next/navigation";
+import styles from "./page.module.css";
 
 interface BaseNode {
   type: "Point" | "LineString";
@@ -17,7 +14,7 @@ interface BaseNode {
   time: number | null;
   categoryRoadType: number | null;
   facilityType: number | null;
-  coordinates: [number, number][]; // 모든 타입에 존재
+  coordinates: [number, number][];
 }
 
 export interface PointNode extends BaseNode {
@@ -56,25 +53,20 @@ interface FallbackPathResponse {
 
 type PathData = InternalPathResponse | FallbackPathResponse;
 
-/* 좌표 단순 lat/lng 객체 */
 interface SimpleCoord {
   lat: number;
   lng: number;
 }
 
-/* ----------------------------------------------------
-   여기까지 타입 수정 완료
------------------------------------------------------ */
-
 const DirectionsPage: React.FC = () => {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [pathData, setPathData] = useState<PathData | null>(null);
   const [startCoord, setStartCoord] = useState<SimpleCoord | null>(null);
   const [endCoord, setEndCoord] = useState<SimpleCoord | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
-  /* ------------------------------
-     API 요청 및 좌표 초기화
-  ------------------------------ */
   useEffect(() => {
     const startLatStr = searchParams.get("start-lat");
     const startLngStr = searchParams.get("start-lng");
@@ -102,27 +94,37 @@ const DirectionsPage: React.FC = () => {
       endName,
     };
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      setIsLoading(false);
+      setHasError(true);
+    }, 30000);
+
     const fetchPath = async () => {
       try {
         const res = await fetch("/api/v1/paths", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(requestBody),
+          signal: controller.signal,
         });
 
         const data = await res.json();
         setPathData(data);
+        setIsLoading(false);
       } catch (error) {
         console.error("경로 데이터를 불러오는 중 오류:", error);
+        setHasError(true);
+        setIsLoading(false);
+      } finally {
+        clearTimeout(timeoutId);
       }
     };
 
     fetchPath();
   }, [searchParams]);
 
-  /* ------------------------------
-     지도 렌더링 처리
-  ------------------------------ */
   useEffect(() => {
     if (!pathData || !startCoord || !endCoord) return;
 
@@ -137,16 +139,11 @@ const DirectionsPage: React.FC = () => {
         level: 5,
       });
 
-      /* 시작/끝 마커 */
       new kakaoMaps.Marker({ position: new kakaoMaps.LatLng(startCoord.lat, startCoord.lng), map });
       new kakaoMaps.Marker({ position: new kakaoMaps.LatLng(endCoord.lat, endCoord.lng), map });
 
-      /* ------------------------------
-         내부 경로 타입일 경우: Polyline 생성
-      ------------------------------ */
       if ("pathNodeList" in pathData.data) {
         const nodes = pathData.data.pathNodeList;
-
         const linePaths: kakao.maps.LatLng[] = [];
 
         nodes.forEach((node) => {
@@ -172,9 +169,6 @@ const DirectionsPage: React.FC = () => {
           map.setBounds(bounds);
         }
       } else {
-        /* ------------------------------
-           외부 경로 링크만 제공된 fallback
-        ------------------------------ */
         const bounds = new kakaoMaps.LatLngBounds();
         bounds.extend(new kakaoMaps.LatLng(startCoord.lat, startCoord.lng));
         bounds.extend(new kakaoMaps.LatLng(endCoord.lat, endCoord.lng));
@@ -193,74 +187,83 @@ const DirectionsPage: React.FC = () => {
     }
   }, [pathData, startCoord, endCoord]);
 
-  /* ------------------------------
-     거리 / 시간 문자열 처리
-  ------------------------------ */
-
   let distanceStr = "";
   let timeStr = "";
 
   if (pathData && "pathSummary" in pathData.data) {
     const { totalDistance, totalTime } = pathData.data.pathSummary;
-
     distanceStr = totalDistance >= 1000 ? `${(totalDistance / 1000).toFixed(1)} km` : `${totalDistance} m`;
-
     const hours = Math.floor(totalTime / 3600);
     const minutes = Math.floor((totalTime % 3600) / 60);
-
     timeStr = hours > 0 ? `${hours}시간 ${minutes}분` : minutes > 0 ? `${minutes}분` : `${totalTime}초`;
   }
 
-  /* ------------------------------
-     화면 렌더링
-  ------------------------------ */
+  if (isLoading) {
+    return (
+        <div className={styles.loading}>
+          <div className={styles.spinner}></div>
+        </div>
+    );
+  }
+
+  if (hasError) {
+    return (
+        <div className={styles.container}>
+          <div className={styles.topBar}>
+            <button onClick={() => router.push("/")} className={styles.backButton}>
+              ←
+            </button>
+          </div>
+          <div className={styles.loading}>
+            서버 오류로 인해 길찾기 기능을 요청할 수 없습니다.
+          </div>
+        </div>
+    );
+  }
 
   return (
-      <div style={{ position: "relative", width: "100%", height: "100vh" }}>
-        <div id="map" style={{ width: "100%", height: "100%" }} />
+            <div style={{ position: "relative", width: "100%", height: "100vh" }}>
+              <div className={styles.topBar}>
+                <button onClick={() => router.push('/')} className={styles.backButton}>
+                  뒤로 가기
+                </button>
+              </div>
+              <div id="map" style={{ width: "100%", height: "100%" }} />
 
-        {/* 내부 경로 */}
         {pathData && "pathSummary" in pathData.data && (
-            <div
-                style={{
-                  position: "absolute",
-                  bottom: "10px",
-                  left: "0",
-                  width: "100%",
-                  padding: "12px",
-                  backgroundColor: "#FFFFFF",
-                  zIndex: 10,
-                  boxSizing: "border-box",
-                  borderTop: "1px solid #ccc",
-                }}
-            >
+            <div style={{
+              position: "absolute",
+              bottom: "10px",
+              left: "0",
+              width: "100%",
+              padding: "12px",
+              backgroundColor: "#FFFFFF",
+              zIndex: 10,
+              boxSizing: "border-box",
+              borderTop: "1px solid #ccc",
+            }}>
               <p>
-                총 거리: <strong>{distanceStr}</strong>
-                <br />
+                총 거리: <strong>{distanceStr}</strong><br />
                 예상 소요 시간: <strong>{timeStr}</strong>
               </p>
             </div>
         )}
 
-        {/* Fallback 경로 */}
         {pathData && "uri" in pathData.data && (
-            <div
-                style={{
-                  position: "absolute",
-                  bottom: "10px",
-                  left: "0",
-                  width: "100%",
-                  padding: "12px",
-                  backgroundColor: "#FEEDBE",
-                  zIndex: 10,
-                  boxSizing: "border-box",
-                  borderTop: "1px solid #ccc",
-                }}
-            >
+            <div style={{
+              position: "absolute",
+              bottom: "10px",
+              left: "0",
+              width: "100%",
+              padding: "12px",
+              backgroundColor: "#FEEDBE",
+              zIndex: 10,
+              boxSizing: "border-box",
+              borderTop: "1px solid #ccc",
+            }}>
               <p style={{ marginBottom: "8px" }}>
-                ⚠️ 해당 구간은 서비스 제공 구역이 아니거나 너무 멉니다.
-                <br />
-                카카오맵 외부 경로로 안내됩니다.
+                ⚠️ 다음 오류로 인해 기능을 사용할 수 없습니다. 카카오맵을 이용해주십시오.<br />
+                {pathData.message}
               </p>
               <a href={pathData.data.uri} target="_blank" rel="noopener noreferrer" style={{ color: "#005AFF", textDecoration: "underline" }}>
                 카카오맵에서 경로 보기

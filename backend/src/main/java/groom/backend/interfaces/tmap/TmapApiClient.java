@@ -3,7 +3,13 @@ package groom.backend.interfaces.tmap;
 import groom.backend.interfaces.tmap.dto.request.TmapPathFindRequest;
 import groom.backend.interfaces.tmap.dto.response.TmapPathFindResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -15,9 +21,35 @@ public class TmapApiClient {
   private final RestClient restClient;
 
   public TmapApiClient(RestClient.Builder builder,
-                  @Value("${api.tmap.url}") String tmapUrl,
-                  @Value("${api.tmap.api-key}") String tmapApiKey) {
-    this.restClient = builder.baseUrl(tmapUrl).build();
+                       @Value("${api.tmap.url}") String tmapUrl,
+                       @Value("${api.tmap.api-key}") String tmapApiKey,
+                       @Value("${api.tmap.connection-timeout}") Integer connectionTimeoutMs,
+                       @Value("${api.tmap.read-timeout}") Integer readTimeoutMs,
+                       @Value("${api.tmap.bulkhead-thread-limit}") Integer connLimit) {
+    // 1. 커넥션 풀 매니저(HttpClient5 전용)
+    var connManager = PoolingHttpClientConnectionManagerBuilder.create()
+            .setMaxConnTotal(connLimit)        // bulkhead 패턴. 전체 동시 연결 connection pool : 50
+            .setMaxConnPerRoute(connLimit)     // Route별 : 50
+            .build();
+
+    // 2. Timeout 설정 (HttpClient5 스타일)
+    RequestConfig requestConfig = RequestConfig.custom()
+            .setConnectTimeout(Timeout.ofMilliseconds(connectionTimeoutMs))
+            .setResponseTimeout(Timeout.ofMilliseconds(readTimeoutMs))
+            .build();
+
+    // 3. HttpClient 빌드
+    CloseableHttpClient httpClient = HttpClients.custom()
+            .setConnectionManager(connManager)
+            .setDefaultRequestConfig(requestConfig)
+            .build();
+
+    // 4. RestClient 반영
+    this.restClient = builder
+            .requestFactory(new HttpComponentsClientHttpRequestFactory(httpClient))
+            .baseUrl(tmapUrl)
+            .build();
+
     this.tmapApiKey = tmapApiKey;
   }
 
