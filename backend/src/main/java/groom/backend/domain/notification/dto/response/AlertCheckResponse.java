@@ -1,7 +1,6 @@
 package groom.backend.domain.notification.dto.response;
 
 import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
 
 public record AlertCheckResponse(
         @NotNull
@@ -11,9 +10,6 @@ public record AlertCheckResponse(
         Double lng,
 
         @NotNull
-        String address,
-
-        @NotNull
-        LocalDateTime time
+        String address
 ) {
 }
