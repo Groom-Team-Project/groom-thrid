@@ -45,7 +45,7 @@ public class Report extends BaseEntity {
     private ReportStatus status = ReportStatus.PENDING;
 
     // 이미지 URL
-    @Column(name = "image_url", length = 500)
+    @Column(name = "image_url", length = 100000)
     private String imageUrl;
 
     // 관리자 답변 (승인/반려 시 사용자에게 전달)

@@ -34,7 +34,7 @@ public class ReportResponse extends BaseEntity {
     @Column(nullable = false, length = 20)
     private String status;
 
-    @Column(name = "image_url", length = 500)
+    @Column(name = "image_url", length = 100000)
     private String imageUrl;
 
     @Column(name = "admin_reply", length = 2000)

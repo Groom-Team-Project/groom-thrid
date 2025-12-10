@@ -14,6 +14,7 @@ import groom.backend.domain.report.service.spec.ReportService;
 import groom.backend.domain.users.entity.Role;
 import groom.backend.domain.users.entity.User;
 import groom.backend.domain.users.repository.spec.UserRepository;
+import groom.backend.common.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ public class ReportServiceImpl implements ReportService {
 
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
+    private final S3Service s3Service;
 
     @Override
     @Transactional
@@ -34,7 +36,16 @@ public class ReportServiceImpl implements ReportService {
         User user = userRepository.findUserById(authUser.userId())
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. ID: " + authUser.userId()));
         
-        Report report = ReportMapper.toEntity(placeId, request, user);
+        // Base64 이미지를 S3에 업로드하고 URL로 변환
+        String imageUrl = s3Service.uploadImageIfBase64(request.imageUrl(), "reports");
+
+        // imageUrl이 업데이트된 CreateReportRequest 생성
+        CreateReportRequest updatedRequest = new CreateReportRequest(
+                request.content(),
+                imageUrl
+        );
+        
+        Report report = ReportMapper.toEntity(placeId, updatedRequest, user);
         Report savedReport = reportRepository.save(report);
         return ReportMapper.toResponseDto(savedReport);
     }
@@ -85,7 +96,15 @@ public class ReportServiceImpl implements ReportService {
             }
         }
         
-        report.update(request.content(), request.imageUrl());
+        // 기존 이미지가 S3에 있다면 삭제
+        if (report.getImageUrl() != null && !report.getImageUrl().isBlank()) {
+            s3Service.deleteImage(report.getImageUrl());
+        }
+        
+        // Base64 이미지를 S3에 업로드하고 URL로 변환
+        String imageUrl = s3Service.uploadImageIfBase64(request.imageUrl(), "reports");
+        
+        report.update(request.content(), imageUrl);
         
         Report savedReport = reportRepository.save(report);
         return ReportMapper.toResponseDto(savedReport);
@@ -103,6 +122,11 @@ public class ReportServiceImpl implements ReportService {
             if (report.getUser() == null || !report.getUser().getId().equals(authUser.userId())) {
                 throw new IllegalArgumentException("본인의 제보만 삭제할 수 있습니다.");
             }
+        }
+        
+        // S3에서 이미지 삭제
+        if (report.getImageUrl() != null && !report.getImageUrl().isBlank()) {
+            s3Service.deleteImage(report.getImageUrl());
         }
         
         reportRepository.deleteById(reportId);
@@ -129,6 +153,15 @@ public class ReportServiceImpl implements ReportService {
                     throw new IllegalArgumentException("제보 ID " + reportId + "는 본인의 제보가 아니거나 존재하지 않습니다.");
                 }
             }
+        }
+        
+        // 삭제 전에 모든 제보의 이미지를 S3에서 삭제
+        for (Long reportId : reportIds) {
+            reportRepository.findById(reportId).ifPresent(report -> {
+                if (report.getImageUrl() != null && !report.getImageUrl().isBlank()) {
+                    s3Service.deleteImage(report.getImageUrl());
+                }
+            });
         }
         
         reportRepository.deleteAllById(reportIds);
