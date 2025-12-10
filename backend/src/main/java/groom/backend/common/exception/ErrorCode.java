@@ -53,7 +53,8 @@ public enum ErrorCode {
     DATABASE_ERROR(500, "S_002", "데이터베이스 오류가 발생했습니다"),
 
     // Relation 에러(P_xxx)
-    RELATION_NOT_FOUND(404, "P_001", "보호자 - 사용자 관계를 찾을 수 없습니다.");
+    RELATION_NOT_FOUND(404, "P_001", "보호자 - 사용자 관계를 찾을 수 없습니다."),
+    RELATION_EXISTS(403, "P_002", "이미 관계가 존재하는 사용자입니다.");
 
     private final int status;
     private final String code;
