@@ -1,10 +1,14 @@
 package groom.backend.domain.notification.repository.spec;
 
 import groom.backend.domain.notification.entity.Notification;
+import java.util.Optional;
 
 public interface NotificationRepository {
 
-    void save(Notification notification);
+    Notification save(Notification notification);
 
-    Notification findById(Long relationId);
+    /**
+     * relationId로 가장 최신 알림 조회
+     */
+    Optional<Notification> findLatestByRelationId(Long relationId);
 }
