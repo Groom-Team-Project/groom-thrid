@@ -177,6 +177,46 @@ const DirectionsPage: React.FC = () => {
       }
     };
 
+    // 사용자 위치 추적
+    useEffect(() => {
+      if (!isNavigating || !endCoord) return;
+
+      const watchId = navigator.geolocation.watchPosition(
+          (position) => {
+            const currentLat = position.coords.latitude;
+            const currentLng = position.coords.longitude;
+
+            const latDiff = Math.abs(currentLat - endCoord.lat);
+            const lngDiff = Math.abs(currentLng - endCoord.lng);
+
+            const threshold = 0.00001; // 대략적 위치 추정
+
+            if (latDiff < threshold && lngDiff < threshold) {
+              console.log("목표 지점에 도착. 길안내 종료 요청 전송");
+
+              fetch("/api/v1/paths/navigation", {
+                method: "DELETE",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+                },
+              }).then((res) => {
+                if (res.ok) setIsNavigating(false);
+              });
+            }
+          },
+          (error) => {
+            console.error("위치 추적 실패", error);
+          },
+          { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+      );
+
+      return () => {
+        navigator.geolocation.clearWatch(watchId);
+      };
+    }, [isNavigating, endCoord]);
+
+
     if (!(window as any).kakao || !(window as any).kakao.maps) {
       const script = document.createElement("script");
       const kakaoApiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
