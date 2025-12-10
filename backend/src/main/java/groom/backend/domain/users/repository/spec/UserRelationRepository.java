@@ -19,4 +19,7 @@ public interface UserRelationRepository {
 
     // 사용자 ID로 관계 존재 여부 확인
     boolean existsByUserId(UUID userId);
+
+    // email로 관계 존재 여부 확인
+    boolean existsByEmail(String email);
 }
