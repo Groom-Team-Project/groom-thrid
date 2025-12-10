@@ -31,23 +31,23 @@ public class UserRelation extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(nullable = false)
-    private User protectorId;
+    private User guardianId;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "relation")
     private List<Notification> notifications;
 
     // 사용자-보호자 관계 생성
-    public static UserRelation create(User user, User protector) {
-        if (user == null || protector == null) {
+    public static UserRelation create(User user, User guardian) {
+        if (user == null || guardian == null) {
             throw new IllegalArgumentException("사용자와 보호자는 null일 수 없습니다");
         }
-        if (user.getId().equals(protector.getId())) {
+        if (user.getId().equals(guardian.getId())) {
             throw new IllegalArgumentException("사용자와 보호자는 동일한 사람일 수 없습니다");
         }
 
         UserRelation relation = new UserRelation();
         relation.userId = user;
-        relation.protectorId = protector;
+        relation.guardianId = guardian;
         return relation;
     }
 
@@ -59,12 +59,12 @@ public class UserRelation extends BaseEntity {
         if (this.userId.getId().equals(newProtector.getId())) {
             throw new IllegalArgumentException("사용자와 보호자는 동일한 사람일 수 없습니다");
         }
-        this.protectorId = newProtector;
+        this.guardianId = newProtector;
     }
 
     // 보호자 ID 조회
     public UUID getProtectorId() {
-        return this.protectorId.getId();
+        return this.guardianId.getId();
     }
 
     // 사용자 ID 조회
