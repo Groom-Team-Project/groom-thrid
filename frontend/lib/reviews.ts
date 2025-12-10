@@ -64,7 +64,14 @@ export const getReviewsByStation = async (placeId: number | string, stationName?
     })
 
     if (response.data) {
-      return response.data.map(review => convertReviewResponse(review, stationName))
+      // 최신 작성 순으로 정렬 (createdAt 기준 내림차순)
+      const sortedReviews = [...response.data].sort((a, b) => {
+        const dateA = new Date(a.createdAt).getTime()
+        const dateB = new Date(b.createdAt).getTime()
+        return dateB - dateA // 최신순 (내림차순)
+      })
+      
+      return sortedReviews.map(review => convertReviewResponse(review, stationName))
     }
     return []
   } catch (error) {

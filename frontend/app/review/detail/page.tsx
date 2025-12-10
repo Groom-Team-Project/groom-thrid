@@ -20,19 +20,13 @@ export default function ReviewDetailPage() {
 
   useEffect(() => {
     const loadReview = async () => {
-      const loggedIn = localStorage.getItem('isLoggedIn')
-      if (loggedIn !== 'true') {
-        router.push('/auth')
-        return
-      }
-
       if (!reviewId) {
         router.push('/')
         return
       }
 
       try {
-        // 먼저 리뷰 정보를 가져옴
+        // 먼저 리뷰 정보를 가져옴 (비로그인 사용자도 가능)
         const reviewData = await getReviewById(reviewId)
         
         // 충전소 정보를 가져와서 stationName 설정
