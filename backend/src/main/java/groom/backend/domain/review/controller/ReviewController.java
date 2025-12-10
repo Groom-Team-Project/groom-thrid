@@ -48,11 +48,9 @@ public class ReviewController {
     }
 
     @GetMapping("/{reviewId}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'PROTECTOR')")
     @Operation(
             summary = "리뷰 조회",
-            description = "ID로 리뷰를 조회합니다",
-            security = {@SecurityRequirement(name = "bearerAuth")}
+            description = "ID로 리뷰를 조회합니다 (인증 불필요)"
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공"),
@@ -63,11 +61,9 @@ public class ReviewController {
     }
 
     @GetMapping("/place/{placeId}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'PROTECTOR')")
     @Operation(
             summary = "장소별 리뷰 목록 조회",
-            description = "장소 ID로 해당 장소의 모든 리뷰를 조회합니다",
-            security = {@SecurityRequirement(name = "bearerAuth")}
+            description = "장소 ID로 해당 장소의 모든 리뷰를 조회합니다 (인증 불필요)"
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공")

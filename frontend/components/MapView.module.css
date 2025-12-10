@@ -504,6 +504,7 @@
 }
 
 .reviewActions {
+  position: relative;
   display: flex;
   gap: 4px;
   flex-shrink: 0;
@@ -527,6 +528,56 @@
 
 .menuIcon:hover {
   color: #333;
+}
+
+.menuOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+}
+
+.menu {
+  position: absolute;
+  top: 28px;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 100px;
+  overflow: hidden;
+}
+
+.menuItem {
+  width: 100%;
+  padding: 12px 16px;
+  text-align: left;
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.menuItem:last-child {
+  border-bottom: none;
+}
+
+.menuItem:hover {
+  background: #f5f5f5;
+}
+
+.deleteMenuItem {
+  color: #ff3b30;
+}
+
+.deleteMenuItem:hover {
+  background: #ffe5e5;
 }
 
 .emptyReview {

@@ -93,7 +93,15 @@ export const apiRequest = async <T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> => {
-  const isPublicEndpoint = PUBLIC_ENDPOINTS.some(path => endpoint.startsWith(path))
+  // 리뷰 조회(GET)는 비로그인에서도 가능, 생성/수정/삭제는 인증 필요
+  const isReviewGetRequest = 
+    options.method === 'GET' && 
+    (endpoint.startsWith('/reviews/place/') || endpoint.startsWith('/reviews/'))
+  
+  const isPublicEndpoint = 
+    PUBLIC_ENDPOINTS.some(path => endpoint.startsWith(path)) || 
+    isReviewGetRequest
+  
   const token = !isPublicEndpoint ? getAccessToken() : null
 
   const headers: HeadersInit = {

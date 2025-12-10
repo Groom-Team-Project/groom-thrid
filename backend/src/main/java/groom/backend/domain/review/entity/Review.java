@@ -43,7 +43,7 @@ public class Review extends BaseEntity {
     private String author;
 
     // 이미지 URL
-    @Column(name = "image_url", length = 500)
+    @Column(name = "image_url", length = 100000)
     private String imageUrl;
 
     // 활성화 여부

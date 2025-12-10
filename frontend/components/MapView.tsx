@@ -37,6 +37,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     const [reviews, setReviews] = useState<Review[]>([])
     const [userType, setUserType] = useState<string | null>(null)
     const [showSearchButton, setShowSearchButton] = useState(false)
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
     // 에러 상태 추가
     const [error, setError] = useState<string | null>(null)
@@ -209,12 +210,17 @@ export default function MapView({ selectedCategory }: MapViewProps) {
 
             // 마커 이미지 설정
             const imageSrc = selectedStation?.placeId === station.placeId
-                ? 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png'
-                : 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png'
+                ? 'https://img.icons8.com/external-phatplus-lineal-color-phatplus/64/external-point-ev-car-phatplus-lineal-color-phatplus.png'
+                : 'https://img.icons8.com/external-phatplus-lineal-phatplus/64/external-point-ev-car-phatplus-lineal-phatplus.png'
 
-            const imageSize = new window.kakao.maps.Size(24, 35)
-            const markerImage = new window.kakao.maps.MarkerImage(imageSrc, imageSize)
 
+            const imageSize = new window.kakao.maps.Size(36, 36)
+            const imageOptions = { offset: new window.kakao.maps.Point(18, 30) }
+            const markerImage = new window.kakao.maps.MarkerImage(
+                imageSrc,
+                imageSize,
+                imageOptions
+            )
             const marker = new window.kakao.maps.Marker({
                 position: markerPosition,
                 image: markerImage,
@@ -230,47 +236,39 @@ export default function MapView({ selectedCategory }: MapViewProps) {
             marker.setMap(kakaoMapRef.current)
             markersRef.current.push(marker)
 
-            // 커스텀 오버레이로 라벨 추가
-            const content = `
-        <div style="
-          padding: 5px 10px;
-          background: white;
-          border: 2px solid #4A90E2;
-          border-radius: 15px;
-          font-size: 12px;
-          font-weight: bold;
-          color: #333;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          white-space: nowrap;
-          cursor: pointer;
-        ">
-          ${station.facilityName}
-        </div>
-      `
-
-            const labelPosition = new window.kakao.maps.LatLng(
-                station.lat + 0.0008, // 라벨을 마커 위에 표시
-                station.lng
-            )
-
-            const customOverlay = new window.kakao.maps.CustomOverlay({
-                position: labelPosition,
-                content: content,
-                yAnchor: 1
-            })
-
-            customOverlay.setMap(kakaoMapRef.current)
-            markersRef.current.push(customOverlay)
         })
 
     }, [stations, selectedStation, mapLoaded, selectedCategory])
 
     // 선택된 충전소로 지도 이동
     useEffect(() => {
-        if (selectedStation && kakaoMapRef.current) {
-            const moveLatLon = new window.kakao.maps.LatLng(selectedStation.lat, selectedStation.lng)
-            kakaoMapRef.current.panTo(moveLatLon)
-        }
+        if (!selectedStation || !kakaoMapRef.current) return
+
+        const map = kakaoMapRef.current
+
+        // 마커의 좌표
+        const markerPosition = new window.kakao.maps.LatLng(
+            selectedStation.lat,
+            selectedStation.lng
+        )
+
+        // 마커를 화면의 특정 위치(중앙보다 위쪽)에 배치
+        // 지도를 이동시켜서 마커가 패널에 가려지지 않게 함
+        const projection = map.getProjection()
+        const point = projection.pointFromCoords(markerPosition)
+
+        // 패널 높이만큼 아래로 이동 (픽셀 단위, 줌 레벨 무관)
+        // 패널이 하단 40% 차지한다고 가정, 지도 높이의 20% 위치로 조정
+        const mapHeight = map.getNode().offsetHeight
+        const panelOffset = mapHeight * 0.2  // 픽셀 단위
+
+        point.y += panelOffset  // y축 아래로 이동 (마커를 위로 올림)
+
+        // 조정된 포인트를 좌표로 변환
+        const newCenter = projection.coordsFromPoint(point)
+
+        map.panTo(newCenter)
+
     }, [selectedStation])
 
     // 디버그: MapView 내부에 추가
@@ -279,11 +277,16 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     }, [selectedCategory])
 
 
-    const handleStationClick = (station: ChargingStation) => {
+    const handleStationClick = async (station: ChargingStation) => {
         setSelectedStation(station)
-        // 리뷰 데이터 로드
-        const stationReviews = getReviewsByStation(station.placeId)
-        setReviews(stationReviews)
+        // 리뷰 데이터 로드 (충전소명 전달)
+        try {
+            const stationReviews = await getReviewsByStation(station.placeId, station.facilityName)
+            setReviews(stationReviews)
+        } catch (error) {
+            console.error('리뷰 로드 실패:', error)
+            setReviews([])
+        }
     }
 
     const checkLogin = () => {
@@ -335,18 +338,8 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     }
 
     const handleMyLocation = () => {
-        if (navigator.geolocation && kakaoMapRef.current) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const moveLatLon = new window.kakao.maps.LatLng(position.coords.latitude, position.coords.longitude)
-                    kakaoMapRef.current.panTo(moveLatLon)
-                    createUserMarker(kakaoMapRef.current, {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    })
-                }
-            )
-        }
+        const moveLatLon = new window.kakao.maps.LatLng(lat, lng)
+        kakaoMapRef.current.panTo(moveLatLon)
     }
 
     const handleEmergencyClick = () => {
@@ -656,8 +649,46 @@ export default function MapView({ selectedCategory }: MapViewProps) {
                     </div>
                   ) : (
                     reviews.map((review) => {
-                      const userId = localStorage.getItem('userEmail') || ''
-                      const isOwner = review.userId === userId
+                      // 백엔드에서 userId를 제공하지 않으므로 작성자 이름으로 확인
+                      const userName = localStorage.getItem('userName') || ''
+                      const isOwner = review.userName === userName
+                      const isMenuOpen = openMenuId === review.id
+                      
+                      const handleMenuClick = (e: React.MouseEvent) => {
+                        e.stopPropagation()
+                        setOpenMenuId(isMenuOpen ? null : review.id)
+                      }
+                      
+                      const handleEdit = (e: React.MouseEvent) => {
+                        e.stopPropagation()
+                        setOpenMenuId(null)
+                        if (selectedStation) {
+                          router.push(`/review/write?reviewId=${review.id}&stationId=${selectedStation.placeId}`)
+                        }
+                      }
+                      
+                      const handleDelete = async (e: React.MouseEvent) => {
+                        e.stopPropagation()
+                        setOpenMenuId(null)
+                        if (confirm('정말로 이 리뷰를 삭제하시겠습니까?')) {
+                          try {
+                            await deleteReview(review.id)
+                            alert('리뷰가 삭제되었습니다.')
+                            // 리뷰 목록 새로고침
+                            if (selectedStation) {
+                              const stationReviews = await getReviewsByStation(selectedStation.placeId, selectedStation.facilityName)
+                              setReviews(stationReviews)
+                            }
+                          } catch (err) {
+                            console.error('리뷰 삭제 실패:', err)
+                            if (err instanceof Error) {
+                              alert(err.message || '리뷰 삭제에 실패했습니다.')
+                            } else {
+                              alert('리뷰 삭제에 실패했습니다.')
+                            }
+                          }
+                        }
+                      }
                       
                       return (
                         <div 
@@ -681,10 +712,33 @@ export default function MapView({ selectedCategory }: MapViewProps) {
                               >
                                 <button
                                   className={styles.menuIcon}
-                                  onClick={() => router.push(`/review/detail?reviewId=${review.id}`)}
+                                  onClick={handleMenuClick}
+                                  title="메뉴"
                                 >
                                   ⋯
                                 </button>
+                                {isMenuOpen && (
+                                  <>
+                                    <div 
+                                      className={styles.menuOverlay}
+                                      onClick={() => setOpenMenuId(null)}
+                                    />
+                                    <div className={styles.menu}>
+                                      <button 
+                                        className={styles.menuItem}
+                                        onClick={handleEdit}
+                                      >
+                                        수정
+                                      </button>
+                                      <button 
+                                        className={`${styles.menuItem} ${styles.deleteMenuItem}`}
+                                        onClick={handleDelete}
+                                      >
+                                        삭제
+                                      </button>
+                                    </div>
+                                  </>
+                                )}
                               </div>
                             )}
                           </div>

@@ -43,6 +43,7 @@ public class SecurityConfig {
                         // Auth 관련 엔드포인트 (회원가입, 로그인, 토큰 갱신) - 인증 불필요
                         .requestMatchers("/v1/auth/**").permitAll()
                         .requestMatchers("/v1/opendata/**").permitAll()
+                        .requestMatchers("/v1/reviews/**").permitAll()
                         // Swagger UI - 개발환경에서만 허용
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/v1/paths/**").permitAll()
@@ -60,6 +61,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost",
                 "http://localhost:3000",
                 "http://localhost:80",
                 "http://localhost:8080",
