@@ -27,11 +27,11 @@ public class UserRelation extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(nullable = false)
-    private User userId;
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(nullable = false)
-    private User guardianId;
+    private User guardian;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "relation")
     private List<Notification> notifications;
