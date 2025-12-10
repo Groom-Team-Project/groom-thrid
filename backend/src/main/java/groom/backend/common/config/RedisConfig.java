@@ -3,6 +3,8 @@ package groom.backend.common.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import groom.backend.domain.location.redis.subscriber.LocationSubscriber;
+import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -18,8 +20,6 @@ import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-
-import java.time.Duration;
 
 @Configuration
 @EnableCaching
@@ -69,9 +69,7 @@ public class RedisConfig {
     }
 
     /**
-     * CacheManager 설정
-     * - Spring Cache 추상화 사용
-     * - TTL: 30분
+     * CacheManager 설정 - Spring Cache 추상화 사용 - TTL: 30분
      */
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
@@ -95,10 +93,10 @@ public class RedisConfig {
     }
 
     /**
-     * ObjectMapper 설정
-     * - LocalDateTime 등 Java 8 날짜/시간 API 지원
+     * ObjectMapper 설정 - LocalDateTime 등 Java 8 날짜/시간 API 지원 - 전역 Bean으로 등록하여 모든 JSON 직렬화/역직렬화에 동일한 설정 적용
      */
-    private ObjectMapper objectMapper() {
+    @Bean
+    public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -106,12 +104,21 @@ public class RedisConfig {
     }
 
     /**
-     * Redis pub/sub 메시지 처리 Listener
+     * Redis pub/sub 메시지 처리 Listener - LocationSubscriber를 location:* 채널에 등록
      */
     @Bean
-    public RedisMessageListenerContainer redisMessageListener(RedisConnectionFactory connectionFactory) {
+    public RedisMessageListenerContainer redisMessageListener(
+            RedisConnectionFactory connectionFactory,
+            LocationSubscriber locationSubscriber) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
+
+        // location:* 채널에 LocationSubscriber 등록
+        container.addMessageListener(
+                locationSubscriber,
+                new org.springframework.data.redis.listener.PatternTopic("location:*")
+        );
+
         return container;
     }
 }

@@ -4,7 +4,7 @@ import groom.backend.domain.auth.dto.request.FormLoginAuthRequest;
 import groom.backend.domain.auth.dto.request.FormSignupAuthRequest;
 import groom.backend.domain.auth.dto.response.CommonAuthResponse;
 import groom.backend.domain.auth.dto.response.SignupAuthResponse;
-import groom.backend.domain.auth.service.impl.AuthServiceImpl;
+import groom.backend.domain.auth.service.spec.AuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthServiceImpl authService;
+    private final AuthService authService;
 
     // 회원가입
     @PostMapping("/signup")
