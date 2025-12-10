@@ -61,7 +61,7 @@ public class UserController {
     @PostMapping("/{email}")
     public void guardianMatch(@AuthenticationPrincipal AuthUser user, @PathVariable("email") String email) {
 
-        UUID userid = user.userId();
+        UUID userId = user.userId();
 
         userService.guardianMatch(userId, email);
     }
