@@ -41,4 +41,7 @@ public class UserRelationRepositoryImpl implements UserRelationRepository {
     public boolean existsByUserId(UUID userId) {
         return jpaUserRelationRepository.existsByUserId(userId);
     }
+
+    @Override
+    public boolean existsByEmail(String email) { return jpaUserRelationRepository.existsByEmail(email)}
 }
