@@ -1,13 +1,17 @@
 package groom.backend.domain.users.service.impl;
 
+import groom.backend.common.exception.BusinessException;
+import groom.backend.common.exception.ErrorCode;
 import groom.backend.common.exception.UserNotFoundException;
 import groom.backend.domain.users.dto.request.UpdateUserRequest;
 import groom.backend.domain.users.dto.response.UserResponse;
 import groom.backend.domain.users.entity.User;
 import groom.backend.domain.users.entity.UserCredential;
+import groom.backend.domain.users.entity.UserRelation;
 import groom.backend.domain.users.mapper.UserMapper;
-import groom.backend.domain.users.repository.impl.UserCredentialRepositoryImpl;
-import groom.backend.domain.users.repository.impl.UserRepositoryImpl;
+import groom.backend.domain.users.repository.spec.UserCredentialRepository;
+import groom.backend.domain.users.repository.spec.UserRelationRepository;
+import groom.backend.domain.users.repository.spec.UserRepository;
 import groom.backend.domain.users.service.spec.UserService;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -21,8 +25,9 @@ import org.springframework.stereotype.Service;
 @Transactional
 public class UserServiceImpl implements UserService {
 
-    private final UserRepositoryImpl userRepository;
-    private final UserCredentialRepositoryImpl userCredentialRepository;
+    private final UserRepository userRepository;
+    private final UserCredentialRepository userCredentialRepository;
+    private final UserRelationRepository userRelationRepository;
 
     @Override
     public UserResponse getUserById(UUID id) {
@@ -53,6 +58,27 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findUserById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
         userRepository.deleteById(user.getId());
+    }
+
+    @Override
+    public void guardianMatch(UUID userId, String email) {
+
+        // 관계 여부 검증
+        if (userRelationRepository.existsByUserId(userId)) {
+            throw new BusinessException(ErrorCode.RELATION_EXISTS);
+        }
+
+        if (userRelationRepository.existsByEmail(email)) {
+            throw new BusinessException(ErrorCode.RELATION_EXISTS);
+        }
+
+        User user = userRepository.findUserById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        User guardian = userRepository.findUserByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException(email));
+
+        UserRelation relation = UserRelation.create(user, guardian);
+        userRelationRepository.save(relation);
     }
 
     // ================= 내부 api용 ===================

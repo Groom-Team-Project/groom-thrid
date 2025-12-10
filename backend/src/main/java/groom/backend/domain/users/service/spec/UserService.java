@@ -24,7 +24,7 @@ public interface UserService {
     // 사용자 삭제
     void deleteUser(UUID id);
 
-    void guardianMach(UUID userId, String email);
+    void guardianMatch(UUID userId, String email);
 
     // ================= 내부 api용 ===================
 
