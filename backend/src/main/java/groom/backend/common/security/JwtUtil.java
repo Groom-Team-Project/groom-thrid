@@ -1,4 +1,4 @@
-package groom.backend.common.util;
+package groom.backend.common.security;
 
 import groom.backend.domain.users.entity.Role;
 import io.jsonwebtoken.Claims;
@@ -28,8 +28,8 @@ public class JwtUtil {
         this.refreshTokenExpiration = refreshTokenExpiration;
     }
 
-    // Access Token 생성 (userId + role + name 포함)
-    public String generateAccessToken(UUID userId, Role role, String name) {
+    // Access Token 생성 (userId + role + relationId 포함)
+    public String generateAccessToken(UUID userId, Role role, String name, Long relationId) {
         Date now = new Date();
         Date expiration = new Date(now.getTime() + accessTokenExpiration);
 
@@ -37,6 +37,7 @@ public class JwtUtil {
                 .subject(userId.toString())
                 .claim("role", role.name())  // RBAC을 위한 role 추가
                 .claim("name", name)  // 사용자 이름 추가
+                .claim("relationId", relationId) // relationId 추가 없으면 null
                 .issuedAt(now)
                 .expiration(expiration)
                 .signWith(secretKey)
@@ -56,25 +57,14 @@ public class JwtUtil {
                 .compact();
     }
 
-    // 토큰에서 사용자 ID 추출
-    public UUID getUserIdFromToken(String token) {
+    // 토큰에서 userId, role, relationId 추출
+    public AuthUser getUserInfoFromToken(String token) {
         Claims claims = parseToken(token);
-        return UUID.fromString(claims.getSubject());
+        return new AuthUser(
+                claims.get("userId", UUID.class),
+                claims.get("role", Role.class),
+                claims.get("relationId", Long.class));
     }
-
-    // 토큰에서 사용자 권한 추출
-    public Role getRoleFromToken(String token) {
-        Claims claims = parseToken(token);
-        String roleString = claims.get("role", String.class);
-        return Role.valueOf(roleString);
-    }
-
-    // 토큰에서 사용자 이름 추출
-    public String getNameFromToken(String token) {
-        Claims claims = parseToken(token);
-        return claims.get("name", String.class);
-    }
-    
 
     // 토큰 유효성 검증
     public boolean validateToken(String token) {

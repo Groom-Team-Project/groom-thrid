@@ -61,10 +61,10 @@ public class GlobalExceptionHandler {
 
     // BusinessException 처리 (비즈니스 로직 예외)
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException e) {
+    public ResponseEntity<ApiResponse<Object>> handleBusinessException(BusinessException e) {
         ErrorCode errorCode = e.getErrorCode();
 
-        ApiResponse<Void> response = ApiResponse.error(
+        ApiResponse<Object> response = ApiResponse.error(
                 errorCode.getStatus(),
                 errorCode.getMessage(),
                 List.of(new ErrorDetail(
@@ -72,8 +72,10 @@ public class GlobalExceptionHandler {
                         null,
                         e.getMessage(),
                         errorCode.getCode()
-                ))
+                )),
+                e.getData()
         );
+
 
         return ResponseEntity
                 .status(errorCode.getStatus())
@@ -93,6 +95,48 @@ public class GlobalExceptionHandler {
                         null,
                         e.getMessage(),
                         "B_001"  // Business logic error
+                ))
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(response);
+    }
+
+    /**
+     * 제보 NotFoundException 처리 (404 Not Found)
+     */
+    @ExceptionHandler(ReportNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleReportNotFoundException(ReportNotFoundException e) {
+        ApiResponse<Void> response = ApiResponse.error(
+                StatusCodeMessage.NOT_FOUND.getCode(),
+                StatusCodeMessage.NOT_FOUND.getMessage(),
+                List.of(new ErrorDetail(
+                        null,
+                        null,
+                        e.getMessage(),
+                        "R_001"  // Report not found error
+                ))
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(response);
+    }
+
+    /**
+     * 리뷰 NotFoundException 처리 (404 Not Found)
+     */
+    @ExceptionHandler(ReviewNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleReviewNotFoundException(ReviewNotFoundException e) {
+        ApiResponse<Void> response = ApiResponse.error(
+                StatusCodeMessage.NOT_FOUND.getCode(),
+                StatusCodeMessage.NOT_FOUND.getMessage(),
+                List.of(new ErrorDetail(
+                        null,
+                        null,
+                        e.getMessage(),
+                        "V_001"  // Review not found error
                 ))
         );
 

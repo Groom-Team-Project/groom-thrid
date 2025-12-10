@@ -17,6 +17,8 @@ public class TmapPathFindRequest {
   private String startName;
   private String endName;
   @Builder.Default
+  private Integer speed = 6; // 보행 속도 (단위 : km/h)
+  @Builder.Default
   private Integer searchOption = 30; // 경로 옵션 : 계단 회피
   @Builder.Default
   private String sort = "index"; // 반환 시 경로 순서대로.

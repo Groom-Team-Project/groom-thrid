@@ -1,5 +1,6 @@
-package groom.backend.domain.path.service.impl;
+package groom.backend.domain.path.service.spec;
 
+import groom.backend.common.security.AuthUser;
 import groom.backend.domain.path.dto.request.PathFindRequest;
 import groom.backend.domain.path.dto.response.PathFindResponse;
 
@@ -11,5 +12,5 @@ public interface PathService {
    * @param pathFindRequest
    * @return
    */
-  public PathFindResponse findPath(PathFindRequest pathFindRequest);
+  public PathFindResponse findPath(PathFindRequest pathFindRequest, AuthUser principal);
 }

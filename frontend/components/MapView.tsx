@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { getStations, type ChargingStation } from '@/lib/stations'
+import { type ChargingStation, chargerApi } from '@/lib/stations'
 import { getReviewsByStation, deleteReview, type Review } from '@/lib/reviews'
 import { saveAlert } from '@/lib/alerts'
 import StarRating from './StarRating'
@@ -27,6 +27,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     const kakaoMapRef = useRef<any>(null)
     const markersRef = useRef<any[]>([])
     const userMarkerRef = useRef<any>(null)
+    const selectedCategoryRef = useRef(selectedCategory)
 
     const [stations, setStations] = useState<ChargingStation[]>([])
     const [selectedStation, setSelectedStation] = useState<ChargingStation | null>(null)
@@ -35,11 +36,22 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     const [activeTab, setActiveTab] = useState<'info' | 'review'>('info')
     const [reviews, setReviews] = useState<Review[]>([])
     const [userType, setUserType] = useState<string | null>(null)
+    const [showSearchButton, setShowSearchButton] = useState(false)
+
+    // 에러 상태 추가
+    const [error, setError] = useState<string | null>(null)
 
     const apiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY ?? ''
 
     const location = useLocation();
     const { lat, lng, timestamp } = location;
+
+    // 에러 자동 해제 (5초)
+    useEffect(() => {
+        if (!error) return
+        const t = setTimeout(() => setError(null), 5000)
+        return () => clearTimeout(t)
+    }, [error])
 
     // 카카오 지도 로드
     useEffect(() => {
@@ -61,26 +73,6 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         }
     }, [apiKey, mapLoaded])
 
-    // // 사용자 위치 가져오기
-    // useEffect(() => {
-    //     if (navigator.geolocation) {
-    //         navigator.geolocation.getCurrentPosition(
-    //             (position) => {
-    //                 setUserLocation({
-    //                     lat: position.coords.latitude,
-    //                     lng: position.coords.longitude,
-    //                 })
-    //             },
-    //             () => {
-    //                 // 기본 위치 (서울 시청)
-    //                 setUserLocation({ lat: 37.5665, lng: 126.9780 })
-    //         }
-    //       )
-    //     } else {
-    //       setUserLocation({ lat: 37.5665, lng: 126.9780 })
-    //     }
-    // }, [])
-
     // 사용자 타입 확인
     useEffect(() => {
         const type = localStorage.getItem('userType')
@@ -89,31 +81,51 @@ export default function MapView({ selectedCategory }: MapViewProps) {
 
     // 충전소 데이터 로드
     useEffect(() => {
-        if (selectedCategory === 'charging') {
-            const stations = getStations()
-            setStations(stations)
-
-            // URL 파라미터에서 stationId 확인
-            const stationId = searchParams?.get('stationId')
-            if (stationId) {
-                const station = stations.find(s => s.id === stationId)
-                if (station) {
-                    setSelectedStation(station)
-                    const stationReviews = getReviewsByStation(station.id)
-                    setReviews(stationReviews)
-                }
-            }
-
-            // URL 파라미터에서 tab 확인
-            const tab = searchParams?.get('tab')
-            if (tab === 'review') {
-                setActiveTab('review')
-            }
-        } else {
+        if (selectedCategory !== 'charging') {
+            // 충전소 카테고리가 아니면 마커 제거
             setStations([])
             setSelectedStation(null)
+            setShowSearchButton(false)
+            setError(null)
+            // 기존 마커들 제거
+            markersRef.current.forEach(marker => marker.setMap(null))
+            markersRef.current = []
+            return
         }
-    }, [selectedCategory, searchParams])
+
+        // 맵이 준비되지 않았으면 대기
+        if (!mapLoaded || !kakaoMapRef.current) return
+
+        let mounted = true
+
+        const loadStations = async () => {
+            const bounds = kakaoMapRef.current.getBounds?.()
+            if (!bounds) return
+
+            const sw = bounds.getSouthWest();
+            const ne = bounds.getNorthEast();
+
+            try {
+                const stationsResult = await chargerApi.getChargersInViewport(
+                    sw.getLat(), ne.getLat(), sw.getLng(), ne.getLng()
+                )
+                if (!mounted) return
+
+                setStations(stationsResult)
+                setShowSearchButton(false)
+                setError(null) // 성공 시 에러 초기화
+            } catch (error) {
+                console.error('충전소 데이터 로드 오류:', error)
+                setError('충전소 로드에 실패했습니다. 잠시 후 다시 시도해주세요.')
+            }
+        }
+
+        loadStations()
+
+        return () => {
+            mounted = false
+        }
+    }, [selectedCategory, mapLoaded])
 
     // 카카오맵 초기화
     useEffect(() => {
@@ -131,6 +143,20 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         // 지도 클릭 이벤트 - 선택 해제
         window.kakao.maps.event.addListener(map, 'click', () => {
             setSelectedStation(null)
+        })
+
+        // 지도 이동 이벤트 - 검색 버튼 표시
+        window.kakao.maps.event.addListener(map, 'dragend', () => {
+            if (selectedCategoryRef.current === 'charging') {
+                setShowSearchButton(true)
+            }
+        })
+
+        // 지도 줌 변경 이벤트 - 검색 버튼 표시
+        window.kakao.maps.event.addListener(map, 'zoom_changed', () => {
+            if (selectedCategoryRef.current === 'charging') {
+                setShowSearchButton(true)
+            }
         })
 
         // 사용자 위치 마커 생성
@@ -182,7 +208,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
             const markerPosition = new window.kakao.maps.LatLng(station.lat, station.lng)
 
             // 마커 이미지 설정
-            const imageSrc = selectedStation?.id === station.id
+            const imageSrc = selectedStation?.placeId === station.placeId
                 ? 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png'
                 : 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png'
 
@@ -192,7 +218,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
             const marker = new window.kakao.maps.Marker({
                 position: markerPosition,
                 image: markerImage,
-                title: station.name,
+                title: station.facilityName,
                 clickable: true
             })
 
@@ -218,7 +244,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
           white-space: nowrap;
           cursor: pointer;
         ">
-          ${station.name}
+          ${station.facilityName}
         </div>
       `
 
@@ -247,11 +273,16 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         }
     }, [selectedStation])
 
+    // 디버그: MapView 내부에 추가
+    useEffect(() => {
+        selectedCategoryRef.current = selectedCategory
+    }, [selectedCategory])
+
 
     const handleStationClick = (station: ChargingStation) => {
         setSelectedStation(station)
         // 리뷰 데이터 로드
-        const stationReviews = getReviewsByStation(station.id)
+        const stationReviews = getReviewsByStation(station.placeId)
         setReviews(stationReviews)
     }
 
@@ -268,7 +299,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         // 안내 버튼 클릭 시 제보 신청 페이지로 이동
         if (!checkLogin()) return
         if (selectedStation) {
-            router.push(`/report?stationName=${encodeURIComponent(selectedStation.name)}`)
+            router.push(`/report?stationName=${encodeURIComponent(selectedStation.facilityName)}`)
         }
     }
 
@@ -276,14 +307,14 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         if (!checkLogin()) return
         if (selectedStation) {
             // 지도에 표시된 충전소만 도착지로 설정 가능
-            const isStationOnMap = stations.some(s => s.id === selectedStation.id)
+            const isStationOnMap = stations.some(s => s.placeId === selectedStation.placeId)
             if (isStationOnMap) {
                 // 출발지 확인
                 const startStationId = localStorage.getItem('startStationId')
 
                 if (startStationId) {
                     // 출발지가 있으면 길찾기 화면으로 이동
-                    router.push(`/directions?startId=${startStationId}&endId=${selectedStation.id}`)
+                    router.push(`/directions?startId=${startStationId}&endId=${selectedStation.placeId}`)
                     // localStorage 정리
                     localStorage.removeItem('startStationId')
                     localStorage.removeItem('startStationName')
@@ -295,7 +326,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
                         `&end-lat=${selectedStation.lat}` +
                         `&end-lng=${selectedStation.lng}` +
                         `&start-name=현재 위치` +
-                        `&end-name=${encodeURIComponent(selectedStation.name)}`
+                        `&end-name=${encodeURIComponent(selectedStation.facilityName)}`
                     )
 
                 }
@@ -340,7 +371,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         }
 
         // 보호자에게 알림 전송
-        if (userLocation) {
+        if (location) {
             const guardianEmail = localStorage.getItem('guardianEmail')
             const userId = localStorage.getItem('userEmail') || ''
             const userName = localStorage.getItem('userName') || '사용자'
@@ -351,14 +382,14 @@ export default function MapView({ selectedCategory }: MapViewProps) {
                     userId,
                     userName,
                     guardianEmail,
-                    lat: userLocation.lat,
-                    lng: userLocation.lng,
+                    lat: location.lat,
+                    lng: location.lng,
                 })
 
                 // 보호자 이메일이 등록되어 있으면 이메일로 알림 전송 (실제로는 API 호출)
                 // 여기서는 시뮬레이션
                 console.log(`긴급 알림을 ${guardianEmail}로 전송합니다.`)
-                console.log(`위치: ${userLocation.lat}, ${userLocation.lng}`)
+                console.log(`위치: ${location.lat}, ${location.lng}`)
 
                 alert('긴급 알림이 보호자에게 전송되었습니다.')
             } else {
@@ -373,6 +404,28 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         setShowEmergencyDialog(false)
     }
 
+    const handleSearchCurrentArea = async () => {
+        if (!kakaoMapRef.current) return
+
+        const bounds = kakaoMapRef.current.getBounds()
+        if (!bounds) return
+
+        const sw = bounds.getSouthWest();
+        const ne = bounds.getNorthEast();
+
+        try {
+            const stationsResult = await chargerApi.getChargersInViewport(
+                sw.getLat(), ne.getLat(), sw.getLng(), ne.getLng()
+            )
+            setStations(stationsResult)
+            setShowSearchButton(false)
+            setError(null) // 성공 시 에러 초기화
+        } catch (error) {
+            console.error('충전소 데이터 로드 오류:', error)
+            setError('현 주소 검색 중 오류가 발생했습니다. 잠시 후 다시 시도하세요.')
+        }
+    }
+
   const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // 마커나 버튼이 아닌 지도 배경을 클릭한 경우에만 패널 닫기
     if (e.target === e.currentTarget) {
@@ -383,7 +436,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
   const handleReport = () => {
     if (!checkLogin()) return
     if (selectedStation) {
-      router.push(`/report?stationName=${encodeURIComponent(selectedStation.name)}`)
+      router.push(`/report?stationName=${encodeURIComponent(selectedStation.facilityName)}`)
     }
   }
 
@@ -399,8 +452,52 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     return positions[index % positions.length]
   }
 
+    const formatTime = (value?: string | number | null): string => {
+        if (value === null || value === undefined) return '-'
+        const raw = String(value).trim()
+        if (!raw) return '-'
+
+        // 이미 HH:mm 형식이면 간단히 정규화
+        if (raw.includes(':')) {
+            const [h, m] = raw.split(':')
+            return `${h.padStart(2, '0')}:${(m || '00').padStart(2, '0')}`
+        }
+
+        // 숫자만 추출
+        let digits = raw.replace(/\D/g, '')
+        if (!digits) return '-'
+
+        // 너무 길면 뒤 4자리 사용
+        if (digits.length > 4) digits = digits.slice(-4)
+
+        if (digits.length === 1 || digits.length === 2) {
+            return `${digits.padStart(2, '0')}:00`
+        }
+
+        let hour: string, minute: string
+        if (digits.length === 3) {
+            hour = digits.slice(0, 1)
+            minute = digits.slice(1)
+        } else { // 4
+            hour = digits.slice(0, 2)
+            minute = digits.slice(2, 4)
+        }
+        return `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
+    }
+
   return (
     <div className={styles.mapContainer}>
+        {/* 에러 배너 */}
+        {error && (
+            <div
+                role="alert"
+                onClick={() => setError(null)}
+                className={styles.errorBanner}
+            >
+                {error}
+            </div>
+        )}
+
         <div ref={mapRef} className={styles.map} />
       
       {/* 긴급 버튼 - 사용자 타입일 때만 표시 */}
@@ -435,14 +532,21 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         <span className={styles.myLocationIcon}>📍</span>
       </button>
 
+        {/* 현 주소에서 검색 버튼 */}
+        {showSearchButton && selectedCategory === 'charging' && (
+            <button className={styles.searchCurrentButton} onClick={handleSearchCurrentArea}>
+                현 주소에서 검색
+            </button>
+        )}
+
       {/* 충전소 정보 패널 */}
       {selectedStation && (
         <div className={styles.infoPanel}>
           {/* 장소명, 주소, 제보, 도착 버튼을 탭 위에 배치 */}
           <div className={styles.stationHeader}>
             <div className={styles.stationInfoText}>
-              <h3 className={styles.stationName}>{selectedStation.name}</h3>
-              <p className={styles.stationAddress}>{selectedStation.address}</p>
+              <h3 className={styles.stationName}>{selectedStation.facilityName}</h3>
+              <p className={styles.stationAddress}>{selectedStation.cityName}, {selectedStation.districtName}</p>
             </div>
             <div className={styles.actionButtons}>
               <button className={styles.guideButton} onClick={handleGuide}>
@@ -467,14 +571,67 @@ export default function MapView({ selectedCategory }: MapViewProps) {
               리뷰
             </button>
           </div>
-          <div className={styles.panelContent}>
+          <div className={styles.infoContent}>
             {activeTab === 'info' ? (
-              <div className={styles.infoContent}>
-                <div className={styles.stationInfo}>
-                  <p>운영시간: 24시간</p>
-                  <p>충전기 타입: 급속/완속</p>
-                  <p>이용 가능: 4대</p>
-                </div>
+              <div className={styles.infoScroll}>
+
+                  <section className={styles.section}>
+                      <h4 className={styles.sectionTitle}>설치장소</h4>
+                      <p className={styles.textPrimary}>{selectedStation.roadAddr}</p>
+                      {selectedStation.landAddr && <p className={styles.textSecondary}>({selectedStation.landAddr})</p>}
+                      {selectedStation.description && <p className={styles.description}>{selectedStation.description}</p>}
+                  </section>
+
+                  <section className={styles.section}>
+                      <h4 className={styles.sectionTitle}>운영 정보</h4>
+                      <div className={styles.infoGrid}>
+                          <div className={styles.infoItem}>
+                              <span className={styles.infoLabel}>평일</span>
+                              <span className={styles.infoValue}>{formatTime(selectedStation.weekdayStart)} ~ {formatTime(selectedStation.weekdayEnd)}</span>
+                          </div>
+                          <div className={styles.infoItem}>
+                              <span className={styles.infoLabel}>토요일</span>
+                              <span className={styles.infoValue}>{formatTime(selectedStation.saturdayStart)} ~ {formatTime(selectedStation.saturdayEnd)}</span>
+                          </div>
+                          <div className={styles.infoItem}>
+                              <span className={styles.infoLabel}>공휴일</span>
+                              <span className={styles.infoValue}>{formatTime(selectedStation.holidayStart)} ~ {formatTime(selectedStation.holidayEnd)}</span>
+                          </div>
+                      </div>
+                  </section>
+
+                  <section className={styles.section}>
+                      <h4 className={styles.sectionTitle}>설비</h4>
+                      <div className={styles.features}>
+                          <div className={styles.featureCard}>
+                              <div className={styles.featureTitle}>동시사용</div>
+                              <div className={styles.featureValue}>{selectedStation.capacity ?? '-'}</div>
+                          </div>
+                          <div className={styles.featureCard}>
+                              <div className={styles.featureTitle}>공기주입</div>
+                              <div className={styles.featureValue}>{selectedStation.isAirPump ? 'Y' : 'N'}</div>
+                          </div>
+                          <div className={styles.featureCard}>
+                              <div className={styles.featureTitle}>충전기</div>
+                              <div className={styles.featureValue}>{selectedStation.isCharger ? 'Y' : 'N'}</div>
+                          </div>
+                      </div>
+                  </section>
+
+                  <section className={styles.section}>
+                      <h4 className={styles.sectionTitle}>관리정보</h4>
+                      <p className={styles.textPrimary}>{selectedStation.manageOrgName ?? '-'}</p>
+                      <p className={styles.textSecondary}>{selectedStation.manageOrgContact ?? '-'}</p>
+                  </section>
+
+                  <section className={styles.section}>
+                      <h4 className={styles.sectionTitle}>출처</h4>
+                      <p className={styles.smallText}>전국전동휠체어급속충전기표준데이터</p>
+                      <p className={styles.smallText}>지방자치단체, 보건복지부</p>
+                      <br/>
+                      <p className={styles.smallText}>데이터 제공기관: {selectedStation.providerName} ({selectedStation.providerCode})</p>
+                      <p className={styles.smallText}>데이터 기준일자: {selectedStation.dataUpdated}</p>
+                  </section>
               </div>
             ) : activeTab === 'review' ? (
               <div className={styles.reviewSection}>
@@ -485,7 +642,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
                     onClick={() => {
                       if (!checkLogin()) return
                       if (selectedStation) {
-                        router.push(`/review/write?stationId=${selectedStation.id}`)
+                        router.push(`/review/write?stationId=${selectedStation.placeId}`)
                       }
                     }}
                   >
