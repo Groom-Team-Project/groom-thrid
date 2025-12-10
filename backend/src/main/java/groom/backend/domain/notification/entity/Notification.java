@@ -45,4 +45,19 @@ public class Notification extends BaseEntity {
 
     @Schema(description = "보호자 알림 확인 시간")
     private LocalDateTime checkedAt;
+
+    public static Notification createNotification(Double lat, Double lng, String address) {
+        Notification notification = new Notification();
+        notification.lat = lat;
+        notification.lng = lng;
+        notification.address = address;
+        notification.isCheck = false;
+        notification.checkedAt = null;
+
+        return notification;
+    }
+
+    private void setUserRelation(UserRelation relation) {
+        this.relation = relation;
+    }
 }
