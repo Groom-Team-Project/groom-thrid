@@ -1,5 +1,7 @@
 package groom.backend.interfaces.kakao.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
@@ -11,7 +13,9 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class KakaoLotAddress {
+  @JsonProperty("address_name")
   private String addressName;
   @JsonProperty("region_1depth_name")
   private String region1DepthName;
@@ -19,7 +23,10 @@ public class KakaoLotAddress {
   private String region2DepthName;
   @JsonProperty("region_3depth_name")
   private String region3DepthName;
+  @JsonProperty("mountain_yn")
   private String mountainYn;
+  @JsonProperty("main_address_no")
   private String mainAddressNo;
+  @JsonProperty("sub_address_no")
   private String subAddressNo;
 }

@@ -66,6 +66,7 @@ const DirectionsPage: React.FC = () => {
   const [endCoord, setEndCoord] = useState<SimpleCoord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     const startLatStr = searchParams.get("start-lat");
@@ -176,6 +177,46 @@ const DirectionsPage: React.FC = () => {
       }
     };
 
+    // 사용자 위치 추적
+    useEffect(() => {
+      if (!isNavigating || !endCoord) return;
+
+      const watchId = navigator.geolocation.watchPosition(
+          (position) => {
+            const currentLat = position.coords.latitude;
+            const currentLng = position.coords.longitude;
+
+            const latDiff = Math.abs(currentLat - endCoord.lat);
+            const lngDiff = Math.abs(currentLng - endCoord.lng);
+
+            const threshold = 0.00001; // 대략적 위치 추정
+
+            if (latDiff < threshold && lngDiff < threshold) {
+              console.log("목표 지점에 도착. 길안내 종료 요청 전송");
+
+              fetch("/api/v1/paths/navigation", {
+                method: "DELETE",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+                },
+              }).then((res) => {
+                if (res.ok) setIsNavigating(false);
+              });
+            }
+          },
+          (error) => {
+            console.error("위치 추적 실패", error);
+          },
+          { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+      );
+
+      return () => {
+        navigator.geolocation.clearWatch(watchId);
+      };
+    }, [isNavigating, endCoord]);
+
+
     if (!(window as any).kakao || !(window as any).kakao.maps) {
       const script = document.createElement("script");
       const kakaoApiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
@@ -186,6 +227,31 @@ const DirectionsPage: React.FC = () => {
       (window as any).kakao.maps.load(drawMap);
     }
   }, [pathData, startCoord, endCoord]);
+
+  const toggleNavigation = async () => {
+    if (!startCoord || !endCoord) return;
+    const startName = searchParams.get("start-name") || "출발지";
+    const endName = searchParams.get("end-name") || "도착지";
+    const body = {
+      startX: startCoord.lng.toString(),
+      startY: startCoord.lat.toString(),
+      endX: endCoord.lng.toString(),
+      endY: endCoord.lat.toString(),
+      startName,
+      endName,
+    };
+    try {
+      const res = await fetch("/api/v1/paths/navigation", {
+        method: isNavigating ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json",
+                     Authorization: `Bearer ${localStorage.getItem('accessToken')}`, },
+        body: isNavigating ? undefined : JSON.stringify(body),
+      });
+      if (res.ok) setIsNavigating(!isNavigating);
+    } catch (e) {
+      console.error("길안내 상태 전환 실패", e);
+    }
+  };
 
   let distanceStr = "";
   let timeStr = "";
@@ -214,23 +280,21 @@ const DirectionsPage: React.FC = () => {
               ←
             </button>
           </div>
-          <div className={styles.loading}>
-            서버 오류로 인해 길찾기 기능을 요청할 수 없습니다.
-          </div>
+          <div className={styles.loading}>서버 오류로 인해 길찾기 기능을 요청할 수 없습니다.</div>
         </div>
     );
   }
 
   return (
-            <div style={{ position: "relative", width: "100%", height: "100vh" }}>
-              <div className={styles.topBar}>
-                <button onClick={() => router.push('/')} className={styles.backButton}>
-                  뒤로 가기
-                </button>
-              </div>
-              <div id="map" style={{ width: "100%", height: "100%" }} />
+      <div style={{ position: "relative", width: "100%", height: "100vh" }}>
+        <div className={styles.topBar}>
+          <button onClick={() => router.push("/")} className={styles.backButton}>
+            뒤로 가기
+          </button>
+        </div>
+        <div id="map" style={{ width: "100%", height: "100%" }} />
 
-        {pathData && "pathSummary" in pathData.data && (
+        {(pathData && "pathSummary" in pathData.data) && (
             <div style={{
               position: "absolute",
               bottom: "10px",
@@ -246,10 +310,25 @@ const DirectionsPage: React.FC = () => {
                 총 거리: <strong>{distanceStr}</strong><br />
                 예상 소요 시간: <strong>{timeStr}</strong>
               </p>
+              <button
+                  onClick={toggleNavigation}
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    top: "12px",
+                    padding: "8px 12px",
+                    backgroundColor: isNavigating ? "#FF5555" : "#007AFF",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  }}>
+                {isNavigating ? "길안내 종료" : "길안내 시작"}
+              </button>
             </div>
         )}
 
-        {pathData && "uri" in pathData.data && (
+        {(pathData && "uri" in pathData.data) && (
             <div style={{
               position: "absolute",
               bottom: "10px",
