@@ -60,10 +60,15 @@ public class JwtUtil {
     // 토큰에서 userId, role, relationId 추출
     public AuthUser getUserInfoFromToken(String token) {
         Claims claims = parseToken(token);
-        return new AuthUser(
-                claims.get("userId", UUID.class),
-                claims.get("role", Role.class),
-                claims.get("relationId", Long.class));
+
+        // 타입 직렬화
+        UUID userId = UUID.fromString(claims.getSubject());
+        Role role = Role.valueOf(claims.get("role", String.class));
+        Long relationId = claims.get("relationId") != null
+                ? ((Number) claims.get("relationId")).longValue()
+                : null;
+
+        return new AuthUser(userId, role, relationId);
     }
 
     // 토큰 유효성 검증

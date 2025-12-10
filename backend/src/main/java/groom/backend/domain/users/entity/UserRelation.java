@@ -1,6 +1,7 @@
 package groom.backend.domain.users.entity;
 
 import groom.backend.common.entity.BaseEntity;
+import groom.backend.domain.notification.entity.Notification;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -8,6 +9,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import java.util.List;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -29,6 +32,9 @@ public class UserRelation extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(nullable = false)
     private User protectorId;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "relation")
+    private List<Notification> notifications;
 
     // 사용자-보호자 관계 생성
     public static UserRelation create(User user, User protector) {
@@ -64,5 +70,11 @@ public class UserRelation extends BaseEntity {
     // 사용자 ID 조회
     public UUID getUserId() {
         return this.userId.getId();
+    }
+
+    // 알림 추가
+    public void addNotification(Notification notification) {
+        this.notifications.add(notification);
+        notification.setUserRelation(this);
     }
 }
