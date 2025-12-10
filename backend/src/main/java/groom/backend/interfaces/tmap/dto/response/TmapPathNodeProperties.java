@@ -1,5 +1,6 @@
 package groom.backend.interfaces.tmap.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
@@ -12,6 +13,7 @@ import lombok.*;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TmapPathNodeProperties {
   @JsonProperty("totalDistance")
   private Integer totalDistance; // 시작점 정보
