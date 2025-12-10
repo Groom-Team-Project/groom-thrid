@@ -33,6 +33,6 @@ public class NotificationController {
 
         Long relationId = user.relationId();
 
-        notificationService.alertCheck(relationId);
+        return notificationService.alertCheck(relationId);
     }
 }

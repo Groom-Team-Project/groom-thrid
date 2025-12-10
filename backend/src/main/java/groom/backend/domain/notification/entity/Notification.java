@@ -57,7 +57,7 @@ public class Notification extends BaseEntity {
         return notification;
     }
 
-    private void setUserRelation(UserRelation relation) {
+    public void setUserRelation(UserRelation relation) {
         this.relation = relation;
     }
 }

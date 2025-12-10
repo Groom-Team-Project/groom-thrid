@@ -71,4 +71,10 @@ public class UserRelation extends BaseEntity {
     public UUID getUserId() {
         return this.userId.getId();
     }
+
+    // 알림 추가
+    public void addNotification(Notification notification) {
+        this.notifications.add(notification);
+        notification.setUserRelation(this);
+    }
 }

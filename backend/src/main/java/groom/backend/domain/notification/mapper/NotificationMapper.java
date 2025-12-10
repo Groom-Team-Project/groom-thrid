@@ -9,7 +9,7 @@ public class NotificationMapper {
     public static Notification toEntity(CreateNotificationRequest req) {
 
         Notification entity = Notification.createNotification(
-                req.lng(),
+                req.lat(),
                 req.lng(),
                 req.address()
         );
@@ -18,7 +18,7 @@ public class NotificationMapper {
     }
 
     public static AlertCheckResponse toDto(Notification notification) {
-        
+
         AlertCheckResponse dto = new AlertCheckResponse(
                 notification.getLat(),
                 notification.getLng(),
