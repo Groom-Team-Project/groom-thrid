@@ -24,6 +24,8 @@ public interface UserService {
     // 사용자 삭제
     void deleteUser(UUID id);
 
+    void guardianMatch(UUID userId, String email);
+
     // ================= 내부 api용 ===================
 
     // User 엔티티로 사용자 생성
