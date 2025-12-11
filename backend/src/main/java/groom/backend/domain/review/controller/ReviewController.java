@@ -31,7 +31,7 @@ public class ReviewController {
     }
 
     @PostMapping("/place/{placeId}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'PROTECTOR')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'GUARDIAN')")
     @Operation(
             summary = "리뷰 생성",
             description = "장소별 새로운 리뷰를 생성합니다",
@@ -73,7 +73,7 @@ public class ReviewController {
     }
 
     @PutMapping("/{reviewId}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'PROTECTOR')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'GUARDIAN')")
     @Operation(
             summary = "리뷰 수정",
             description = "USER, PROTECTOR: 자신이 생성한 리뷰만 수정 / ADMIN: 모든 리뷰 수정",
@@ -93,7 +93,7 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{reviewId}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'PROTECTOR')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'GUARDIAN')")
     @Operation(
             summary = "리뷰 삭제",
             description = "USER, PROTECTOR: 자신이 생성한 리뷰만 삭제 / ADMIN: 모든 리뷰 삭제",
