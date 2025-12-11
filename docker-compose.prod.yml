@@ -45,7 +45,7 @@ services:
     environment:
       - NEXT_PUBLIC_API_URL=https://wheelfinder.deving.xyz/api/v1
     env_file:
-      - .env
+      - .env.prod
     networks:
       - app-network
 
