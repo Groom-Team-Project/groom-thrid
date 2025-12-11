@@ -1,6 +1,7 @@
 package groom.backend.domain.users.service.spec;
 
 import groom.backend.domain.users.dto.request.UpdateUserRequest;
+import groom.backend.domain.users.dto.response.RelationInfoResponse;
 import groom.backend.domain.users.dto.response.UserResponse;
 import groom.backend.domain.users.entity.User;
 import groom.backend.domain.users.entity.UserCredential;
@@ -24,8 +25,11 @@ public interface UserService {
     // 사용자 삭제
     void deleteUser(UUID id);
 
+    // 관계 설정
     void guardianMatch(UUID userId, String email);
 
+    // 관계 조회
+    RelationInfoResponse relationInfo(Long relationId);
     // ================= 내부 api용 ===================
 
     // User 엔티티로 사용자 생성

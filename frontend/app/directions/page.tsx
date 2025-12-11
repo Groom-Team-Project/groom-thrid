@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { updateLocation } from "@/lib/location";
 import styles from "./page.module.css";
 
 interface BaseNode {
@@ -177,46 +178,6 @@ const DirectionsPage: React.FC = () => {
       }
     };
 
-    // 사용자 위치 추적
-    useEffect(() => {
-      if (!isNavigating || !endCoord) return;
-
-      const watchId = navigator.geolocation.watchPosition(
-          (position) => {
-            const currentLat = position.coords.latitude;
-            const currentLng = position.coords.longitude;
-
-            const latDiff = Math.abs(currentLat - endCoord.lat);
-            const lngDiff = Math.abs(currentLng - endCoord.lng);
-
-            const threshold = 0.00001; // 대략적 위치 추정
-
-            if (latDiff < threshold && lngDiff < threshold) {
-              console.log("목표 지점에 도착. 길안내 종료 요청 전송");
-
-              fetch("/api/v1/paths/navigation", {
-                method: "DELETE",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-                },
-              }).then((res) => {
-                if (res.ok) setIsNavigating(false);
-              });
-            }
-          },
-          (error) => {
-            console.error("위치 추적 실패", error);
-          },
-          { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
-      );
-
-      return () => {
-        navigator.geolocation.clearWatch(watchId);
-      };
-    }, [isNavigating, endCoord]);
-
-
     if (!(window as any).kakao || !(window as any).kakao.maps) {
       const script = document.createElement("script");
       const kakaoApiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
@@ -227,6 +188,77 @@ const DirectionsPage: React.FC = () => {
       (window as any).kakao.maps.load(drawMap);
     }
   }, [pathData, startCoord, endCoord]);
+
+  // 사용자 위치 추적 및 백엔드 업데이트 (주기적 전송)
+  useEffect(() => {
+    if (!isNavigating || !endCoord) return;
+
+    console.log("[위치 추적] 🎯 길안내 시작 - 실시간 위치 추적 활성화");
+    let updateCount = 0;
+    let isActive = true;
+
+    // 주기적으로 위치 가져와서 전송 (3초마다)
+    const locationInterval = setInterval(async () => {
+      if (!isActive) return;
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const currentLat = position.coords.latitude;
+          const currentLng = position.coords.longitude;
+          updateCount++;
+
+          console.log(`[위치 추적] 📍 위치 업데이트 #${updateCount}:`, currentLat, currentLng);
+
+          // 백엔드에 위치 업데이트 전송
+          try {
+            await updateLocation(currentLat, currentLng);
+            console.log(`[위치 추적] ✅ 백엔드 전송 성공 #${updateCount}`);
+          } catch (error) {
+            console.error(`[위치 추적] ❌ 백엔드 전송 실패 #${updateCount}:`, error);
+          }
+
+          // 목적지 도착 확인
+          const latDiff = Math.abs(currentLat - endCoord.lat);
+          const lngDiff = Math.abs(currentLng - endCoord.lng);
+
+          const threshold = 0.001; // 약 100m
+
+          if (latDiff < threshold && lngDiff < threshold) {
+            console.log("[위치 추적] 🏁 목표 지점에 도착! 길안내 종료");
+
+            fetch("/api/v1/paths/navigation", {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+              },
+            }).then((res) => {
+              if (res.ok) {
+                setIsNavigating(false);
+                console.log("[위치 추적] 🔌 길안내 종료 완료");
+              }
+            });
+          }
+        },
+        (error) => {
+          console.error(`[위치 추적] ❌ 위치 조회 실패 #${updateCount + 1}:`, error);
+          console.error("[위치 추적] 오류 코드:", error.code);
+          console.error("[위치 추적] 오류 메시지:", error.message);
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 10000
+        }
+      );
+    }, 3000); // 3초마다 위치 전송
+
+    return () => {
+      console.log("[위치 추적] 🔌 위치 추적 해제");
+      isActive = false;
+      clearInterval(locationInterval);
+    };
+  }, [isNavigating, endCoord]);
 
   const toggleNavigation = async () => {
     if (!startCoord || !endCoord) return;

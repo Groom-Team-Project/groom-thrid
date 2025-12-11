@@ -101,10 +101,17 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(ErrorCode.DEACTIVATED_USER);
         }
 
-        // 5. JWT 토큰 생성 (userId + role + name 포함)
-        Long relationId = userRelationRepository.findByUserId(user.getId())
-                .map(UserRelation::getId)
-                .orElse(null);
+        // 5. JWT 토큰 생성 (userId + role + name + relationId 포함)
+        // role에 따라 다른 메서드로 relationId 조회
+        Long relationId = switch (user.getRole()) {
+            case USER -> userRelationRepository.findByUserId(user.getId())
+                    .map(UserRelation::getId)
+                    .orElse(null);
+            case GUARDIAN -> userRelationRepository.findByGuardianId(user.getId())
+                    .map(UserRelation::getId)
+                    .orElse(null);
+            default -> null;
+        };
         String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getRole(), user.getName(), relationId);
         String refreshTokenString = jwtUtil.generateRefreshToken(user.getId());
 
@@ -150,10 +157,17 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(ErrorCode.DEACTIVATED_USER);
         }
 
-        // 5. 새로운 Access Token 생성 (최신 role, name 반영)
-        Long relationId = userRelationRepository.findByUserId(user.getId())
-                .map(UserRelation::getId)
-                .orElse(null);
+        // 5. 새로운 Access Token 생성 (최신 role, name, relationId 반영)
+        // role에 따라 다른 메서드로 relationId 조회
+        Long relationId = switch (user.getRole()) {
+            case USER -> userRelationRepository.findByUserId(user.getId())
+                    .map(UserRelation::getId)
+                    .orElse(null);
+            case GUARDIAN -> userRelationRepository.findByGuardianId(user.getId())
+                    .map(UserRelation::getId)
+                    .orElse(null);
+            default -> null;
+        };
         String newAccessToken = jwtUtil.generateAccessToken(user.getId(), user.getRole(), user.getName(), relationId);
 
         // 6. 새로운 Refresh Token 생성 (Refresh Token Rotation)

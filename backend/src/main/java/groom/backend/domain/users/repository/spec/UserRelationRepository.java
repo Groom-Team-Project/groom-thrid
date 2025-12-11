@@ -11,6 +11,9 @@ public interface UserRelationRepository {
     // 사용자 ID로 관계 조회
     Optional<UserRelation> findByUserId(UUID userId);
 
+    // 보호자 ID로 관계 조회
+    Optional<UserRelation> findByGuardianId(UUID guardianId);
+
     // 관계 저장
     UserRelation save(UserRelation userRelation);
 

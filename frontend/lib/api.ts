@@ -45,6 +45,7 @@ interface JwtPayload {
   sub: string // userId
   role: string // USER, GUARDIAN
   name: string // 사용자 이름
+  relationId: number | null // 관계 ID (없으면 null)
   iat: number // issued at
   exp: number // expiration
 }
@@ -85,6 +86,12 @@ export const getNameFromToken = (token: string): string | null => {
   return payload?.name || null
 }
 
+// JWT에서 relationId 추출
+export const getRelationIdFromToken = (token: string): number | null => {
+  const payload = decodeJwt(token)
+  return payload?.relationId ?? null
+}
+
 // 인증이 필요 없는 엔드포인트 목록
 const PUBLIC_ENDPOINTS = ['/auth/form-login', '/auth/signup']
 
@@ -115,6 +122,17 @@ export const apiRequest = async <T>(
       ...options,
       headers,
     })
+
+    // 204 No Content 응답인 경우 body가 없으므로 빈 응답 반환
+    if (response.status === 204) {
+      return {
+        status: 'success',
+        code: 204,
+        message: 'No Content',
+        data: null as T,
+        errors: null,
+      }
+    }
 
     const data: ApiResponse<T> = await response.json()
 
