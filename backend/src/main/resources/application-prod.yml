@@ -60,5 +60,5 @@ logging:
   level:
     root: INFO
     groom.backend.common.service.S3Service: INFO  # S3 서비스 로그 레벨
-    software.amazon.awssdk: DEBUG  # AWS SDK 상세 로그 (필요시)
+    software.amazon.awssdk: INFO  # AWS SDK 상세 로그 (필요시)
 
