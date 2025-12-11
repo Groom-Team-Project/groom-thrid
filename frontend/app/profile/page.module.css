@@ -175,3 +175,58 @@
   align-items: center;
 }
 
+.emptyUsers {
+  text-align: center;
+  padding: 24px;
+}
+
+.emptyText {
+  font-size: 14px;
+  color: #999;
+}
+
+.userItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+  transition: background 0.2s ease;
+}
+
+.userItem:last-child {
+  border-bottom: none;
+}
+
+.userItem:hover {
+  background: #f5f5f5;
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.userName {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.userEmail {
+  font-size: 14px;
+  color: #666;
+}
+
+.userActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.connectedDate {
+  font-size: 12px;
+  color: #999;
+}
+

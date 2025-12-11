@@ -4,6 +4,7 @@ import groom.backend.common.exception.BusinessException;
 import groom.backend.common.exception.ErrorCode;
 import groom.backend.common.exception.UserNotFoundException;
 import groom.backend.domain.users.dto.request.UpdateUserRequest;
+import groom.backend.domain.users.dto.response.RelationInfoResponse;
 import groom.backend.domain.users.dto.response.UserResponse;
 import groom.backend.domain.users.entity.User;
 import groom.backend.domain.users.entity.UserCredential;
@@ -84,6 +85,13 @@ public class UserServiceImpl implements UserService {
         // 5. 관계 생성
         UserRelation relation = UserRelation.create(user, guardian);
         userRelationRepository.save(relation);
+    }
+
+    @Override
+    public RelationInfoResponse relationInfo(Long relationId) {
+        UserRelation userRelation = userRelationRepository.findById(relationId).get();
+
+        return UserMapper.toDto(userRelation);
     }
 
     // ================= 내부 api용 ===================
