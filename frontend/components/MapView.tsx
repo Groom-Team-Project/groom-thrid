@@ -26,7 +26,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
 
     const mapRef = useRef<HTMLDivElement>(null)
     const kakaoMapRef = useRef<any>(null)
-    const markersRef = useRef<any[]>([])
+    const clustererRef = useRef<kakao.maps.MarkerClusterer | null>(null)
     const userMarkerRef = useRef<any>(null)
     const selectedCategoryRef = useRef(selectedCategory)
 
@@ -61,7 +61,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         if (typeof window === 'undefined') return;
 
         const script = document.createElement('script')
-        script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&autoload=false&libraries=services`
+        script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&autoload=false&libraries=services,clusterer`
         script.async = true
         script.onload = () => {
             window.kakao.maps.load(() => {
@@ -89,10 +89,13 @@ export default function MapView({ selectedCategory }: MapViewProps) {
             setSelectedStation(null)
             setShowSearchButton(false)
             setError(null)
-            // 기존 마커들 제거
-            markersRef.current.forEach(marker => marker.setMap(null))
-            markersRef.current = []
             return
+        }
+
+        // 클러스터러 정리
+        if (clustererRef.current) {
+            clustererRef.current.clear(); // 또는 removeMarkers()
+            clustererRef.current.setMap(null);
         }
 
         // 맵이 준비되지 않았으면 대기
@@ -197,13 +200,25 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         userMarkerRef.current = customOverlay
     }
 
+
+
     // 충전소 마커들 생성
     useEffect(() => {
+        // 클러스터러 정리
+        if (clustererRef.current) {
+            clustererRef.current.clear(); // 또는 removeMarkers()
+            clustererRef.current.setMap(null);
+        }
+
         if (!kakaoMapRef.current || !mapLoaded || selectedCategory !== 'charging') return
 
-        // 기존 마커들 제거
-        markersRef.current.forEach(marker => marker.setMap(null))
-        markersRef.current = []
+
+        const clusterer = new window.kakao.maps.MarkerClusterer({
+            map: kakaoMapRef.current, // 마커들을 클러스터로 관리하고 표시할 지도 객체
+            averageCenter: true, // 클러스터에 포함된 마커들의 평균 위치를 클러스터 마커 위치로 설정
+            minLevel: 5 // 클러스터 할 최소 지도 레벨
+        });
+        clustererRef.current = clusterer;
 
         // 새 마커들 생성
         stations.forEach((station) => {
@@ -234,11 +249,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
                 handleStationClick(station)
             })
 
-            marker.setMap(kakaoMapRef.current)
-            markersRef.current.push(marker)
-
-        })
-
+            clusterer.addMarker(marker) })
     }, [stations, selectedStation, mapLoaded, selectedCategory])
 
     // 선택된 충전소로 지도 이동
