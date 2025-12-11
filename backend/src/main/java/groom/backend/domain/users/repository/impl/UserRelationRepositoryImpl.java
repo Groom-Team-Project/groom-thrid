@@ -8,9 +8,6 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-/**
- * UserRelation Repository 구현체
- */
 @Repository
 @RequiredArgsConstructor
 public class UserRelationRepositoryImpl implements UserRelationRepository {
