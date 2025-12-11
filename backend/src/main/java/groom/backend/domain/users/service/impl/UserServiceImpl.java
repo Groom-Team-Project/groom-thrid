@@ -63,20 +63,25 @@ public class UserServiceImpl implements UserService {
     @Override
     public void guardianMatch(UUID userId, String email) {
 
-        // 관계 여부 검증
+        // 1. userId로 이미 관계가 있는지 확인 (user로써)
         if (userRelationRepository.existsByUserId(userId)) {
             throw new BusinessException(ErrorCode.RELATION_EXISTS);
         }
 
-        if (userRelationRepository.existsByEmail(email)) {
-            throw new BusinessException(ErrorCode.RELATION_EXISTS);
-        }
-
-        User user = userRepository.findUserById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+        // 2. email로 guardian User 조회
         User guardian = userRepository.findUserByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException(email));
 
+        // 3. guardian의 ID로 관계가 있는지 확인 (guardian도 다른 누군가의 user인지)
+        if (userRelationRepository.existsByUserId(guardian.getId())) {
+            throw new BusinessException(ErrorCode.RELATION_EXISTS);
+        }
+
+        // 4. user 조회
+        User user = userRepository.findUserById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+
+        // 5. 관계 생성
         UserRelation relation = UserRelation.create(user, guardian);
         userRelationRepository.save(relation);
     }

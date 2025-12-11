@@ -46,8 +46,8 @@ public class UserRelation extends BaseEntity {
         }
 
         UserRelation relation = new UserRelation();
-        relation.userId = user;
-        relation.guardianId = guardian;
+        relation.user = user;
+        relation.guardian = guardian;
         return relation;
     }
 
@@ -56,20 +56,20 @@ public class UserRelation extends BaseEntity {
         if (newProtector == null) {
             throw new IllegalArgumentException("보호자는 null일 수 없습니다");
         }
-        if (this.userId.getId().equals(newProtector.getId())) {
+        if (this.user.getId().equals(newProtector.getId())) {
             throw new IllegalArgumentException("사용자와 보호자는 동일한 사람일 수 없습니다");
         }
-        this.guardianId = newProtector;
+        this.guardian = newProtector;
     }
 
     // 보호자 ID 조회
     public UUID getProtectorId() {
-        return this.guardianId.getId();
+        return this.guardian.getId();
     }
 
     // 사용자 ID 조회
     public UUID getUserId() {
-        return this.userId.getId();
+        return this.user.getId();
     }
 
     // 알림 추가

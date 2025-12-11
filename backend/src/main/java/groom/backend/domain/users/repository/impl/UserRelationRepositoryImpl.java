@@ -8,9 +8,6 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-/**
- * UserRelation Repository 구현체
- */
 @Repository
 @RequiredArgsConstructor
 public class UserRelationRepositoryImpl implements UserRelationRepository {
@@ -41,7 +38,4 @@ public class UserRelationRepositoryImpl implements UserRelationRepository {
     public boolean existsByUserId(UUID userId) {
         return jpaUserRelationRepository.existsByUserId(userId);
     }
-
-    @Override
-    public boolean existsByEmail(String email) { return jpaUserRelationRepository.existsByEmail(email)}
 }

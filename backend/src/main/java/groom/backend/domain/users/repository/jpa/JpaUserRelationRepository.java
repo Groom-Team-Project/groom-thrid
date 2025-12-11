@@ -16,6 +16,4 @@ public interface JpaUserRelationRepository extends JpaRepository<UserRelation, L
     // 사용자 ID로 관계 존재 여부 확인
     @Query("SELECT CASE WHEN COUNT(ur) > 0 THEN true ELSE false END FROM UserRelation ur WHERE ur.user.id = :userId")
     boolean existsByUserId(@Param("userId") UUID userId);
-
-    boolean existsByEmail(String email);
 }
