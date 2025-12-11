@@ -17,35 +17,35 @@ public interface ReportService {
 
     /**
      * 제보 목록을 조회합니다
-     * USER, PROTECTOR: 자신이 생성한 제보 목록만 조회
+     * USER, GUARDIAN: 자신이 생성한 제보 목록만 조회
      * ADMIN: 모든 제보 목록 조회
      */
     List<ReportResponseDto> getReports(AuthUser authUser);
 
     /**
      * 제보 상세를 조회합니다
-     * USER, PROTECTOR: 자신이 생성한 제보만 조회
+     * USER, GUARDIAN: 자신이 생성한 제보만 조회
      * ADMIN: 모든 제보 조회
      */
     ReportResponseDto getReport(Long reportId, AuthUser authUser);
 
     /**
      * 제보를 수정합니다
-     * USER, PROTECTOR: 자신이 생성한 제보만 수정
+     * USER, GUARDIAN: 자신이 생성한 제보만 수정
      * ADMIN: 모든 제보 수정
      */
     ReportResponseDto updateReport(Long reportId, UpdateReportRequest request, AuthUser authUser);
 
     /**
      * 제보를 삭제합니다
-     * USER, PROTECTOR: 자신이 생성한 제보만 삭제
+     * USER, GUARDIAN: 자신이 생성한 제보만 삭제
      * ADMIN: 모든 제보 삭제
      */
     void deleteReport(Long reportId, AuthUser authUser);
 
     /**
      * 제보들을 일괄 삭제합니다
-     * USER, PROTECTOR: 자신이 생성한 제보만 삭제
+     * USER, GUARDIAN: 자신이 생성한 제보만 삭제
      * ADMIN: 모든 제보 삭제
      */
     void deleteReports(DeleteReportsRequest request, AuthUser authUser);
