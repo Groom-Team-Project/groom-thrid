@@ -60,7 +60,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         if (typeof window === 'undefined') return;
 
         const script = document.createElement('script')
-        script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&autoload=false&libraries=services`
+        script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&autoload=false&libraries=services,clusterer`
         script.async = true
         script.onload = () => {
             window.kakao.maps.load(() => {
@@ -204,6 +204,12 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         markersRef.current.forEach(marker => marker.setMap(null))
         markersRef.current = []
 
+        const clusterer = new window.kakao.maps.MarkerClusterer({
+            map: kakaoMapRef.current, // 마커들을 클러스터로 관리하고 표시할 지도 객체
+            averageCenter: true, // 클러스터에 포함된 마커들의 평균 위치를 클러스터 마커 위치로 설정
+            minLevel: 5 // 클러스터 할 최소 지도 레벨
+        });
+
         // 새 마커들 생성
         stations.forEach((station) => {
             const markerPosition = new window.kakao.maps.LatLng(station.lat, station.lng)
@@ -234,7 +240,8 @@ export default function MapView({ selectedCategory }: MapViewProps) {
             })
 
             marker.setMap(kakaoMapRef.current)
-            markersRef.current.push(marker)
+            clusterer.addMarker(marker)
+            // markersRef.current.push(marker)
 
         })
 
