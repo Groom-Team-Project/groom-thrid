@@ -45,6 +45,7 @@ interface JwtPayload {
   sub: string // userId
   role: string // USER, GUARDIAN
   name: string // 사용자 이름
+  relationId: number | null // 관계 ID (없으면 null)
   iat: number // issued at
   exp: number // expiration
 }
@@ -83,6 +84,12 @@ export const getRoleFromToken = (token: string): string | null => {
 export const getNameFromToken = (token: string): string | null => {
   const payload = decodeJwt(token)
   return payload?.name || null
+}
+
+// JWT에서 relationId 추출
+export const getRelationIdFromToken = (token: string): number | null => {
+  const payload = decodeJwt(token)
+  return payload?.relationId ?? null
 }
 
 // 인증이 필요 없는 엔드포인트 목록

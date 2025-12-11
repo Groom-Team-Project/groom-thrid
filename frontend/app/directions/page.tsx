@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { updateLocation } from "@/lib/location";
 import styles from "./page.module.css";
 
 interface BaseNode {
@@ -188,15 +189,24 @@ const DirectionsPage: React.FC = () => {
     }
   }, [pathData, startCoord, endCoord]);
 
-  // 사용자 위치 추적
+  // 사용자 위치 추적 및 백엔드 업데이트
   useEffect(() => {
     if (!isNavigating || !endCoord) return;
 
     const watchId = navigator.geolocation.watchPosition(
-        (position) => {
+        async (position) => {
           const currentLat = position.coords.latitude;
           const currentLng = position.coords.longitude;
 
+          // 백엔드에 위치 업데이트 전송
+          try {
+            await updateLocation(currentLat, currentLng);
+            console.log("위치 업데이트 성공:", currentLat, currentLng);
+          } catch (error) {
+            console.error("위치 업데이트 실패:", error);
+          }
+
+          // 목적지 도착 확인
           const latDiff = Math.abs(currentLat - endCoord.lat);
           const lngDiff = Math.abs(currentLng - endCoord.lng);
 
