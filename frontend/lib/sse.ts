@@ -29,11 +29,12 @@ export class SseConnection {
 
     if (!token) {
       const error = new Error('토큰이 없습니다. 로그인이 필요합니다.')
-      console.error(error.message)
+      console.error('[SSE] ❌ 연결 실패:', error.message)
       this.handlers.onError?.(error)
       return
     }
 
+    console.log('[SSE] 🔌 연결 시도 중...', `${API_BASE_URL}/sse/connect`)
     this.abortController = new AbortController()
 
     try {
@@ -50,7 +51,7 @@ export class SseConnection {
         throw new Error(`SSE 연결 실패: ${response.status}`)
       }
 
-      console.log('SSE 연결 성공')
+      console.log('[SSE] ✅ 연결 성공! 실시간 위치 수신 대기 중...')
       this.handlers.onOpen?.()
 
       // 스트림 읽기
@@ -65,7 +66,7 @@ export class SseConnection {
         const { done, value } = await reader.read()
 
         if (done) {
-          console.log('SSE 연결 종료')
+          console.log('[SSE] 🔌 연결 종료')
           break
         }
 
@@ -78,16 +79,23 @@ export class SseConnection {
           if (line.startsWith('data:')) {
             const data = line.substring(5).trim()
 
+            // 빈 데이터는 무시 (keep-alive 또는 빈 이벤트)
+            if (!data || data.length === 0) {
+              continue
+            }
+
             // "connect" 이벤트는 무시 (초기 연결 확인용)
             if (data === 'SSE 연결이 성공적으로 생성되었습니다') {
+              console.log('[SSE] 💡 초기 연결 확인 메시지 수신')
               continue
             }
 
             try {
               const locationData = JSON.parse(data) as LocationData
+              console.log('[SSE] 📍 실시간 위치 수신:', locationData)
               this.handlers.onLocation?.(locationData)
             } catch (error) {
-              console.error('SSE 메시지 파싱 실패:', error, 'data:', data)
+              console.error('[SSE] ❌ 메시지 파싱 실패:', error, 'data:', data)
             }
           }
         }
@@ -95,9 +103,9 @@ export class SseConnection {
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          console.log('SSE 연결이 중단되었습니다.')
+          console.log('[SSE] ⚠️  연결이 사용자에 의해 중단되었습니다.')
         } else {
-          console.error('SSE 연결 에러:', error)
+          console.error('[SSE] ❌ 연결 에러:', error)
           this.handlers.onError?.(error)
         }
       }
@@ -109,7 +117,7 @@ export class SseConnection {
     if (this.abortController) {
       this.abortController.abort()
       this.abortController = null
-      console.log('SSE 연결 종료')
+      console.log('[SSE] 🔌 연결 종료 요청')
     }
   }
 }

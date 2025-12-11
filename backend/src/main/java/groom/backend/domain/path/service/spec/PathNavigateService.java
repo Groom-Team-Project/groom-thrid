@@ -2,6 +2,7 @@ package groom.backend.domain.path.service.spec;
 
 import groom.backend.common.security.AuthUser;
 import groom.backend.domain.path.dto.request.PathFindRequest;
+import groom.backend.domain.path.dto.response.PathNavigationResponse;
 
 // TODO : 길안내 기능으로 확장
 public interface PathNavigateService {
@@ -15,4 +16,10 @@ public interface PathNavigateService {
    * 프론트엔드에서 수동 조작 또는 도착지 근접 시 자동 트리거됩니다.
    */
   public void endNavigation(AuthUser principal);
+
+  /**
+   * 보호자가 사용자의 현재 길안내 정보를 조회합니다.
+   * Redis Stream에서 경로 정보를 읽어옵니다.
+   */
+  public PathNavigationResponse getCurrentNavigation(AuthUser principal);
 }

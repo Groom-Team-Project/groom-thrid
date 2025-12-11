@@ -67,4 +67,23 @@ public class PathNavigateController {
 
     return new NavigationMessageResponse("user navigation streaming end");
   }
+
+  @GetMapping("/navigation")
+  @Operation(
+          summary = "현재 길안내 정보 조회",
+          description = "보호자가 사용자의 현재 길안내 정보(출발지, 도착지)를 조회합니다. Redis Stream에서 경로 정보를 읽어옵니다."
+  )
+  @ApiResponses(value = {
+          @ApiResponse(responseCode = "200", description = "성공 (길안내 중이 아니면 isNavigating=false 반환)"),
+          @ApiResponse(responseCode = "404", description = "보호자 - 사용자 관계를 찾을 수 없습니다."),
+  })
+  public groom.backend.domain.path.dto.response.PathNavigationResponse getCurrentNavigation(
+          @AuthenticationPrincipal AuthUser principal) {
+    if (principal == null || principal.relationId() == null) {
+      throw new BusinessException(ErrorCode.RELATION_NOT_FOUND);
+    }
+
+    // Service 레이어 호출, Redis Stream에서 경로 정보 조회
+    return pathNavigateService.getCurrentNavigation(principal);
+  }
 }

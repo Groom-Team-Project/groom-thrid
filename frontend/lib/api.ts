@@ -123,6 +123,17 @@ export const apiRequest = async <T>(
       headers,
     })
 
+    // 204 No Content 응답인 경우 body가 없으므로 빈 응답 반환
+    if (response.status === 204) {
+      return {
+        status: 'success',
+        code: 204,
+        message: 'No Content',
+        data: null as T,
+        errors: null,
+      }
+    }
+
     const data: ApiResponse<T> = await response.json()
 
     if (!response.ok) {
