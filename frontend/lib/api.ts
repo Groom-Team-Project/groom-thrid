@@ -116,10 +116,65 @@ export const apiRequest = async <T>(
       headers,
     })
 
-    const data: ApiResponse<T> = await response.json()
+    // 응답 본문을 먼저 텍스트로 읽기
+    const responseText = await response.text()
+    
+    // 빈 응답 처리 (DELETE 등)
+    if (!responseText || responseText.trim().length === 0) {
+      if (response.ok) {
+        return {
+          status: 'success',
+          code: response.status,
+          message: '요청이 성공했습니다.',
+          data: null,
+          errors: null,
+        } as ApiResponse<T>
+      } else {
+        throw new Error(`서버 오류 (${response.status}): 응답 본문이 비어있습니다.`)
+      }
+    }
+
+    // JSON 파싱 시도
+    let data: ApiResponse<T>
+    try {
+      data = JSON.parse(responseText)
+    } catch (parseError) {
+      console.error('JSON 파싱 실패:', {
+        status: response.status,
+        statusText: response.statusText,
+        responseText: responseText.substring(0, 500), // 처음 500자만 표시
+        endpoint,
+      })
+      throw new Error(`서버 응답을 파싱할 수 없습니다. (${response.status} ${response.statusText})`)
+    }
 
     if (!response.ok) {
-      throw new Error(data.message || '요청이 실패했습니다.')
+      // 에러 상세 정보 로깅
+      console.error('API 요청 실패:', {
+        status: response.status,
+        statusText: response.statusText,
+        endpoint,
+        message: data.message,
+        errors: data.errors,
+        responseText: responseText.substring(0, 1000), // 처음 1000자만 표시
+      })
+      
+      // 에러 메시지 구성
+      let errorMessage = data.message || '요청이 실패했습니다.'
+      
+      // 500 오류인 경우 더 자세한 정보 제공
+      if (response.status === 500) {
+        errorMessage = `서버 내부 오류가 발생했습니다.${data.message ? ` (${data.message})` : ''}`
+        if (data.errors && data.errors.length > 0) {
+          errorMessage += `\n상세: ${data.errors.map(e => `${e.field}: ${e.reason}`).join(', ')}`
+        }
+      } else if (data.errors && data.errors.length > 0) {
+        // 검증 오류가 있는 경우
+        const validationErrors = data.errors.map(e => `${e.field}: ${e.reason}`).join(', ')
+        errorMessage = `${errorMessage}\n${validationErrors}`
+      }
+      
+      throw new Error(errorMessage)
     }
 
     return data
