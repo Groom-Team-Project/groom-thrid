@@ -4,6 +4,7 @@ import { apiRequest, saveTokens, clearTokens, getRoleFromToken, getNameFromToken
 export enum Role {
   USER = 'USER',
   GUARDIAN = 'GUARDIAN',
+  ADMIN = 'ADMIN',
 }
 
 // 사용자 타입 (화면 구분용)
@@ -131,6 +132,12 @@ export const getUserType = (): UserType | null => {
   if (role === Role.GUARDIAN) return 'guardian'
   if (role === Role.USER) return 'user'
   return null
+}
+
+// 현재 사용자가 ADMIN인지 확인
+export const isAdmin = (): boolean => {
+  const role = localStorage.getItem('userRole')
+  return role === Role.ADMIN
 }
 
 // 로그아웃

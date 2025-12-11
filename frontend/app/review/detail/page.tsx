@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getReviewById, deleteReview, type Review } from '@/lib/reviews'
 import { chargerApi } from '@/lib/stations'
+import { isAdmin } from '@/lib/auth'
 import StarRating from '@/components/StarRating'
 import BottomNav from '@/components/BottomNav'
 import styles from './page.module.css'
@@ -55,10 +56,13 @@ export default function ReviewDetailPage() {
     loadReview()
   }, [router, reviewId])
 
-  // 백엔드에서 userId를 제공하지 않으므로 작성자 이름으로만 확인
-  // 실제 권한 체크는 백엔드에서 처리됨
+  // 권한 체크:
+  // - USER, PROTECTOR: 자기가 작성한 리뷰만 수정/삭제 가능
+  // - ADMIN: 모든 리뷰 수정/삭제 가능
+  // 실제 권한 검증은 백엔드에서 처리됨
   const userName = localStorage.getItem('userName') || ''
   const isOwner = review?.userName === userName
+  const canEditOrDelete = isOwner || isAdmin()
 
   const handleEdit = () => {
     if (review) {
@@ -120,7 +124,7 @@ export default function ReviewDetailPage() {
           ←
         </button>
         <h1 className={styles.title}>리뷰 상세</h1>
-        {isOwner && (
+        {canEditOrDelete && (
           <div className={styles.menuContainer}>
             <button 
               className={styles.menuButton}
@@ -158,7 +162,7 @@ export default function ReviewDetailPage() {
             )}
           </div>
         )}
-        {!isOwner && <div className={styles.placeholder} />}
+        {!canEditOrDelete && <div className={styles.placeholder} />}
       </div>
 
       <div className={styles.content}>

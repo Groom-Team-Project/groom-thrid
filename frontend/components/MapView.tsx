@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { type ChargingStation, chargerApi } from '@/lib/stations'
 import { getReviewsByStation, deleteReview, type Review } from '@/lib/reviews'
+import { isAdmin } from '@/lib/auth'
 import { saveAlert } from '@/lib/alerts'
 import StarRating from './StarRating'
 import styles from './MapView.module.css'
@@ -649,9 +650,13 @@ export default function MapView({ selectedCategory }: MapViewProps) {
                     </div>
                   ) : (
                     reviews.map((review) => {
-                      // 백엔드에서 userId를 제공하지 않으므로 작성자 이름으로 확인
+                      // 권한 체크:
+                      // - USER, PROTECTOR: 자기가 작성한 리뷰만 수정/삭제 가능
+                      // - ADMIN: 모든 리뷰 수정/삭제 가능
+                      // 실제 권한 검증은 백엔드에서 처리됨
                       const userName = localStorage.getItem('userName') || ''
                       const isOwner = review.userName === userName
+                      const canEditOrDelete = isOwner || isAdmin()
                       const isMenuOpen = openMenuId === review.id
                       
                       const handleMenuClick = (e: React.MouseEvent) => {
@@ -705,7 +710,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
                                 size="small"
                               />
                             </div>
-                            {isOwner && (
+                            {canEditOrDelete && (
                               <div 
                                 className={styles.reviewActions}
                                 onClick={(e) => e.stopPropagation()}
