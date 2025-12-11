@@ -1,6 +1,7 @@
 package groom.backend.domain.users.controller;
 
 import groom.backend.common.security.AuthUser;
+import groom.backend.domain.users.dto.request.GuardianMatchRequest;
 import groom.backend.domain.users.dto.request.UpdateUserRequest;
 import groom.backend.domain.users.dto.response.UserResponse;
 import groom.backend.domain.users.service.spec.UserService;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -58,10 +60,11 @@ public class UserController {
         userService.deleteUser(userId);
     }
 
-    @PostMapping("/{email}")
-    public void guardianMatch(@AuthenticationPrincipal AuthUser user, @PathVariable("email") String email) {
+    @PostMapping("/guardian")
+    public void guardianMatch(@AuthenticationPrincipal AuthUser user, @RequestBody GuardianMatchRequest req) {
 
         UUID userId = user.userId();
+        String email = req.email();
 
         userService.guardianMatch(userId, email);
     }
