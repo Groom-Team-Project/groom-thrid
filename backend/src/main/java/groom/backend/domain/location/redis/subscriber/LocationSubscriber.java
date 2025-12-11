@@ -2,6 +2,7 @@ package groom.backend.domain.location.redis.subscriber;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import groom.backend.domain.location.dto.request.LocationUpdateRequest;
+import groom.backend.domain.location.dto.response.LocationDataResponse;
 import groom.backend.domain.sse.service.spec.SseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,22 +30,29 @@ public class LocationSubscriber implements MessageListener {
             String[] split = channel.split(":");
             Long relationId = Long.parseLong(split[1]);
 
-            // 메시지 본문 파싱 (LocationData JSON -> Object)
+            // 메시지 본문 파싱 (LocationUpdateRequest JSON -> Object)
             String messageBody = new String(message.getBody());
             LocationUpdateRequest locationData = objectMapper.readValue(messageBody, LocationUpdateRequest.class);
 
-            log.info("위치 정보 수신: relationId={}, lat={}, lng={}, timestamp={}",
+            log.info("위치 정보 수신: relationId={}, lat={}, lng={}, time={}",
                     relationId, locationData.lat(), locationData.lng(), locationData.time());
 
             // 보호자가 SSE 연결 상태인지 확인
             if (!sseService.isConnect(relationId)) {
-                log.info("보호자가 SSE 연결 상태가 아님: protectorId={}", relationId);
+                log.info("보호자가 SSE 연결 상태가 아님: relationId={}", relationId);
                 return;
             }
 
+            // LocationUpdateRequest를 LocationDataResponse로 변환 (필드명 매칭: time -> timestamp)
+            LocationDataResponse response = LocationDataResponse.from(
+                    locationData.lat(),
+                    locationData.lng(),
+                    locationData.time()
+            );
+
             // 보호자에게 위치 정보 전송
-            sseService.send(relationId, locationData);
-            log.info("보호자에게 위치 정보 전송 완료: protectorId={}", relationId);
+            sseService.send(relationId, response);
+            log.info("보호자에게 위치 정보 전송 완료: relationId={}", relationId);
 
         } catch (Exception e) {
             log.error("위치 정보 처리 중 오류 발생: {}", e.getMessage(), e);

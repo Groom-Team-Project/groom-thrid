@@ -1,30 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { saveGuardianRequest, getGuardianRequestByUserId, type GuardianRequest } from '@/lib/guardian'
+import { matchGuardian } from '@/lib/guardian'
+import { refreshAccessToken } from '@/lib/auth'
 import styles from './page.module.css'
 
 export default function GuardianRegisterPage() {
   const router = useRouter()
   const [guardianEmail, setGuardianEmail] = useState('')
   const [error, setError] = useState('')
-  const [currentRequest, setCurrentRequest] = useState<GuardianRequest | null>(null)
-
-  useEffect(() => {
-    const userId = localStorage.getItem('userEmail') || ''
-    const request = getGuardianRequestByUserId(userId)
-    
-    if (request) {
-      setCurrentRequest(request)
-      setGuardianEmail(request.guardianEmail)
-    } else {
-      const savedEmail = localStorage.getItem('guardianEmail')
-      if (savedEmail) {
-        setGuardianEmail(savedEmail)
-      }
-    }
-  }, [])
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -45,34 +30,24 @@ export default function GuardianRegisterPage() {
       return
     }
 
-    const userId = localStorage.getItem('userEmail') || ''
-    const userName = localStorage.getItem('userName') || '사용자'
-    const userEmail = localStorage.getItem('userEmail') || ''
+    try {
+      // 백엔드 API 호출: 보호자 연결
+      await matchGuardian(guardianEmail.trim())
 
-    // 보호자 연동 요청 생성
-    const request = saveGuardianRequest({
-      userId,
-      userName,
-      userEmail,
-      guardianEmail: guardianEmail.trim(),
-    })
-    
-    if (request.status === 'pending') {
-      alert('보호자에게 연동 요청이 전송되었습니다. 보호자가 승인하면 연동이 완료됩니다.')
-    } else {
-      alert('보호자 이메일이 등록되었습니다.')
-    }
-    
-    router.push('/profile')
-  }
+      // 보호자 연결 성공 후 JWT 재발급 (relationId 업데이트를 위해)
+      try {
+        await refreshAccessToken()
+        console.log('JWT 재발급 성공 - relationId가 업데이트되었습니다.')
+      } catch (refreshError) {
+        console.error('JWT 재발급 실패:', refreshError)
+        // 재발급 실패해도 보호자 연결은 성공했으므로 계속 진행
+      }
 
-  const handleRemove = () => {
-    if (confirm('보호자 연동을 해제하시겠습니까?')) {
-      localStorage.removeItem('guardianEmail')
-      setGuardianEmail('')
-      setCurrentRequest(null)
-      alert('보호자 연동이 해제되었습니다.')
+      alert('보호자 연동이 완료되었습니다.')
       router.push('/profile')
+    } catch (error) {
+      console.error('보호자 연결 실패:', error)
+      setError(error instanceof Error ? error.message : '보호자 연결에 실패했습니다.')
     }
   }
 
@@ -96,39 +71,11 @@ export default function GuardianRegisterPage() {
             value={guardianEmail}
             onChange={(e) => setGuardianEmail(e.target.value)}
           />
-          {currentRequest && (
-            <div className={styles.statusInfo}>
-              {currentRequest.status === 'pending' && (
-                <p className={styles.pendingStatus}>
-                  승인 대기 중: {currentRequest.guardianEmail}
-                </p>
-              )}
-              {currentRequest.status === 'approved' && (
-                <p className={styles.approvedStatus}>
-                  연동 완료: {currentRequest.guardianEmail}
-                </p>
-              )}
-              {currentRequest.status === 'rejected' && (
-                <p className={styles.rejectedStatus}>
-                  거절됨: {currentRequest.guardianEmail}
-                </p>
-              )}
-            </div>
-          )}
         </div>
 
         {error && <p className={styles.error}>{error}</p>}
 
         <div className={styles.buttonGroup}>
-          {currentRequest && currentRequest.status === 'approved' && (
-            <button
-              type="button"
-              className={styles.removeButton}
-              onClick={handleRemove}
-            >
-              연동 해제
-            </button>
-          )}
           <button
             type="button"
             className={styles.cancelButton}

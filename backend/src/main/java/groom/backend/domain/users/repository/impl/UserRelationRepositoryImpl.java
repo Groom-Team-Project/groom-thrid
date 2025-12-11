@@ -25,6 +25,11 @@ public class UserRelationRepositoryImpl implements UserRelationRepository {
     }
 
     @Override
+    public Optional<UserRelation> findByGuardianId(UUID guardianId) {
+        return jpaUserRelationRepository.findByGuardianIdWithUser(guardianId);
+    }
+
+    @Override
     public UserRelation save(UserRelation userRelation) {
         return jpaUserRelationRepository.save(userRelation);
     }

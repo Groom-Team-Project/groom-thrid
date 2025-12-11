@@ -3,6 +3,7 @@ package groom.backend.domain.users.controller;
 import groom.backend.common.security.AuthUser;
 import groom.backend.domain.users.dto.request.GuardianMatchRequest;
 import groom.backend.domain.users.dto.request.UpdateUserRequest;
+import groom.backend.domain.users.dto.response.RelationInfoResponse;
 import groom.backend.domain.users.dto.response.UserResponse;
 import groom.backend.domain.users.service.spec.UserService;
 import jakarta.validation.Valid;
@@ -67,5 +68,12 @@ public class UserController {
         String email = req.email();
 
         userService.guardianMatch(userId, email);
+    }
+
+    @GetMapping("/relationInfo")
+    public RelationInfoResponse relationInfo(@AuthenticationPrincipal AuthUser user) {
+        Long relationId = user.relationId();
+
+        return userService.relationInfo(relationId);
     }
 }
