@@ -5,6 +5,7 @@ import { getRelationInfo, saveRelationInfo, clearRelationInfo } from './user'
 export enum Role {
   USER = 'USER',
   GUARDIAN = 'GUARDIAN',
+  ADMIN = 'ADMIN',
 }
 
 // 사용자 타입 (화면 구분용)
@@ -212,6 +213,10 @@ export const refreshAccessToken = async (): Promise<AuthResponse> => {
     }
     throw new Error('토큰 재발급 중 오류가 발생했습니다.')
   }
+// 현재 사용자가 ADMIN인지 확인
+export const isAdmin = (): boolean => {
+  const role = localStorage.getItem('userRole')
+  return role === Role.ADMIN
 }
 
 // 로그아웃

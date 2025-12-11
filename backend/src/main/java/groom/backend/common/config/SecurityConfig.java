@@ -2,6 +2,7 @@ package groom.backend.common.config;
 
 import groom.backend.common.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -29,6 +30,9 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Value("${app.cors.allowed-origins:}")
+    private String[] allowedOrigins;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -60,15 +64,14 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost",
-                "http://localhost:3000",
-                "http://localhost:80",
-                "http://localhost:8080",
-                "http://127.0.0.1:3000",
-                "http://127.0.0.1:80",
-                "http://127.0.0.1:8080"
-        ));
+
+        if (allowedOrigins != null && allowedOrigins.length > 0) {
+            configuration.setAllowedOrigins(Arrays.asList(allowedOrigins));
+        } else {
+            // 운영 설정 누락 시 안전한 fallback (개발용). 운영에서는 사용 금지 권장.
+            configuration.setAllowedOriginPatterns(List.of("*"));
+        }
+
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
