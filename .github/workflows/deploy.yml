@@ -58,7 +58,7 @@ jobs:
           
             # 배포 스크립트 실행
             echo "Running deployment script..."
-            chomd +x prod.sh
+            chmod +x prod.sh
             ./prod.sh build
             
             # 결과 확인
