@@ -314,7 +314,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         // 안내 버튼 클릭 시 제보 신청 페이지로 이동
         if (!checkLogin()) return
         if (selectedStation) {
-            router.push(`/report?stationName=${encodeURIComponent(selectedStation.facilityName)}`)
+            router.push(`/report?placeId=${selectedStation.placeId}&stationName=${encodeURIComponent(selectedStation.facilityName)}`)
         }
     }
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { getReportById, deleteReport, type Report } from '@/lib/reports'
+import { isAdmin } from '@/lib/auth'
 import BottomNav from '@/components/BottomNav'
 import styles from './page.module.css'
 
@@ -15,29 +16,46 @@ export default function ReportDetailPage() {
   const [isOwner, setIsOwner] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const loggedIn = localStorage.getItem('isLoggedIn')
-    if (loggedIn !== 'true') {
-      router.push('/auth')
-      return
-    }
+    const loadReport = async () => {
+      const loggedIn = localStorage.getItem('isLoggedIn')
+      if (loggedIn !== 'true') {
+        router.push('/auth')
+        return
+      }
 
-    const currentUserId = localStorage.getItem('userEmail') || ''
-    setUserId(currentUserId)
+      const currentUserId = localStorage.getItem('userEmail') || ''
+      const currentUserName = localStorage.getItem('userName') || ''
+      setUserId(currentUserId)
 
-    if (reportId) {
-      const foundReport = getReportById(reportId)
-      if (foundReport) {
-        setReport(foundReport)
-        setIsOwner(foundReport.userId === currentUserId)
+      if (reportId) {
+        try {
+          const foundReport = await getReportById(reportId)
+          if (foundReport) {
+            setReport(foundReport)
+            // 작성자 이름과 현재 사용자 이름을 비교
+            // ADMIN은 모든 제보를 수정/삭제할 수 있음
+            const authorName = foundReport.authorName || foundReport.userId
+            setIsOwner(isAdmin() || authorName === currentUserName)
+          } else {
+            alert('제보를 찾을 수 없습니다.')
+            router.push('/report/list')
+          }
+        } catch (error) {
+          console.error('제보 로드 실패:', error)
+          alert('제보를 불러오는 중 오류가 발생했습니다.')
+          router.push('/report/list')
+        } finally {
+          setLoading(false)
+        }
       } else {
-        alert('제보를 찾을 수 없습니다.')
         router.push('/report/list')
       }
-    } else {
-      router.push('/report/list')
     }
+
+    loadReport()
   }, [reportId, router])
 
   const handleDelete = () => {
@@ -45,16 +63,19 @@ export default function ReportDetailPage() {
     setShowMenu(false)
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!report) return
     
-    if (deleteReport(report.id)) {
+    try {
+      await deleteReport(report.id)
       alert('제보가 삭제되었습니다.')
       router.push('/report/list')
-    } else {
+    } catch (error) {
+      console.error('제보 삭제 실패:', error)
       alert('제보 삭제에 실패했습니다.')
+    } finally {
+      setShowDeleteModal(false)
     }
-    setShowDeleteModal(false)
   }
 
   const cancelDelete = () => {
@@ -85,8 +106,11 @@ export default function ReportDetailPage() {
   const getStatusMessage = (status: Report['status']) => {
     switch (status) {
       case 'pending':
-      case 'processing':
         return '관리자가 아직 확인하지 않았습니다.'
+      case 'processing':
+        return report?.adminCheckedDate 
+          ? `관리자가 확인했습니다. (${report.adminCheckedDate})`
+          : '관리자가 확인했습니다.'
       case 'completed':
         return '관리자가 확인하여 처리 완료되었습니다.'
       case 'rejected':
@@ -110,7 +134,7 @@ export default function ReportDetailPage() {
     }
   }
 
-  if (!report) {
+  if (loading || !report) {
     return (
       <div className={styles.container}>
         <div className={styles.loading}>로딩 중...</div>
