@@ -2,6 +2,7 @@ package groom.backend.domain.auth.controller;
 
 import groom.backend.domain.auth.dto.request.FormLoginAuthRequest;
 import groom.backend.domain.auth.dto.request.FormSignupAuthRequest;
+import groom.backend.domain.auth.dto.request.OAuthLoginRequest;
 import groom.backend.domain.auth.dto.request.OAuthSignupAuthRequest;
 import groom.backend.domain.auth.dto.response.CommonAuthResponse;
 import groom.backend.domain.auth.dto.response.SignupAuthResponse;
@@ -38,7 +39,7 @@ public class AuthController {
     }
 
     //
-    @PostMapping("/OAuth-signup")
+    @PostMapping("/oauth-signup")
     public SignupAuthResponse oauthSignup(@Valid @RequestBody OAuthSignupAuthRequest req,
                                           HttpServletResponse res) {
 
@@ -53,6 +54,12 @@ public class AuthController {
     @PostMapping("/form-login")
     public CommonAuthResponse formLogin(@Valid @RequestBody FormLoginAuthRequest req) {
         return authService.formLogin(req);
+    }
+
+    // 로그인(OAuth)
+    @PostMapping("/oauth-login")
+    public CommonAuthResponse oauthLogin(@Valid @RequestBody OAuthLoginRequest req) {
+        return authService.oauthLogin(req);
     }
 
     // 로그아웃(토큰 무효화)

@@ -26,7 +26,7 @@ public record OAuthSignupAuthRequest(
         Provider provider,
 
         @NotBlank
-        String providerToken
+        String providerId
 ) {
 
 }
