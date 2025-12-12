@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getUserReports, deleteReport, type Report } from '@/lib/reports'
+import { isAdmin } from '@/lib/auth'
 import BottomNav from '@/components/BottomNav'
 import styles from './page.module.css'
 
@@ -18,12 +19,19 @@ export default function ReportListPage() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
   const [reportToDelete, setReportToDelete] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const loadReports = () => {
-    const userId = localStorage.getItem('userEmail') || 'anonymous'
-    const userReports = getUserReports(userId)
-    setAllReports(userReports)
-    setReports(userReports)
+  const loadReports = async () => {
+    try {
+      const userReports = await getUserReports()
+      setAllReports(userReports)
+      setReports(userReports)
+    } catch (error) {
+      console.error('제보 목록 로드 실패:', error)
+      alert('제보 목록을 불러오는 중 오류가 발생했습니다.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   // 상태 필터 적용
@@ -80,9 +88,10 @@ export default function ReportListPage() {
     setOpenMenuId(null)
   }
 
-  const confirmDeleteReport = () => {
+  const confirmDeleteReport = async () => {
     if (reportToDelete) {
-      if (deleteReport(reportToDelete)) {
+      try {
+        await deleteReport(reportToDelete)
         const updatedAllReports = allReports.filter(r => r.id !== reportToDelete)
         setAllReports(updatedAllReports)
         
@@ -97,11 +106,13 @@ export default function ReportListPage() {
         newSelected.delete(reportToDelete)
         setSelectedReports(newSelected)
         alert('제보가 삭제되었습니다.')
-      } else {
+      } catch (error) {
+        console.error('제보 삭제 실패:', error)
         alert('제보 삭제에 실패했습니다.')
+      } finally {
+        setShowDeleteConfirmModal(false)
+        setReportToDelete(null)
       }
-      setShowDeleteConfirmModal(false)
-      setReportToDelete(null)
     }
   }
 
@@ -120,31 +131,35 @@ export default function ReportListPage() {
     setShowDeleteModal(true)
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteMode) return
 
-    if (deleteMode === 'selected') {
-      selectedReports.forEach(reportId => {
-      deleteReport(reportId)
-    })
-    
-    const updatedAllReports = allReports.filter(r => !selectedReports.has(r.id))
-    setAllReports(updatedAllReports)
-    
-    // 필터 적용
-    if (statusFilter === 'all') {
-      setReports(updatedAllReports)
-    } else {
-      setReports(updatedAllReports.filter(r => r.status === statusFilter))
+    try {
+      if (deleteMode === 'selected') {
+        // 선택된 제보들 삭제
+        await Promise.all(Array.from(selectedReports).map(reportId => deleteReport(reportId)))
+        
+        const updatedAllReports = allReports.filter(r => !selectedReports.has(r.id))
+        setAllReports(updatedAllReports)
+        
+        // 필터 적용
+        if (statusFilter === 'all') {
+          setReports(updatedAllReports)
+        } else {
+          setReports(updatedAllReports.filter(r => r.status === statusFilter))
+        }
+        
+        setSelectedReports(new Set())
+        alert(`${deleteCount}개의 제보가 삭제되었습니다.`)
+      }
+    } catch (error) {
+      console.error('제보 삭제 실패:', error)
+      alert('제보 삭제에 실패했습니다.')
+    } finally {
+      setShowDeleteModal(false)
+      setDeleteMode(null)
+      setDeleteCount(0)
     }
-    
-    setSelectedReports(new Set())
-    alert(`${deleteCount}개의 제보가 삭제되었습니다.`)
-  }
-
-    setShowDeleteModal(false)
-    setDeleteMode(null)
-    setDeleteCount(0)
   }
 
   const cancelDelete = () => {
@@ -185,10 +200,8 @@ export default function ReportListPage() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <button className={styles.backButton} onClick={() => router.back()}>
-          ←
-        </button>
-        <h1 className={styles.title}>나의 제보 목록</h1>
+        <div className={styles.placeholder} />
+        <h1 className={styles.title}>{isAdmin() ? '제보 목록 관리' : '나의 제보 목록'}</h1>
         <div className={styles.placeholder} />
       </div>
 
@@ -228,9 +241,13 @@ export default function ReportListPage() {
           </div>
         )}
 
-        {reports.length === 0 ? (
+        {loading ? (
           <div className={styles.emptyState}>
-            <p className={styles.emptyText}>제보한 내역이 없습니다.</p>
+            <p className={styles.emptyText}>로딩 중...</p>
+          </div>
+        ) : reports.length === 0 ? (
+          <div className={styles.emptyState}>
+            <p className={styles.emptyText}>{isAdmin() ? '제보 내역이 없습니다.' : '제보한 내역이 없습니다.'}</p>
           </div>
         ) : (
           <div className={styles.reportList}>
@@ -253,77 +270,92 @@ export default function ReportListPage() {
                 </button>
               )}
             </div>
-            {reports.map((report) => (
-              <div
-                key={report.id}
-                className={`${styles.reportItem} ${selectedReports.has(report.id) ? styles.selected : ''}`}
-                onClick={() => handleReportClick(report.id)}
-              >
-                <div className={styles.reportCheckbox}>
-                  <input
-                    type="checkbox"
-                    checked={selectedReports.has(report.id)}
-                    onChange={(e) => handleSelectReport(report.id, e)}
-                    onClick={(e) => e.stopPropagation()}
-                    className={styles.checkbox}
-                  />
-                </div>
-                <div className={styles.reportContent}>
-                  <p className={styles.reportText}>{report.content}</p>
-                  <div className={styles.reportMeta}>
-                    <span className={styles.reportDate}>{report.date}</span>
-                    <span
-                      className={styles.reportStatus}
-                      style={{ color: getStatusColor(report.status) }}
-                    >
-                      {getStatusText(report.status)}
-                    </span>
+            {reports.map((report) => {
+              // 본인 제보인지 확인 (작성자 이메일과 현재 사용자 이메일 비교 - 동명이인 구분)
+              const currentUserEmail = localStorage.getItem('userEmail') || ''
+              const authorEmail = report.authorEmail
+              const canEditOrDelete = isAdmin() || (authorEmail && authorEmail === currentUserEmail)
+
+              return (
+                <div
+                  key={report.id}
+                  className={`${styles.reportItem} ${selectedReports.has(report.id) ? styles.selected : ''}`}
+                  onClick={() => handleReportClick(report.id)}
+                >
+                  <div className={styles.reportCheckbox}>
+                    <input
+                      type="checkbox"
+                      checked={selectedReports.has(report.id)}
+                      onChange={(e) => handleSelectReport(report.id, e)}
+                      onClick={(e) => e.stopPropagation()}
+                      className={styles.checkbox}
+                    />
                   </div>
-                </div>
-                <div className={styles.reportActions}>
-                  <div className={styles.menuContainer}>
-                    <button
-                      className={styles.menuButton}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setOpenMenuId(openMenuId === report.id ? null : report.id)
-                      }}
-                    >
-                      ⋯
-                    </button>
-                    {openMenuId === report.id && (
-                      <>
-                        <div 
-                          className={styles.menuOverlay}
-                          onClick={() => setOpenMenuId(null)}
-                        />
-                        <div className={styles.menu}>
-                          <button
-                            className={styles.menuItem}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setOpenMenuId(null)
-                              handleEditReport(report.id, e)
-                            }}
-                          >
-                            수정
-                          </button>
-                          <button
-                            className={`${styles.menuItem} ${styles.deleteMenuItem}`}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDeleteReport(report.id)
-                            }}
-                          >
-                            삭제
-                          </button>
-                        </div>
-                      </>
+                  <div className={styles.reportContent}>
+                    <p className={styles.reportText}>{report.content}</p>
+                    {isAdmin() && report.authorName && (
+                      <p className={styles.reportAuthor}>
+                        작성자: {report.authorName}
+                        {report.authorEmail && ` (${report.authorEmail})`}
+                      </p>
                     )}
+                    <div className={styles.reportMeta}>
+                      <span className={styles.reportDate}>{report.date}</span>
+                      <span
+                        className={styles.reportStatus}
+                        style={{ color: getStatusColor(report.status) }}
+                      >
+                        {getStatusText(report.status)}
+                      </span>
+                    </div>
                   </div>
+                  {canEditOrDelete && (
+                    <div className={styles.reportActions}>
+                      <div className={styles.menuContainer}>
+                        <button
+                          className={styles.menuButton}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setOpenMenuId(openMenuId === report.id ? null : report.id)
+                          }}
+                        >
+                          ⋯
+                        </button>
+                        {openMenuId === report.id && (
+                          <>
+                            <div 
+                              className={styles.menuOverlay}
+                              onClick={() => setOpenMenuId(null)}
+                            />
+                            <div className={styles.menu}>
+                              <button
+                                className={styles.menuItem}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setOpenMenuId(null)
+                                  handleEditReport(report.id, e)
+                                }}
+                              >
+                                수정
+                              </button>
+                              <button
+                                className={`${styles.menuItem} ${styles.deleteMenuItem}`}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDeleteReport(report.id)
+                                }}
+                              >
+                                삭제
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

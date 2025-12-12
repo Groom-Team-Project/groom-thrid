@@ -86,9 +86,8 @@ export default function WriteReviewPage() {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // 파일 크기 검증 (3MB 제한 - base64로 변환하면 약 4MB가 되므로 원본을 더 작게 제한)
-      if (file.size > 3 * 1024 * 1024) {
-        setError('사진 크기는 3MB 이하여야 합니다.')
+      if (file.size > 5 * 1024 * 1024) {
+        setError('사진 크기는 5MB 이하여야 합니다.')
         return
       }
       
