@@ -4,6 +4,10 @@ name: Deploy to EC2
 # 트리거: prod 브랜치에 push 될 때
 # ====================================
 on:
+  pull_request:
+    types: [closed]
+    branches:
+      - prod
   push:
     branches:
       - prod
@@ -31,16 +35,21 @@ jobs:
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key.pem
-          chmod 600 ~/.ssh/deploy_key.pem
-          ssh-keyscan -H ${{ secrets.EC_HOST }} >> ~/.ssh/known_hosts
+          chmod 700 ~/.ssh
+          
+          touch ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+          
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/groom_backend_key.pem
+          chmod 600 ~/.ssh/groom_backend_key.pem
+          ssh-keyscan -p ${{ secrets.EC2_SSH_PORT }} -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
       # ----------------------------------
       # Step 3: EC2 접속 및 배포
       # ----------------------------------
       - name: Deploy to EC2
         run: |
-          ssh -i ~/.ssh/deploy_key.pem \
+          ssh -i ~/.ssh/groom_backend_key.pem \
             -o StrictHostKeyChecking=no \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
           
@@ -54,7 +63,7 @@ jobs:
           
             # 배포 스크립트 실행
             echo "Running deployment script..."
-            chomd +x prod.sh
+            chmod +x prod.sh
             ./prod.sh build
             
             # 결과 확인
