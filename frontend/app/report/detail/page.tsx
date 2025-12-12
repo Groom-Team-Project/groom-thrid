@@ -18,7 +18,7 @@ export default function ReportDetailPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showResponseModal, setShowResponseModal] = useState(false)
   const [responseText, setResponseText] = useState('')
-  const [responseStatus, setResponseStatus] = useState<'completed' | 'rejected' | null>(null)
+  const [responseStatus, setResponseStatus] = useState<'processing' | 'completed' | 'rejected' | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -91,14 +91,19 @@ export default function ReportDetailPage() {
     router.push(`/report?reportId=${report.id}`)
   }
 
-  const handleReply = (status: 'completed' | 'rejected') => {
-    setResponseStatus(status)
+  const handleReply = () => {
     setShowResponseModal(true)
   }
 
   const handleResponseSubmit = async () => {
-    if (!report || !responseStatus || !responseText.trim()) {
-      alert('답변을 입력해주세요.')
+    if (!report || !responseStatus) {
+      alert('상태를 선택해주세요.')
+      return
+    }
+
+    // 승인 또는 반려인 경우 답변 메시지 필수
+    if ((responseStatus === 'completed' || responseStatus === 'rejected') && !responseText.trim()) {
+      alert('답변 메시지를 입력해주세요.')
       return
     }
 
@@ -106,7 +111,7 @@ export default function ReportDetailPage() {
     try {
       const updated = await updateReportStatus(report.id, {
         status: responseStatus,
-        adminReply: responseText.trim(),
+        adminReply: responseText.trim() || undefined, // 처리 중인 경우 adminReply는 선택사항
       })
       
       if (updated) {
@@ -114,11 +119,11 @@ export default function ReportDetailPage() {
         setShowResponseModal(false)
         setResponseText('')
         setResponseStatus(null)
-        alert('답변이 전송되었습니다.')
+        alert('상태가 변경되었습니다.')
       }
     } catch (error) {
-      console.error('답변 전송 실패:', error)
-      alert('답변 전송에 실패했습니다.')
+      console.error('상태 변경 실패:', error)
+      alert('상태 변경에 실패했습니다.')
     } finally {
       setIsSubmitting(false)
     }
@@ -295,17 +300,9 @@ export default function ReportDetailPage() {
           <div className={styles.adminActions}>
             <button
               className={styles.replyButton}
-              onClick={() => handleReply('completed')}
-              disabled={report.status === 'completed'}
+              onClick={handleReply}
             >
-              승인하기
-            </button>
-            <button
-              className={`${styles.replyButton} ${styles.rejectButton}`}
-              onClick={() => handleReply('rejected')}
-              disabled={report.status === 'rejected'}
-            >
-              반려하기
+              답변하기
             </button>
           </div>
         )}
@@ -317,7 +314,7 @@ export default function ReportDetailPage() {
         <div className={styles.modal} onClick={cancelResponse}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3>{responseStatus === 'completed' ? '승인 답변 작성' : '반려 답변 작성'}</h3>
+              <h3>상태 변경 및 답변</h3>
               <button
                 className={styles.closeButton}
                 onClick={cancelResponse}
@@ -330,15 +327,52 @@ export default function ReportDetailPage() {
                 <label className={styles.label}>충전소명</label>
                 <div className={styles.value}>{report.stationName}</div>
               </div>
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>상태 변경</label>
+                <div className={styles.statusButtons}>
+                  <button
+                    className={`${styles.statusButton} ${responseStatus === 'processing' ? styles.active : ''}`}
+                    onClick={() => setResponseStatus('processing')}
+                  >
+                    처리 중
+                  </button>
+                  <button
+                    className={`${styles.statusButton} ${responseStatus === 'completed' ? styles.active : ''}`}
+                    onClick={() => setResponseStatus('completed')}
+                  >
+                    승인
+                  </button>
+                  <button
+                    className={`${styles.statusButton} ${styles.rejectStatusButton} ${responseStatus === 'rejected' ? styles.active : ''}`}
+                    onClick={() => setResponseStatus('rejected')}
+                  >
+                    반려
+                  </button>
+                </div>
+              </div>
               <div className={styles.responseSection}>
-                <label className={styles.label}>답변 내용</label>
+                <label className={styles.label}>
+                  답변 내용
+                  {(responseStatus === 'completed' || responseStatus === 'rejected') && (
+                    <span className={styles.required}> *</span>
+                  )}
+                </label>
                 <textarea
                   className={styles.responseTextarea}
                   value={responseText}
                   onChange={(e) => setResponseText(e.target.value)}
-                  placeholder={responseStatus === 'completed' ? '승인 사유를 입력해주세요.' : '반려 사유를 입력해주세요.'}
+                  placeholder={
+                    responseStatus === 'processing' 
+                      ? '답변 메시지를 입력해주세요. (선택사항)'
+                      : responseStatus === 'completed'
+                      ? '승인 사유를 입력해주세요. (필수)'
+                      : responseStatus === 'rejected'
+                      ? '반려 사유를 입력해주세요. (필수)'
+                      : '상태를 선택한 후 답변을 입력해주세요.'
+                  }
                   rows={6}
                   maxLength={2000}
+                  disabled={!responseStatus}
                 />
                 <div className={styles.charCount}>
                   {responseText.length} / 2000
@@ -355,7 +389,11 @@ export default function ReportDetailPage() {
                 <button
                   className={styles.submitButton}
                   onClick={handleResponseSubmit}
-                  disabled={isSubmitting || !responseText.trim()}
+                  disabled={
+                    isSubmitting || 
+                    !responseStatus || 
+                    ((responseStatus === 'completed' || responseStatus === 'rejected') && !responseText.trim())
+                  }
                 >
                   {isSubmitting ? '전송 중...' : '전송'}
                 </button>

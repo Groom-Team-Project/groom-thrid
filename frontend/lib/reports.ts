@@ -62,19 +62,19 @@ const convertReportResponse = async (response: ReportResponse): Promise<Report> 
   const createdAt = new Date(response.createdAt)
   const date = `${createdAt.getFullYear()}.${String(createdAt.getMonth() + 1).padStart(2, '0')}.${String(createdAt.getDate()).padStart(2, '0')}`
 
-  // adminCheckedDate: processing, completed, rejected 상태일 때 updatedAt 사용
+  // adminCheckedDate: processing, completed, rejected 상태일 때 updatedAt 사용 (시, 분 포함)
   let adminCheckedDate: string | undefined
   const status = convertBackendStatus(response.status)
   if (status !== 'pending' && response.updatedAt) {
     const updatedAt = new Date(response.updatedAt)
-    adminCheckedDate = `${updatedAt.getFullYear()}.${String(updatedAt.getMonth() + 1).padStart(2, '0')}.${String(updatedAt.getDate()).padStart(2, '0')}`
+    adminCheckedDate = `${updatedAt.getFullYear()}.${String(updatedAt.getMonth() + 1).padStart(2, '0')}.${String(updatedAt.getDate()).padStart(2, '0')} ${String(updatedAt.getHours()).padStart(2, '0')}:${String(updatedAt.getMinutes()).padStart(2, '0')}`
   }
 
-  // adminResponseDate: adminReply가 있을 때 updatedAt 사용
+  // adminResponseDate: adminReply가 있을 때 updatedAt 사용 (시, 분 포함)
   let adminResponseDate: string | undefined
   if (response.adminReply && response.updatedAt) {
     const updatedAt = new Date(response.updatedAt)
-    adminResponseDate = `${updatedAt.getFullYear()}.${String(updatedAt.getMonth() + 1).padStart(2, '0')}.${String(updatedAt.getDate()).padStart(2, '0')}`
+    adminResponseDate = `${updatedAt.getFullYear()}.${String(updatedAt.getMonth() + 1).padStart(2, '0')}.${String(updatedAt.getDate()).padStart(2, '0')} ${String(updatedAt.getHours()).padStart(2, '0')}:${String(updatedAt.getMinutes()).padStart(2, '0')}`
   }
 
   return {

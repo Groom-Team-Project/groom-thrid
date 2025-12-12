@@ -368,12 +368,43 @@
   cursor: not-allowed;
 }
 
-.rejectButton {
-  background: #ff3b30;
+.statusButtons {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
 }
 
-.rejectButton:hover:not(:disabled) {
-  background: #d32f2f;
+.statusButton {
+  flex: 1;
+  padding: 10px;
+  background: #f5f5f5;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.statusButton:hover {
+  background: #e8e8e8;
+  border-color: #ccc;
+}
+
+.statusButton.active {
+  background: #007AFF;
+  color: white;
+  border-color: #007AFF;
+}
+
+.rejectStatusButton.active {
+  background: #ff3b30;
+  border-color: #ff3b30;
+}
+
+.required {
+  color: #ff3b30;
 }
 
 .responseSection {
