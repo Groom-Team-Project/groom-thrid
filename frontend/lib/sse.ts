@@ -7,9 +7,17 @@ export interface LocationData {
   timestamp: string
 }
 
+// SSE로 받을 알림 데이터 타입
+export interface NotificationData {
+  lat: number
+  lng: number
+  address: string
+}
+
 // SSE 이벤트 핸들러 타입
 export interface SseEventHandlers {
   onLocation?: (data: LocationData) => void
+  onNotification?: (data: NotificationData) => void
   onError?: (error: Error) => void
   onOpen?: () => void
 }
@@ -91,9 +99,20 @@ export class SseConnection {
             }
 
             try {
-              const locationData = JSON.parse(data) as LocationData
-              console.log('[SSE] 📍 실시간 위치 수신:', locationData)
-              this.handlers.onLocation?.(locationData)
+              const parsedData = JSON.parse(data)
+
+              // address 필드가 있으면 알림 데이터, timestamp가 있으면 위치 데이터
+              if ('address' in parsedData) {
+                const notificationData = parsedData as NotificationData
+                console.log('[SSE] 🔔 알림 수신:', notificationData)
+                this.handlers.onNotification?.(notificationData)
+              } else if ('timestamp' in parsedData) {
+                const locationData = parsedData as LocationData
+                console.log('[SSE] 📍 실시간 위치 수신:', locationData)
+                this.handlers.onLocation?.(locationData)
+              } else {
+                console.warn('[SSE] ⚠️ 알 수 없는 데이터 형식:', parsedData)
+              }
             } catch (error) {
               console.error('[SSE] ❌ 메시지 파싱 실패:', error, 'data:', data)
             }
