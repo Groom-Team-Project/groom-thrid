@@ -267,13 +267,6 @@ export default function ReportDetailPage() {
           </div>
         )}
 
-        {report.adminCheckedDate && (
-          <div className={styles.inputGroup}>
-            <label className={styles.label}>관리자 확인 시간</label>
-            <div className={styles.value}>{report.adminCheckedDate}</div>
-          </div>
-        )}
-
         {report.adminResponse && (
           <div className={styles.inputGroup}>
             <label className={styles.label}>관리자 답변</label>
