@@ -2,6 +2,7 @@ package groom.backend.domain.auth.controller;
 
 import groom.backend.domain.auth.dto.request.FormLoginAuthRequest;
 import groom.backend.domain.auth.dto.request.FormSignupAuthRequest;
+import groom.backend.domain.auth.dto.request.OAuthSignupAuthRequest;
 import groom.backend.domain.auth.dto.response.CommonAuthResponse;
 import groom.backend.domain.auth.dto.response.SignupAuthResponse;
 import groom.backend.domain.auth.service.spec.AuthService;
@@ -23,14 +24,26 @@ public class AuthController {
 
     private final AuthService authService;
 
-    // 회원가입
-    @PostMapping("/signup")
+    // form 회원가입
+    @PostMapping("/form-signup")
     public SignupAuthResponse formSignup(
             @Valid @RequestBody FormSignupAuthRequest req,
             HttpServletResponse res
     ) {
 
         SignupAuthResponse result = authService.formSignup(req);
+        res.setStatus(201);
+
+        return result;
+    }
+
+    //
+    @PostMapping("/OAuth-signup")
+    public SignupAuthResponse oauthSignup(@Valid @RequestBody OAuthSignupAuthRequest req,
+                                          HttpServletResponse res) {
+
+        SignupAuthResponse result = authService.oauthSignup(req);
+
         res.setStatus(201);
 
         return result;
