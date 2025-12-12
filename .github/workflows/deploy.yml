@@ -54,23 +54,32 @@ jobs:
             -o StrictHostKeyChecking=no \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
           
+            set -euo pipefail
+            echo ">>> SSH: connected $(date)"     
+          
             # 프로젝트 디렉토리로 이동
             cd ${{ secrets.EC2_PROJECT_PATH }}
             
             # Git에서 최신 코드 가져오기
-            echo "Pulling latest code from Git..."
+            echo ">>> Pulling latest code from Git...$(date)"
             git fetch origin prod
             git reset --hard origin/prod
           
             # 배포 스크립트 실행
-            echo "Running deployment script..."
+            echo ">>> Running deployment script...$(date)"
             chmod +x prod.sh
             ./prod.sh build
             
             # 결과 확인
-            echo "Deployment completed."
-            docker compose ps || docker-compose ps
-          EOF
+            echo ">>> prod.sh finished with exit \$? $(date)"
+            EOF
+          rc=$?
+          echo "ssh exit code: $rc"
+          if [ $rc -ne 0 ]; then
+            echo "Deployment failed (ssh rc=$rc)"
+            exit $rc
+          fi
+          echo "Deployment step completed successfully"
 
       # ----------------------------------
       # Step 4: 배포 알림 (선택)
