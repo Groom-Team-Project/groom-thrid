@@ -213,6 +213,8 @@ export const refreshAccessToken = async (): Promise<AuthResponse> => {
     }
     throw new Error('토큰 재발급 중 오류가 발생했습니다.')
   }
+}
+
 // 현재 사용자가 ADMIN인지 확인
 export const isAdmin = (): boolean => {
   const role = localStorage.getItem('userRole')
