@@ -134,8 +134,7 @@ export const apiRequest = async <T>(
       }
     }
 
-    const data: ApiResponse<T> = await response.json()
-    // 응답 본문을 먼저 텍스트로 읽기
+    // 응답 본문을 먼저 텍스트로 읽기 (Response body는 한 번만 읽을 수 있음)
     const responseText = await response.text()
     
     // 빈 응답 처리 (DELETE 등)
