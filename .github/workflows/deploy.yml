@@ -72,7 +72,7 @@ jobs:
             
             # 결과 확인
             echo ">>> prod.sh finished with exit \$? $(date)"
-            EOF
+          EOF
           rc=$?
           echo "ssh exit code: $rc"
           if [ $rc -ne 0 ]; then
