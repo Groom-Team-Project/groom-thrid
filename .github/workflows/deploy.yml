@@ -41,7 +41,7 @@ jobs:
           touch ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
           
-          printf "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/groom_backend_key.pem
+          printf "%s" "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/groom_backend_key.pem
           chmod 600 ~/.ssh/groom_backend_key.pem
           ssh-keyscan -p ${{ secrets.EC2_SSH_PORT }} -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
