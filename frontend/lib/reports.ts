@@ -58,9 +58,9 @@ const convertReportResponse = async (response: ReportResponse): Promise<Report> 
     console.error('충전소 정보 로드 실패:', err)
   }
 
-  // createdAt을 date 형식으로 변환
+  // createdAt을 date 형식으로 변환 (날짜 + 시간)
   const createdAt = new Date(response.createdAt)
-  const date = `${createdAt.getFullYear()}.${String(createdAt.getMonth() + 1).padStart(2, '0')}.${String(createdAt.getDate()).padStart(2, '0')}`
+  const date = `${createdAt.getFullYear()}.${String(createdAt.getMonth() + 1).padStart(2, '0')}.${String(createdAt.getDate()).padStart(2, '0')} ${String(createdAt.getHours()).padStart(2, '0')}:${String(createdAt.getMinutes()).padStart(2, '0')}`
 
   // adminCheckedDate: processing, completed, rejected 상태일 때 updatedAt 사용 (시, 분 포함)
   let adminCheckedDate: string | undefined
