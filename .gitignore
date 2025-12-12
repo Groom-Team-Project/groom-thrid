@@ -33,3 +33,5 @@ build/
 *~
 *.bak
 .backup
+
+*.md

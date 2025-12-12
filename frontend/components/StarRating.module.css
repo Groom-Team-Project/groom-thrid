@@ -1,0 +1,65 @@
+.starRating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.star {
+  position: relative;
+  display: inline-block;
+  color: #ddd;
+  cursor: default;
+  user-select: none;
+}
+
+.star.small {
+  font-size: 14px;
+}
+
+.star.medium {
+  font-size: 18px;
+}
+
+.star.large {
+  font-size: 24px;
+}
+
+.star.editable {
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.star.editable:hover {
+  transform: scale(1.1);
+}
+
+.starOutline {
+  position: relative;
+  display: inline-block;
+  color: #ddd;
+}
+
+.starFill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  color: #ffc107;
+  white-space: nowrap;
+}
+
+.starFill.full {
+  width: 100%;
+}
+
+.starFill.half {
+  width: 50%;
+}
+
+.ratingText {
+  margin-left: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
