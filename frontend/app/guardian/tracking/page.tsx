@@ -6,11 +6,6 @@ import { connectSSE, disconnectSSE, SseConnection, LocationData } from '@/lib/ss
 import { getCurrentNavigation, PathNavigationInfo } from '@/lib/path'
 import styles from './page.module.css'
 
-interface PathNode {
-  type: 'Point' | 'LineString'
-  coordinates: [number, number][]
-}
-
 export default function GuardianTrackingPage() {
   const router = useRouter()
   const mapRef = useRef<HTMLDivElement>(null)
@@ -18,6 +13,7 @@ export default function GuardianTrackingPage() {
   const userMarkerRef = useRef<any>(null)
   const startMarkerRef = useRef<any>(null)
   const endMarkerRef = useRef<any>(null)
+  const pathPolylineRef = useRef<any>(null)
   const sseConnectionRef = useRef<SseConnection | null>(null)
 
   const [mapLoaded, setMapLoaded] = useState(false)
@@ -25,6 +21,7 @@ export default function GuardianTrackingPage() {
   const [pathInfo, setPathInfo] = useState<PathNavigationInfo | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isLoadingPath, setIsLoadingPath] = useState(false)
 
   const apiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY ?? ''
 
@@ -56,7 +53,41 @@ export default function GuardianTrackingPage() {
           console.log('[보호자 추적] ✅ 사용자가 길안내 중입니다!')
           console.log('[보호자 추적] 출발지:', info.startName, `(${info.startY}, ${info.startX})`)
           console.log('[보호자 추적] 도착지:', info.endName, `(${info.endY}, ${info.endX})`)
-          setPathInfo(info)
+
+          // 전체 경로 데이터 조회 (pathNodeList 포함)
+          setIsLoadingPath(true)
+          const requestBody = {
+            startY: parseFloat(info.startY),
+            startX: parseFloat(info.startX),
+            endY: parseFloat(info.endY),
+            endX: parseFloat(info.endX),
+            startName: info.startName,
+            endName: info.endName,
+          }
+
+          console.log('[보호자 추적] 🛣️  상세 경로 데이터 요청 중...')
+          const pathRes = await fetch('/api/v1/paths', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+          })
+
+          const pathData = await pathRes.json()
+          console.log('[보호자 추적] 🛣️  상세 경로 데이터 수신:', pathData)
+
+          if (pathData && pathData.data && 'pathNodeList' in pathData.data) {
+            // pathNodeList를 포함한 완전한 경로 정보 설정
+            const fullPathInfo = {
+              ...info,
+              pathNodeList: pathData.data.pathNodeList,
+            }
+            console.log('[보호자 추적] ✅ 경로 노드 개수:', pathData.data.pathNodeList.length)
+            setPathInfo(fullPathInfo)
+          } else {
+            console.log('[보호자 추적] ⚠️  경로 데이터를 가져왔지만 pathNodeList가 없습니다.')
+            setPathInfo(info)
+          }
+          setIsLoadingPath(false)
         } else {
           console.log('[보호자 추적] ⚠️  사용자가 현재 길안내 중이 아닙니다.')
           console.log('[보호자 추적] 응답 데이터:', info)
@@ -68,6 +99,7 @@ export default function GuardianTrackingPage() {
           console.error('[보호자 추적] 에러 메시지:', err.message)
         }
         setError('경로 정보를 불러올 수 없습니다.')
+        setIsLoadingPath(false)
       }
     }
 
@@ -161,11 +193,63 @@ export default function GuardianTrackingPage() {
       endMarkerRef.current = endMarker
       console.log('[보호자 추적] ✅ 도착지 마커 생성 완료')
 
-      // 지도 범위 조정 (출발지, 도착지 모두 보이도록)
-      const bounds = new window.kakao.maps.LatLngBounds()
-      bounds.extend(startPosition)
-      bounds.extend(endPosition)
-      map.setBounds(bounds)
+      // 경로 그리기 (pathNodeList가 있는 경우)
+      if (pathInfo.pathNodeList && pathInfo.pathNodeList.length > 0) {
+        console.log('[보호자 추적] 🛣️  경로 그리기 시작')
+
+        // 기존 경로 제거
+        if (pathPolylineRef.current) {
+          pathPolylineRef.current.setMap(null)
+          console.log('[보호자 추적] 기존 경로 제거')
+        }
+
+        const linePaths: any[] = []
+
+        // LineString 타입의 노드들에서 좌표 추출
+        pathInfo.pathNodeList.forEach((node) => {
+          if (node.type === 'LineString') {
+            node.coordinates.forEach(([lng, lat]) => {
+              linePaths.push(new window.kakao.maps.LatLng(lat, lng))
+            })
+          }
+        })
+
+        console.log('[보호자 추적] 경로 좌표 개수:', linePaths.length)
+
+        // 경로가 있으면 Polyline 그리기
+        if (linePaths.length > 1) {
+          const polyline = new window.kakao.maps.Polyline({
+            path: linePaths,
+            strokeWeight: 5,
+            strokeColor: '#005AFF',
+            strokeOpacity: 0.8,
+            strokeStyle: 'solid',
+            map: map,
+          })
+
+          pathPolylineRef.current = polyline
+          console.log('[보호자 추적] ✅ 경로 그리기 완료!')
+
+          // 지도 범위를 경로 전체가 보이도록 조정
+          const bounds = new window.kakao.maps.LatLngBounds()
+          linePaths.forEach((p) => bounds.extend(p))
+          map.setBounds(bounds)
+        } else {
+          console.log('[보호자 추적] ⚠️  경로 좌표가 부족하여 Polyline을 그리지 않음')
+          // 경로가 없으면 출발지, 도착지만 보이도록
+          const bounds = new window.kakao.maps.LatLngBounds()
+          bounds.extend(startPosition)
+          bounds.extend(endPosition)
+          map.setBounds(bounds)
+        }
+      } else {
+        console.log('[보호자 추적] ⚠️  pathNodeList가 없어 경로를 그리지 않음')
+        // 경로 정보가 없으면 출발지, 도착지만 보이도록
+        const bounds = new window.kakao.maps.LatLngBounds()
+        bounds.extend(startPosition)
+        bounds.extend(endPosition)
+        map.setBounds(bounds)
+      }
 
       console.log('[보호자 추적] 🗺️  출발지/도착지 마커 표시 완료!')
     } catch (error) {
@@ -183,7 +267,6 @@ export default function GuardianTrackingPage() {
       onLocation: (data: LocationData) => {
         console.log('[보호자 추적] 📍 사용자 위치 수신:', data)
         setUserLocation(data)
-        updateUserMarker(data)
       },
       onError: (err: Error) => {
         console.error('[보호자 추적] ❌ SSE 에러:', err)
@@ -206,6 +289,17 @@ export default function GuardianTrackingPage() {
       }
     }
   }, [mapLoaded])
+
+  // 사용자 위치가 업데이트되면 마커 표시
+  useEffect(() => {
+    if (!userLocation || !kakaoMapRef.current) {
+      console.log('[보호자 추적] ⚠️ 마커 업데이트 스킵 - 위치 또는 지도 없음')
+      return
+    }
+
+    console.log('[보호자 추적] 🎯 사용자 위치 마커 업데이트:', userLocation)
+    updateUserMarker(userLocation)
+  }, [userLocation, mapLoaded])
 
   // 사용자 위치 마커 업데이트
   const updateUserMarker = (location: LocationData) => {
@@ -267,6 +361,11 @@ export default function GuardianTrackingPage() {
         <span className={styles.statusText}>
           {isConnected ? '연결됨' : '연결 중...'}
         </span>
+        {isLoadingPath && (
+          <span className={styles.statusText} style={{ marginLeft: '8px' }}>
+            | 경로 불러오는 중...
+          </span>
+        )}
       </div>
 
       {/* 에러 메시지 */}
