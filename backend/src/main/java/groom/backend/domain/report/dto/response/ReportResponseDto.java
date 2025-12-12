@@ -21,6 +21,9 @@ public class ReportResponseDto {
     @Schema(description = "작성자", example = "홍길동")
     private String author;
 
+    @Schema(description = "작성자 이메일", example = "user@example.com")
+    private String authorEmail;
+
     @Schema(description = "제보 상태", example = "대기 중")
     private String status;
 
@@ -39,12 +42,13 @@ public class ReportResponseDto {
     public ReportResponseDto() {}
 
     public ReportResponseDto(Long id, Long placeId, String content, String author, 
-                         String status, String imageUrl, String adminReply,
+                         String authorEmail, String status, String imageUrl, String adminReply,
                          LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.placeId = placeId;
         this.content = content;
         this.author = author;
+        this.authorEmail = authorEmail;
         this.status = status;
         this.imageUrl = imageUrl;
         this.adminReply = adminReply;
@@ -122,6 +126,14 @@ public class ReportResponseDto {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getAuthorEmail() {
+        return authorEmail;
+    }
+
+    public void setAuthorEmail(String authorEmail) {
+        this.authorEmail = authorEmail;
     }
 }
 

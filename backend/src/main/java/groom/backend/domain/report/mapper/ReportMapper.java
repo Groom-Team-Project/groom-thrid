@@ -26,12 +26,15 @@ public class ReportMapper {
     public static ReportResponseDto toResponseDto(Report report) {
         // User 엔티티에서 이름을 가져오되, 없으면 denormalized author 사용
         String authorName = report.getUser() != null ? report.getUser().getName() : report.getAuthor();
+        // User 엔티티에서 이메일을 가져옴
+        String authorEmail = report.getUser() != null ? report.getUser().getEmail() : null;
         
         return new ReportResponseDto(
                 report.getId(),
                 report.getPlaceId(),
                 report.getContent(),
                 authorName,
+                authorEmail,
                 report.getStatus().getDescription(),
                 report.getImageUrl(),
                 report.getAdminReply(),

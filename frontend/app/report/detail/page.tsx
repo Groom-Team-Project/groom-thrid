@@ -26,19 +26,18 @@ export default function ReportDetailPage() {
         return
       }
 
-      const currentUserId = localStorage.getItem('userEmail') || ''
-      const currentUserName = localStorage.getItem('userName') || ''
-      setUserId(currentUserId)
+      const currentUserEmail = localStorage.getItem('userEmail') || ''
+      setUserId(currentUserEmail)
 
       if (reportId) {
         try {
           const foundReport = await getReportById(reportId)
           if (foundReport) {
             setReport(foundReport)
-            // 작성자 이름과 현재 사용자 이름을 비교
+            // 작성자 이메일과 현재 사용자 이메일을 비교 (동명이인 구분)
             // ADMIN은 모든 제보를 수정/삭제할 수 있음
-            const authorName = foundReport.authorName || foundReport.userId
-            setIsOwner(isAdmin() || authorName === currentUserName)
+            const authorEmail = foundReport.authorEmail
+            setIsOwner(isAdmin() || (authorEmail && authorEmail === currentUserEmail))
           } else {
             alert('제보를 찾을 수 없습니다.')
             router.push('/report/list')

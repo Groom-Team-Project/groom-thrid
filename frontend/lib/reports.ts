@@ -7,6 +7,7 @@ export interface ReportResponse {
   placeId: number
   content: string
   author: string
+  authorEmail?: string // 작성자 이메일 (동명이인 구분용)
   status: string // "대기 중", "처리 중", "승인", "반려"
   imageUrl?: string
   adminReply?: string
@@ -24,6 +25,7 @@ export interface Report {
   status: 'pending' | 'processing' | 'completed' | 'rejected'
   userId: string // 하위 호환성을 위해 유지 (작성자 이름)
   authorName?: string // 작성자 이름
+  authorEmail?: string // 작성자 이메일 (동명이인 구분용)
   adminResponse?: string
   adminResponseDate?: string
   adminCheckedDate?: string
@@ -84,6 +86,7 @@ const convertReportResponse = async (response: ReportResponse): Promise<Report> 
     status,
     userId: response.author, // author(작성자 이름)를 userId로 저장 (하위 호환성)
     authorName: response.author, // 작성자 이름을 별도로 저장
+    authorEmail: response.authorEmail, // 작성자 이메일 저장 (동명이인 구분용)
     adminResponse: response.adminReply,
     adminResponseDate,
     adminCheckedDate,

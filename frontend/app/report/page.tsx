@@ -36,7 +36,7 @@ export default function ReportPage() {
         // 수정 모드인 경우 기존 제보 데이터 로드
         if (reportId) {
           const report = await getReportById(reportId)
-          const currentUserName = localStorage.getItem('userName') || ''
+          const currentUserEmail = localStorage.getItem('userEmail') || ''
           
           if (!report) {
             alert('제보를 찾을 수 없습니다.')
@@ -44,11 +44,11 @@ export default function ReportPage() {
             return
           }
           
-          // 본인 제보인지 확인 (작성자 이름과 현재 사용자 이름 비교)
+          // 본인 제보인지 확인 (작성자 이메일과 현재 사용자 이메일 비교 - 동명이인 구분)
           // ADMIN은 모든 제보를 수정할 수 있음
           // 백엔드에서도 권한 체크하지만 프론트엔드에서도 체크
-          const authorName = report.authorName || report.userId
-          if (!isAdmin() && authorName !== currentUserName) {
+          const authorEmail = report.authorEmail
+          if (!isAdmin() && (!authorEmail || authorEmail !== currentUserEmail)) {
             alert('본인의 제보만 수정할 수 있습니다.')
             router.push('/report/list')
             return

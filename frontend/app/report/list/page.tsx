@@ -271,10 +271,10 @@ export default function ReportListPage() {
               )}
             </div>
             {reports.map((report) => {
-              // 본인 제보인지 확인 (작성자 이름과 현재 사용자 이름 비교)
-              const currentUserName = localStorage.getItem('userName') || ''
-              const authorName = report.authorName || report.userId
-              const canEditOrDelete = isAdmin() || authorName === currentUserName
+              // 본인 제보인지 확인 (작성자 이메일과 현재 사용자 이메일 비교 - 동명이인 구분)
+              const currentUserEmail = localStorage.getItem('userEmail') || ''
+              const authorEmail = report.authorEmail
+              const canEditOrDelete = isAdmin() || (authorEmail && authorEmail === currentUserEmail)
 
               return (
                 <div
