@@ -21,8 +21,9 @@ public record CreateReviewRequest(
     Double rating,
 
     @Schema(description = "이미지 URL", example = "https://example.com/image.jpg")
-    @Size(max = 500, message = "이미지 URL은 500자 이하여야 합니다")
+    @Size(max = 10000000, message = "이미지 URL은 10000000자 이하여야 합니다")
     String imageUrl
 ) {
 }
+
 

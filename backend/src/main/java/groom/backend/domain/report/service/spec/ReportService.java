@@ -1,8 +1,11 @@
 package groom.backend.domain.report.service.spec;
 
+import groom.backend.common.security.AuthUser;
 import groom.backend.domain.report.dto.request.CreateReportRequest;
+import groom.backend.domain.report.dto.request.DeleteReportsRequest;
 import groom.backend.domain.report.dto.request.UpdateReportRequest;
-import groom.backend.domain.report.dto.response.ReportResponse;
+import groom.backend.domain.report.dto.request.UpdateReportStatusRequest;
+import groom.backend.domain.report.dto.response.ReportResponseDto;
 
 import java.util.List;
 
@@ -10,31 +13,47 @@ public interface ReportService {
     /**
      * 새로운 제보를 생성합니다
      */
-    ReportResponse createReport(Long placeId, CreateReportRequest request);
+    ReportResponseDto createReport(Long placeId, CreateReportRequest request, AuthUser authUser);
 
     /**
-     * 나의 제보 목록을 조회합니다
+     * 제보 목록을 조회합니다
+     * USER, GUARDIAN: 자신이 생성한 제보 목록만 조회
+     * ADMIN: 모든 제보 목록 조회
      */
-    List<ReportResponse> getMyReports(String author);
+    List<ReportResponseDto> getReports(AuthUser authUser);
 
     /**
-     * 나의 제보 상세를 조회합니다
+     * 제보 상세를 조회합니다
+     * USER, GUARDIAN: 자신이 생성한 제보만 조회
+     * ADMIN: 모든 제보 조회
      */
-    ReportResponse getMyReport(Long reportId, String author);
+    ReportResponseDto getReport(Long reportId, AuthUser authUser);
 
     /**
-     * 나의 제보를 수정합니다
+     * 제보를 수정합니다
+     * USER, GUARDIAN: 자신이 생성한 제보만 수정
+     * ADMIN: 모든 제보 수정
      */
-    ReportResponse updateMyReport(Long reportId, String author, UpdateReportRequest request);
+    ReportResponseDto updateReport(Long reportId, UpdateReportRequest request, AuthUser authUser);
 
     /**
-     * 나의 제보를 삭제합니다
+     * 제보를 삭제합니다
+     * USER, GUARDIAN: 자신이 생성한 제보만 삭제
+     * ADMIN: 모든 제보 삭제
      */
-    void deleteMyReport(Long reportId, String author);
+    void deleteReport(Long reportId, AuthUser authUser);
 
     /**
-     * 나의 제보들을 삭제합니다
+     * 제보들을 일괄 삭제합니다
+     * USER, GUARDIAN: 자신이 생성한 제보만 삭제
+     * ADMIN: 모든 제보 삭제
      */
-    void deleteMyReports(List<Long> reportIds, String author);
+    void deleteReports(DeleteReportsRequest request, AuthUser authUser);
+
+    /**
+     * 관리자가 제보 상태를 변경합니다 (승인/반려 시 답변 포함)
+     */
+    ReportResponseDto updateReportStatus(Long reportId, UpdateReportStatusRequest request);
 }
+
 

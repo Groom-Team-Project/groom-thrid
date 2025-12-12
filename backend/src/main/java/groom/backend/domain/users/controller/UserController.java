@@ -1,9 +1,11 @@
 package groom.backend.domain.users.controller;
 
 import groom.backend.common.security.AuthUser;
+import groom.backend.domain.users.dto.request.GuardianMatchRequest;
 import groom.backend.domain.users.dto.request.UpdateUserRequest;
+import groom.backend.domain.users.dto.response.RelationInfoResponse;
 import groom.backend.domain.users.dto.response.UserResponse;
-import groom.backend.domain.users.service.impl.UserServiceImpl;
+import groom.backend.domain.users.service.spec.UserService;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -14,6 +16,8 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserServiceImpl userService;
+    private final UserService userService;
 
     @GetMapping("/")
     @PreAuthorize("hasRole('ADMIN')")
@@ -57,4 +61,19 @@ public class UserController {
         userService.deleteUser(userId);
     }
 
+    @PostMapping("/guardian")
+    public void guardianMatch(@AuthenticationPrincipal AuthUser user, @RequestBody GuardianMatchRequest req) {
+
+        UUID userId = user.userId();
+        String email = req.email();
+
+        userService.guardianMatch(userId, email);
+    }
+
+    @GetMapping("/relationInfo")
+    public RelationInfoResponse relationInfo(@AuthenticationPrincipal AuthUser user) {
+        Long relationId = user.relationId();
+
+        return userService.relationInfo(relationId);
+    }
 }

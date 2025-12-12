@@ -1,5 +1,6 @@
 package groom.backend.domain.review.controller;
 
+import groom.backend.common.security.AuthUser;
 import groom.backend.domain.review.dto.request.CreateReviewRequest;
 import groom.backend.domain.review.dto.request.UpdateReviewRequest;
 import groom.backend.domain.review.dto.response.ReviewResponse;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,7 +31,7 @@ public class ReviewController {
     }
 
     @PostMapping("/place/{placeId}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'PROTECTOR')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'GUARDIAN')")
     @Operation(
             summary = "리뷰 생성",
             description = "장소별 새로운 리뷰를 생성합니다",
@@ -46,11 +48,9 @@ public class ReviewController {
     }
 
     @GetMapping("/{reviewId}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'PROTECTOR')")
     @Operation(
             summary = "리뷰 조회",
-            description = "ID로 리뷰를 조회합니다",
-            security = {@SecurityRequirement(name = "bearerAuth")}
+            description = "ID로 리뷰를 조회합니다 (인증 불필요)"
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공"),
@@ -61,11 +61,9 @@ public class ReviewController {
     }
 
     @GetMapping("/place/{placeId}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'PROTECTOR')")
     @Operation(
             summary = "장소별 리뷰 목록 조회",
-            description = "장소 ID로 해당 장소의 모든 리뷰를 조회합니다",
-            security = {@SecurityRequirement(name = "bearerAuth")}
+            description = "장소 ID로 해당 장소의 모든 리뷰를 조회합니다 (인증 불필요)"
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공")
@@ -75,36 +73,42 @@ public class ReviewController {
     }
 
     @PutMapping("/{reviewId}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'PROTECTOR')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'GUARDIAN')")
     @Operation(
             summary = "리뷰 수정",
-            description = "리뷰를 수정합니다",
+            description = "USER, PROTECTOR: 자신이 생성한 리뷰만 수정 / ADMIN: 모든 리뷰 수정",
             security = {@SecurityRequirement(name = "bearerAuth")}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "수정 성공"),
             @ApiResponse(responseCode = "404", description = "리뷰를 찾을 수 없음"),
+            @ApiResponse(responseCode = "403", description = "권한 없음"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청")
     })
     public ReviewResponse updateReview(
             @PathVariable Long reviewId,
-            @Valid @RequestBody UpdateReviewRequest request) {
-        return reviewService.updateReview(reviewId, request);
+            @Valid @RequestBody UpdateReviewRequest request,
+            @AuthenticationPrincipal AuthUser authUser) {
+        return reviewService.updateReview(reviewId, request, authUser);
     }
 
     @DeleteMapping("/{reviewId}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'PROTECTOR')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'GUARDIAN')")
     @Operation(
             summary = "리뷰 삭제",
-            description = "리뷰를 삭제합니다",
+            description = "USER, PROTECTOR: 자신이 생성한 리뷰만 삭제 / ADMIN: 모든 리뷰 삭제",
             security = {@SecurityRequirement(name = "bearerAuth")}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "삭제 성공"),
-            @ApiResponse(responseCode = "404", description = "리뷰를 찾을 수 없음")
+            @ApiResponse(responseCode = "404", description = "리뷰를 찾을 수 없음"),
+            @ApiResponse(responseCode = "403", description = "권한 없음")
     })
-    public void deleteReview(@PathVariable Long reviewId) {
-        reviewService.deleteReview(reviewId);
+    public void deleteReview(
+            @PathVariable Long reviewId,
+            @AuthenticationPrincipal AuthUser authUser) {
+        reviewService.deleteReview(reviewId, authUser);
     }
 }
+
 

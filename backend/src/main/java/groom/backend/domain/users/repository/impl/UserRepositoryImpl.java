@@ -21,6 +21,11 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public Optional<User> findUserByEmail(String email) {
+        return jpaUserRepository.findByEmail(email);
+    }
+
+    @Override
     public Boolean existsByEmail(String email) {
         return jpaUserRepository.existsByEmail(email);
     }
