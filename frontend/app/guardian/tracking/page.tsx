@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { connectSSE, disconnectSSE, SseConnection, LocationData } from '@/lib/sse'
+import { connectSSE, disconnectSSE, SseConnection, LocationData, NotificationData } from '@/lib/sse'
 import { getCurrentNavigation, PathNavigationInfo } from '@/lib/path'
 import styles from './page.module.css'
 
@@ -15,6 +15,7 @@ export default function GuardianTrackingPage() {
   const endMarkerRef = useRef<any>(null)
   const pathPolylineRef = useRef<any>(null)
   const sseConnectionRef = useRef<SseConnection | null>(null)
+  const alertMarkerRef = useRef<any>(null)
 
   const [mapLoaded, setMapLoaded] = useState(false)
   const [userLocation, setUserLocation] = useState<LocationData | null>(null)
@@ -22,6 +23,8 @@ export default function GuardianTrackingPage() {
   const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoadingPath, setIsLoadingPath] = useState(false)
+  const [notification, setNotification] = useState<NotificationData | null>(null)
+  const [showNotificationModal, setShowNotificationModal] = useState(false)
 
   const apiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY ?? ''
 
@@ -268,6 +271,11 @@ export default function GuardianTrackingPage() {
         console.log('[보호자 추적] 📍 사용자 위치 수신:', data)
         setUserLocation(data)
       },
+      onNotification: (data: NotificationData) => {
+        console.log('[보호자 추적] 🔔 긴급 알림 수신:', data)
+        setNotification(data)
+        setShowNotificationModal(true)
+      },
       onError: (err: Error) => {
         console.error('[보호자 추적] ❌ SSE 에러:', err)
         setError('실시간 위치 연결에 실패했습니다.')
@@ -345,6 +353,50 @@ export default function GuardianTrackingPage() {
     }
   }
 
+  const handleNotificationConfirm = () => {
+    if (!notification || !kakaoMapRef.current) return
+
+    const map = kakaoMapRef.current
+    const alertPosition = new window.kakao.maps.LatLng(notification.lat, notification.lng)
+
+    if (alertMarkerRef.current) {
+      alertMarkerRef.current.setMap(null)
+    }
+
+    const content = `
+      <div style="
+        padding: 10px;
+        background: white;
+        border: 3px solid #ff4444;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        text-align: center;
+        min-width: 120px;
+      ">
+        <div style="font-size: 24px; margin-bottom: 4px;">🚨</div>
+        <div style="font-weight: bold; color: #ff4444; font-size: 14px;">긴급 알림</div>
+      </div>
+    `
+
+    const customOverlay = new window.kakao.maps.CustomOverlay({
+      position: alertPosition,
+      content: content,
+      zIndex: 20,
+    })
+
+    customOverlay.setMap(map)
+    alertMarkerRef.current = customOverlay
+
+    map.panTo(alertPosition)
+    map.setLevel(3)
+
+    setShowNotificationModal(false)
+  }
+
+  const handleNotificationClose = () => {
+    setShowNotificationModal(false)
+  }
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -415,6 +467,39 @@ export default function GuardianTrackingPage() {
           <div className={styles.infoRow}>
             <span className={styles.infoLabel}>업데이트:</span>
             <span className={styles.infoValue}>{new Date(userLocation.timestamp).toLocaleString('ko-KR')}</span>
+          </div>
+        </div>
+      )}
+
+      {/* 긴급 알림 모달 */}
+      {showNotificationModal && notification && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalIcon}>🚨</div>
+            <h2 className={styles.modalTitle}>긴급 알림</h2>
+            <p className={styles.modalMessage}>사용자가 긴급 알림을 보냈습니다!</p>
+            <div className={styles.modalInfo}>
+              <div className={styles.modalInfoRow}>
+                <span className={styles.modalInfoLabel}>주소:</span>
+                <span className={styles.modalInfoValue}>{notification.address}</span>
+              </div>
+              <div className={styles.modalInfoRow}>
+                <span className={styles.modalInfoLabel}>위도:</span>
+                <span className={styles.modalInfoValue}>{notification.lat.toFixed(6)}</span>
+              </div>
+              <div className={styles.modalInfoRow}>
+                <span className={styles.modalInfoLabel}>경도:</span>
+                <span className={styles.modalInfoValue}>{notification.lng.toFixed(6)}</span>
+              </div>
+            </div>
+            <div className={styles.modalButtons}>
+              <button className={styles.modalButtonPrimary} onClick={handleNotificationConfirm}>
+                위치 확인
+              </button>
+              <button className={styles.modalButtonSecondary} onClick={handleNotificationClose}>
+                닫기
+              </button>
+            </div>
           </div>
         </div>
       )}

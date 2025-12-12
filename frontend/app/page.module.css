@@ -7,4 +7,37 @@
   overflow: hidden;
 }
 
+.alertButton {
+  position: fixed;
+  bottom: 100px;
+  right: 20px;
+  width: 120px;
+  height: 50px;
+  background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.4);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.alertButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 68, 68, 0.5);
+}
+
+.alertButton:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(255, 68, 68, 0.4);
+}
+
+.alertButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 
