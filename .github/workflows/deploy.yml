@@ -35,8 +35,8 @@ jobs:
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key.pem
-          chmod 600 ~/.ssh/deploy_key.pem
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/groom_backend_key.pem
+          chmod 600 ~/.ssh/groom_backend_key.pem
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
       # ----------------------------------
