@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { getReportById, deleteReport, type Report } from '@/lib/reports'
+import { getReportById, deleteReport, updateReportStatus, type Report } from '@/lib/reports'
 import { isAdmin } from '@/lib/auth'
 import BottomNav from '@/components/BottomNav'
 import styles from './page.module.css'
@@ -16,6 +16,10 @@ export default function ReportDetailPage() {
   const [isOwner, setIsOwner] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showResponseModal, setShowResponseModal] = useState(false)
+  const [responseText, setResponseText] = useState('')
+  const [responseStatus, setResponseStatus] = useState<'completed' | 'rejected' | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -85,6 +89,45 @@ export default function ReportDetailPage() {
     if (!report) return
     setShowMenu(false)
     router.push(`/report?reportId=${report.id}`)
+  }
+
+  const handleReply = (status: 'completed' | 'rejected') => {
+    setResponseStatus(status)
+    setShowResponseModal(true)
+  }
+
+  const handleResponseSubmit = async () => {
+    if (!report || !responseStatus || !responseText.trim()) {
+      alert('답변을 입력해주세요.')
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const updated = await updateReportStatus(report.id, {
+        status: responseStatus,
+        adminReply: responseText.trim(),
+      })
+      
+      if (updated) {
+        setReport(updated)
+        setShowResponseModal(false)
+        setResponseText('')
+        setResponseStatus(null)
+        alert('답변이 전송되었습니다.')
+      }
+    } catch (error) {
+      console.error('답변 전송 실패:', error)
+      alert('답변 전송에 실패했습니다.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const cancelResponse = () => {
+    setShowResponseModal(false)
+    setResponseText('')
+    setResponseStatus(null)
   }
 
   const getStatusText = (status: Report['status']) => {
@@ -183,9 +226,23 @@ export default function ReportDetailPage() {
         {!isOwner && <div className={styles.placeholder} />}
       </div>
 
-      <div className={styles.subtitle}>나의 제보 조회</div>
+      <div className={styles.subtitle}>{isAdmin() ? '제보 상세 조회' : '나의 제보 조회'}</div>
 
       <div className={styles.content}>
+        {isAdmin() && report.authorName && (
+          <>
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>작성자</label>
+              <div className={styles.value}>{report.authorName}</div>
+            </div>
+            {report.authorEmail && (
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>작성자 이메일</label>
+                <div className={styles.value}>{report.authorEmail}</div>
+              </div>
+            )}
+          </>
+        )}
         <div className={styles.inputGroup}>
           <label className={styles.label}>충전소명</label>
           <div className={styles.value}>{report.stationName}</div>
@@ -234,7 +291,79 @@ export default function ReportDetailPage() {
           </div>
         </div>
 
+        {isAdmin() && (
+          <div className={styles.adminActions}>
+            <button
+              className={styles.replyButton}
+              onClick={() => handleReply('completed')}
+              disabled={report.status === 'completed'}
+            >
+              승인하기
+            </button>
+            <button
+              className={`${styles.replyButton} ${styles.rejectButton}`}
+              onClick={() => handleReply('rejected')}
+              disabled={report.status === 'rejected'}
+            >
+              반려하기
+            </button>
+          </div>
+        )}
+
       </div>
+
+      {/* 답변 모달 */}
+      {showResponseModal && report && (
+        <div className={styles.modal} onClick={cancelResponse}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>{responseStatus === 'completed' ? '승인 답변 작성' : '반려 답변 작성'}</h3>
+              <button
+                className={styles.closeButton}
+                onClick={cancelResponse}
+              >
+                ✕
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>충전소명</label>
+                <div className={styles.value}>{report.stationName}</div>
+              </div>
+              <div className={styles.responseSection}>
+                <label className={styles.label}>답변 내용</label>
+                <textarea
+                  className={styles.responseTextarea}
+                  value={responseText}
+                  onChange={(e) => setResponseText(e.target.value)}
+                  placeholder={responseStatus === 'completed' ? '승인 사유를 입력해주세요.' : '반려 사유를 입력해주세요.'}
+                  rows={6}
+                  maxLength={2000}
+                />
+                <div className={styles.charCount}>
+                  {responseText.length} / 2000
+                </div>
+              </div>
+              <div className={styles.modalButtons}>
+                <button
+                  className={styles.cancelButton}
+                  onClick={cancelResponse}
+                  disabled={isSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  className={styles.submitButton}
+                  onClick={handleResponseSubmit}
+                  disabled={isSubmitting || !responseText.trim()}
+                >
+                  {isSubmitting ? '전송 중...' : '전송'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 삭제 확인 모달 */}
       {showDeleteModal && (

@@ -224,19 +224,19 @@ export interface UpdateReportStatusRequest {
   adminReply?: string
 }
 
-// 백엔드 상태로 변환
+// 백엔드 상태로 변환 (enum 이름으로 전송)
 const convertToBackendStatus = (status: 'pending' | 'processing' | 'completed' | 'rejected'): string => {
   switch (status) {
     case 'pending':
-      return '대기 중'
+      return 'PENDING'
     case 'processing':
-      return '처리 중'
+      return 'PROCESSING'
     case 'completed':
-      return '승인'
+      return 'APPROVED'
     case 'rejected':
-      return '반려'
+      return 'REJECTED'
     default:
-      return '대기 중'
+      return 'PENDING'
   }
 }
 

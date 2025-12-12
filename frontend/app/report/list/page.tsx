@@ -293,6 +293,12 @@ export default function ReportListPage() {
                   </div>
                   <div className={styles.reportContent}>
                     <p className={styles.reportText}>{report.content}</p>
+                    {isAdmin() && report.authorName && (
+                      <p className={styles.reportAuthor}>
+                        작성자: {report.authorName}
+                        {report.authorEmail && ` (${report.authorEmail})`}
+                      </p>
+                    )}
                     <div className={styles.reportMeta}>
                       <span className={styles.reportDate}>{report.date}</span>
                       <span
