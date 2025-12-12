@@ -4,10 +4,6 @@ name: Deploy to EC2
 # 트리거: prod 브랜치에 push 될 때
 # ====================================
 on:
-  pull_request:
-    types: [closed]
-    branches:
-      - prod
   push:
     branches:
       - prod
