@@ -195,22 +195,20 @@ public class ChargerLocationServiceImpl implements ChargerLocationService {
     }
 
     /**
-     * 전략 1: 전체 충전소 조회 (Spring Cache + Redis)
-     * - 초기 로드 시 사용
-     * - 30분간 캐싱
-     * - 데이터 변경 시 자동 갱신
+     * 전략 1: 전체 충전소 조회 (Spring Cache + Redis)<br>
+     * - 초기 로드 시 캐시 웜업을 위해 사용<br>
+     * - TODO : 배치 작업으로 인한 데이터 변경 시 자동 갱신
      */
-    @Cacheable(value = "chargers", key = "'all'")
     @Override
     public List<ChargerLocationResponse> getAllChargerLocations() {
         log.info("DB에서 전체 충전소 조회 (캐시 미스)");
-
         List<ChargerLocationResponse> chargers = repository.findAll();
 
         log.info("총 충전소 개수: {}", chargers.size());
         return chargers;
     }
 
+    @Cacheable(value = "chargers", key = "#id")
     @Override
     public ChargerLocationResponse getChargerLocationById(Long id) {
         return repository.findById(id);
