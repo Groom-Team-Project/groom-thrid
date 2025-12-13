@@ -14,6 +14,7 @@ import groom.backend.domain.opendata.dto.request.ViewportRequest;
 import groom.backend.domain.opendata.dto.response.ChargerLocationResponse;
 import groom.backend.domain.opendata.mapper.ChargerLocationMapper;
 import groom.backend.domain.opendata.repository.spec.ChargerLocationRepository;
+import groom.backend.domain.opendata.service.spec.ChargerLocationFindService;
 import groom.backend.domain.opendata.service.spec.ChargerLocationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,8 +59,9 @@ public class ChargerLocationServiceImpl implements ChargerLocationService {
     private static final Duration CACHE_TTL = Duration.ofMinutes(30);
 
     private final RedisTemplate<String, Object> redisTemplate;
-    private final RedisTemplate<String, ChargerLocationResponse> chargerRedisTemplate;
     private final ChargerLocationRepository repository;
+
+    private final ChargerLocationFindService chargerLocationFindService;
 
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
@@ -212,22 +214,14 @@ public class ChargerLocationServiceImpl implements ChargerLocationService {
         for (ChargerLocationResponse charger : chargers) {
             redisTemplate.opsForGeo()
                     .add( "charger:geo",
-                    new Point(charger.getLng(), charger.getLat()),
-                    charger.getPlaceId()
-                            );
+                            new Point(charger.getLng(), charger.getLat()),
+                            charger.getPlaceId()
+                    );
 
         }
 
         log.info("총 충전소 개수: {}", chargers.size());
         return chargers;
-    }
-
-    @Cacheable(value = "chargers",
-            key = "#id",
-            cacheManager = "chargerCacheManager")
-    @Override
-    public ChargerLocationResponse getChargerLocationById(Long id) {
-        return repository.findById(id);
     }
 
     /**
@@ -265,7 +259,7 @@ public class ChargerLocationServiceImpl implements ChargerLocationService {
                 .map(GeoLocation::getName)   // placeId (long)
                 .map(String::valueOf)        // string parsing
                 .map(Long::parseLong)        // long parsing
-                .map(this::getChargerLocationById) // to ChargerLocation (caching)
+                .map(chargerLocationFindService::getChargerLocationById) // to ChargerLocation (caching)
                 .toList();
     }
 
