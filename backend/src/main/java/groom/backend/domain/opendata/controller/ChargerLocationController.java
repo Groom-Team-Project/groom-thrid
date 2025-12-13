@@ -4,6 +4,7 @@ import groom.backend.common.response.ApiResponse;
 import groom.backend.domain.opendata.dto.request.NearbyRequest;
 import groom.backend.domain.opendata.dto.request.ViewportRequest;
 import groom.backend.domain.opendata.dto.response.ChargerLocationResponse;
+import groom.backend.domain.opendata.service.spec.ChargerLocationFindService;
 import groom.backend.domain.opendata.service.spec.ChargerLocationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -26,11 +27,15 @@ import java.util.concurrent.Executor;
 public class ChargerLocationController {
 
     private final ChargerLocationService chargerLocationService;
+    private final ChargerLocationFindService chargerLocationFindService;
     private final Executor opendataExecutor;
 
-    public ChargerLocationController(ChargerLocationService chargerLocationService, @Qualifier("opendataExecutor") Executor opendataExecutor) {
+    public ChargerLocationController(ChargerLocationService chargerLocationService,
+                                     @Qualifier("opendataExecutor") Executor opendataExecutor,
+                                     ChargerLocationFindService chargerLocationFindService) {
         this.chargerLocationService = chargerLocationService;
         this.opendataExecutor = opendataExecutor;
+        this.chargerLocationFindService = chargerLocationFindService;
     }
 
     @Operation(
@@ -148,7 +153,7 @@ public class ChargerLocationController {
 
         log.info("충전소 상세 조회: ID={}", id);
 
-        ChargerLocationResponse charger = chargerLocationService.getChargerLocationById(id);
+        ChargerLocationResponse charger = chargerLocationFindService.getChargerLocationById(id);
 
         return ResponseEntity.ok(
                 ApiResponse.success(200, "조회 성공", charger)

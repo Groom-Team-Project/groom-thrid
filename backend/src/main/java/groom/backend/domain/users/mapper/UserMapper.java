@@ -1,10 +1,14 @@
 package groom.backend.domain.users.mapper;
 
+import groom.backend.common.exception.BusinessException;
+import groom.backend.common.exception.ErrorCode;
 import groom.backend.domain.users.dto.request.CreateUserRequest;
 import groom.backend.domain.users.dto.request.UpdateUserRequest;
+import groom.backend.domain.users.dto.response.RelationInfoResponse;
 import groom.backend.domain.users.dto.response.UserResponse;
 import groom.backend.domain.users.entity.Role;
 import groom.backend.domain.users.entity.User;
+import groom.backend.domain.users.entity.UserRelation;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -63,5 +67,19 @@ public class UserMapper {
         user.updateProfile(request.name(), request.phone());
 
         user.changeRole(request.role());
+    }
+
+    public static RelationInfoResponse toDto(UserRelation userRelation) {
+
+        if (userRelation == null) {
+            throw new BusinessException(ErrorCode.RELATION_NOT_FOUND);
+        }
+
+        return new RelationInfoResponse(
+                userRelation.getUser().getName(),
+                userRelation.getUser().getEmail(),
+                userRelation.getGuardian().getName(),
+                userRelation.getGuardian().getEmail()
+        );
     }
 }

@@ -48,23 +48,23 @@ public class SseServiceImpl implements SseService {
 
         // relationId 기반 생성
         emitters.put(relationId, emitter);
-        log.info("SSE 연결 생성: userId={}, timeout={}ms", relationId, DEFAULT_TIMEOUT);
+        log.info("SSE 연결 생성: relationId={}, timeout={}ms", relationId, DEFAULT_TIMEOUT);
 
         // 연결 정상 종료시 연결해제 설정
         emitter.onCompletion(() -> {
-            log.info("SSE 연결 완료: userId={}", relationId);
+            log.info("SSE 연결 완료: relationId={}", relationId);
             emitters.remove(relationId);
         });
 
         // 타임아웃 시 제거 설정
         emitter.onTimeout(() -> {
-            log.warn("SSE 연결 타임아웃: userId={}", relationId);
+            log.warn("SSE 연결 타임아웃: relationId={}", relationId);
             emitters.remove(relationId);
         });
 
         // 에러 발생 시 제거
         emitter.onError(throwable -> {
-            log.error("SSE 연결 에러: userId={}, error={}", relationId, throwable.getMessage());
+            log.error("SSE 연결 에러: relationId={}, error={}", relationId, throwable.getMessage());
             emitters.remove(relationId);
         });
 

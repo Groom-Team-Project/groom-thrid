@@ -52,7 +52,7 @@ public class ReportController {
     @GetMapping
     @Operation(
             summary = "제보 목록 조회",
-            description = "USER, PROTECTOR: 자신이 생성한 제보 목록만 조회 / ADMIN: 모든 제보 목록 조회",
+            description = "USER, GUARDIAN: 자신이 생성한 제보 목록만 조회 / ADMIN: 모든 제보 목록 조회",
             security = {@SecurityRequirement(name = "bearerAuth")}
     )
     @ApiResponses(value = {
@@ -66,7 +66,7 @@ public class ReportController {
     @GetMapping("/{reportId}")
     @Operation(
             summary = "제보 상세 조회",
-            description = "USER, PROTECTOR: 자신이 생성한 제보만 조회 / ADMIN: 모든 제보 조회",
+            description = "USER, GUARDIAN: 자신이 생성한 제보만 조회 / ADMIN: 모든 제보 조회",
             security = {@SecurityRequirement(name = "bearerAuth")}
     )
     @ApiResponses(value = {
@@ -83,7 +83,7 @@ public class ReportController {
     @PutMapping("/{reportId}")
     @Operation(
             summary = "제보 수정",
-            description = "USER, PROTECTOR: 자신이 생성한 제보만 수정 / ADMIN: 모든 제보 수정",
+            description = "USER, GUARDIAN: 자신이 생성한 제보만 수정 / ADMIN: 모든 제보 수정",
             security = {@SecurityRequirement(name = "bearerAuth")}
     )
     @ApiResponses(value = {
@@ -102,7 +102,7 @@ public class ReportController {
     @DeleteMapping("/{reportId}")
     @Operation(
             summary = "제보 삭제",
-            description = "USER, PROTECTOR: 자신이 생성한 제보만 삭제 / ADMIN: 모든 제보 삭제",
+            description = "USER, GUARDIAN: 자신이 생성한 제보만 삭제 / ADMIN: 모든 제보 삭제",
             security = {@SecurityRequirement(name = "bearerAuth")}
     )
     @ApiResponses(value = {
@@ -119,7 +119,7 @@ public class ReportController {
     @DeleteMapping
     @Operation(
             summary = "제보들 일괄 삭제",
-            description = "USER, PROTECTOR: 자신이 생성한 제보만 삭제 / ADMIN: 모든 제보 삭제",
+            description = "USER, GUARDIAN: 자신이 생성한 제보만 삭제 / ADMIN: 모든 제보 삭제",
             security = {@SecurityRequirement(name = "bearerAuth")}
     )
     @ApiResponses(value = {

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getGuardianRequestsByGuardianEmail, type GuardianRequest } from '@/lib/guardian'
+import { getStoredRelationInfo, getRelationInfo, saveRelationInfo, type RelationInfo } from '@/lib/user'
+import { getRelationIdFromToken, getAccessToken } from '@/lib/api'
 import BottomNav from '@/components/BottomNav'
 import styles from './page.module.css'
 
@@ -11,10 +12,9 @@ export default function ProfilePage() {
   const [userName, setUserName] = useState('')
   const [userEmail, setUserEmail] = useState('')
   const [userRole, setUserRole] = useState('')
-  const [guardianEmail, setGuardianEmail] = useState('')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userType, setUserType] = useState<string | null>(null)
-  const [connectedUsers, setConnectedUsers] = useState<GuardianRequest[]>([])
+  const [relationInfo, setRelationInfo] = useState<RelationInfo | null>(null)
 
   useEffect(() => {
     const loggedIn = localStorage.getItem('isLoggedIn')
@@ -23,20 +23,41 @@ export default function ProfilePage() {
       setUserName(localStorage.getItem('userName') || '')
       setUserEmail(localStorage.getItem('userEmail') || '')
       setUserRole(localStorage.getItem('userRole') || '')
-      setGuardianEmail(localStorage.getItem('guardianEmail') || '')
 
       // userRole을 기반으로 userType 설정
       const role = localStorage.getItem('userRole')
       const type = role === 'GUARDIAN' ? 'guardian' : 'user'
       setUserType(type)
 
-      // 보호자 타입인 경우 연동된 사용자 목록 가져오기
-      if (type === 'guardian') {
-        const guardianEmail = localStorage.getItem('userEmail') || ''
-        const requests = getGuardianRequestsByGuardianEmail(guardianEmail)
-        const approved = requests.filter(r => r.status === 'approved')
-        setConnectedUsers(approved)
+      // 관계 정보 가져오기
+      const loadRelationInfo = async () => {
+        // JWT에서 relationId 확인
+        const token = getAccessToken()
+        if (token) {
+          const relationId = getRelationIdFromToken(token)
+
+          if (relationId !== null) {
+            // relationId가 있으면 서버에서 최신 정보 가져오기
+            try {
+              const fetchedRelationInfo = await getRelationInfo()
+              saveRelationInfo(fetchedRelationInfo)
+              setRelationInfo(fetchedRelationInfo)
+            } catch (error) {
+              console.error('관계 정보 조회 실패:', error)
+              // 서버 조회 실패 시 로컬 저장된 정보 사용
+              const storedRelationInfo = getStoredRelationInfo()
+              if (storedRelationInfo) {
+                setRelationInfo(storedRelationInfo)
+              }
+            }
+          } else {
+            // relationId가 없으면 로컬 저장된 정보도 없어야 함
+            setRelationInfo(null)
+          }
+        }
       }
+
+      loadRelationInfo()
     } else {
       router.push('/login')
     }
@@ -94,8 +115,8 @@ export default function ProfilePage() {
               <div className={styles.infoBlock}>
                 <button className={styles.guardianButton} onClick={handleGuardianClick}>
                   <span className={styles.buttonText}>보호자</span>
-                  {guardianEmail && (
-                    <span className={styles.guardianEmail}>{guardianEmail}</span>
+                  {relationInfo && (
+                    <span className={styles.guardianEmail}>{relationInfo.GuardianEmail}</span>
                   )}
                   <span className={styles.arrow}>→</span>
                 </button>
@@ -103,15 +124,19 @@ export default function ProfilePage() {
             </div>
 
             {/* 연동된 보호자 */}
-            {guardianEmail && (
+            {relationInfo && (
               <div className={styles.section}>
                 <div className={styles.sectionHeader}>
                   <h2 className={styles.sectionTitle}>연동된 보호자</h2>
                 </div>
                 <div className={styles.infoBlock}>
-                  <div className={styles.guardianInfo}>
-                    <span className={styles.guardianLabel}>보호자 이메일</span>
-                    <span className={styles.guardianValue}>{guardianEmail}</span>
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>보호자 이름</span>
+                    <span className={styles.infoValue}>{relationInfo.GuardianName}</span>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>보호자 이메일</span>
+                    <span className={styles.infoValue}>{relationInfo.GuardianEmail}</span>
                   </div>
                 </div>
               </div>
@@ -119,27 +144,31 @@ export default function ProfilePage() {
           </>
         )}
 
-        {/* 보호자 타입인 경우 연동된 사용자 목록 표시 */}
+        {/* 보호자 타입인 경우 연동된 사용자 표시 */}
         {userType === 'guardian' && (
           <div className={styles.section}>
             <div className={styles.sectionHeader}>
               <h2 className={styles.sectionTitle}>연동된 사용자</h2>
             </div>
             <div className={styles.infoBlock}>
-              {connectedUsers.length === 0 ? (
+              {!relationInfo ? (
                 <div className={styles.emptyUsers}>
                   <p className={styles.emptyText}>연동된 사용자가 없습니다.</p>
                 </div>
               ) : (
-                connectedUsers.map((request) => (
-                  <div key={request.id} className={styles.userItem}>
-                    <div className={styles.userInfo}>
-                      <span className={styles.userName}>{request.userName}</span>
-                      <span className={styles.userEmail}>{request.userEmail}</span>
-                    </div>
-                    <span className={styles.connectedDate}>연동일: {request.responseDate || request.requestDate}</span>
+                <div
+                  className={styles.userItem}
+                  onClick={() => router.push('/guardian/tracking')}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className={styles.userInfo}>
+                    <span className={styles.userName}>{relationInfo.UserName}</span>
+                    <span className={styles.userEmail}>{relationInfo.UserEmail}</span>
                   </div>
-                ))
+                  <div className={styles.userActions}>
+                    <span className={styles.arrow}>→</span>
+                  </div>
+                </div>
               )}
             </div>
           </div>
