@@ -26,7 +26,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.domain.geo.BoundingBox;
 import org.springframework.data.redis.domain.geo.GeoLocation;
 import org.springframework.data.redis.domain.geo.GeoReference;
-import org.springframework.data.redis.domain.geo.GeoShape;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,8 +40,6 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -61,6 +58,7 @@ public class ChargerLocationServiceImpl implements ChargerLocationService {
     private static final Duration CACHE_TTL = Duration.ofMinutes(30);
 
     private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, ChargerLocationResponse> chargerRedisTemplate;
     private final ChargerLocationRepository repository;
 
     private final HttpClient httpClient = HttpClient.newBuilder()
@@ -224,7 +222,9 @@ public class ChargerLocationServiceImpl implements ChargerLocationService {
         return chargers;
     }
 
-    @Cacheable(value = "chargers", key = "#id")
+    @Cacheable(value = "chargers",
+            key = "#id",
+            cacheManager = "chargerCacheManager")
     @Override
     public ChargerLocationResponse getChargerLocationById(Long id) {
         return repository.findById(id);
@@ -255,11 +255,10 @@ public class ChargerLocationServiceImpl implements ChargerLocationService {
         GeoResults<RedisGeoCommands.GeoLocation<Object>> geoResults = redisTemplate.opsForGeo()
                 .search("charger:geo",
                         GeoReference.fromCoordinate(centerLng, centerLat),
-                        (BoundingBox) GeoShape.byBox(
-                                widthKm,
+                        new BoundingBox(widthKm,
                                 heightKm,
-                                RedisGeoCommands.DistanceUnit.KILOMETERS
-                        ));
+                                Metrics.KILOMETERS)
+                );
 
         return geoResults.getContent().stream()
                 .map(GeoResult::getContent)  // GeoResult에서 GeoLocation 추출
@@ -268,23 +267,6 @@ public class ChargerLocationServiceImpl implements ChargerLocationService {
                 .map(Long::parseLong)        // long parsing
                 .map(this::getChargerLocationById) // to ChargerLocation (caching)
                 .toList();
-    }
-
-    // 소수점 precision으로 내림(확장 방향: 더 넓게)
-    private static double floorToPrecision(double value, int precision) {
-        double factor = Math.pow(10, precision);
-        return Math.floor(value * factor) / factor;
-    }
-
-    // 소수점 precision으로 올림(확장 방향: 더 넓게)
-    private static double ceilToPrecision(double value, int precision) {
-        double factor = Math.pow(10, precision);
-        return Math.ceil(value * factor) / factor;
-    }
-
-    private String buildViewportCacheKey(double minLat, double maxLat, double minLng, double maxLng, int precision) {
-        String fmt = "%s%." + precision + "f:%." + precision + "f:%." + precision + "f:%." + precision + "f";
-        return String.format(Locale.ROOT, fmt, CACHE_KEY_VIEWPORT, minLat, maxLat, minLng, maxLng);
     }
 
     /**
