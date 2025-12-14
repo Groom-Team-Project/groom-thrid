@@ -26,7 +26,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
 
     const mapRef = useRef<HTMLDivElement>(null)
     const kakaoMapRef = useRef<any>(null)
-    const clustererRef = useRef<kakao.maps.MarkerClusterer | null>(null)
+    const clustererRef = useRef<any>(null)
     const userMarkerRef = useRef<any>(null)
     const selectedCategoryRef = useRef(selectedCategory)
 

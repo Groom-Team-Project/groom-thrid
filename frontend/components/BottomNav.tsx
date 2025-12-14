@@ -19,17 +19,18 @@ export default function BottomNav() {
 
   // 일반 사용자 네비게이션
   const userNavItems = [
-    { id: 'home', icon: '🏠', label: '홈', path: '/', requiresLogin: false },
-    { id: 'map', icon: '🗺️', label: '지도', path: '/', requiresLogin: false },
-    { id: 'emergency', icon: '🚨', label: '긴급', path: '/emergency', requiresLogin: true },
-    { id: 'reports', icon: '📝', label: '나의 제보', path: '/report/list', requiresLogin: true },
-    { id: 'profile', icon: '👤', label: '마이페이지', path: '/profile', requiresLogin: true },
+    { id: 'map', icon: '🗺️', label: '지도메인', path: '/', requiresLogin: false },
+    { id: 'notifications', icon: '🚨', label: '긴급알림내역', path: '/notification', requiresLogin: true },
+    { id: 'reviews', icon: '📝', label: '리뷰내역', path: '/report/list', requiresLogin: true },
+    { id: 'profile', icon: '👤', label: '사용자정보', path: '/profile', requiresLogin: true },
   ]
 
   // 보호자 네비게이션
   const guardianNavItems = [
-    { id: 'tracking', icon: '📍', label: '위치 추적', path: '/guardian/tracking', requiresLogin: true },
-    { id: 'profile', icon: '👤', label: '마이페이지', path: '/profile', requiresLogin: true },
+    { id: 'map', icon: '🗺️', label: '지도메인', path: '/', requiresLogin: false },
+    { id: 'tracking', icon: '🎯', label: '위치추적', path: '/guardian/tracking', requiresLogin: true },
+    { id: 'notifications', icon: '🚨', label: '긴급알림내역', path: '/notification', requiresLogin: true },
+    { id: 'profile', icon: '👤', label: '사용자정보', path: '/profile', requiresLogin: true },
   ]
 
   // role에 따라 다른 네비게이션 표시
