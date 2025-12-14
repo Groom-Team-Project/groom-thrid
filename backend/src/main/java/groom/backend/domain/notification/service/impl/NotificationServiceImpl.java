@@ -10,6 +10,8 @@ import groom.backend.domain.sse.service.spec.SseService;
 import groom.backend.domain.users.entity.UserRelation;
 import groom.backend.domain.users.repository.spec.UserRelationRepository;
 import jakarta.transaction.Transactional;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -38,11 +40,24 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public AlertCheckResponse alertCheck(Long relationId) {
-        
+
         Notification latestNotification = notificationRepository
                 .findLatestByRelationId(relationId)
                 .orElseThrow(() -> new RuntimeException("알림을 찾을 수 없습니다"));
 
         return NotificationMapper.toDto(latestNotification);
+    }
+
+    @Override
+    public List<AlertCheckResponse> alertList(Long relationId) {
+
+        List<Notification> notifications = notificationRepository.findAllByRelationId(relationId);
+
+        List<AlertCheckResponse> res = new ArrayList<>();
+        for (Notification notification : notifications) {
+            res.add(NotificationMapper.toDto(notification));
+        }
+
+        return res;
     }
 }
