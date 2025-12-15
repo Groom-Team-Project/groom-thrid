@@ -30,3 +30,12 @@ export const alertCheck = async (): Promise<AlertCheckResponse> => {
 
   return response.data
 }
+
+// 모든 알림 조회 (relationId 기반)
+export const getAlertList = async (): Promise<AlertCheckResponse[]> => {
+  const response = await apiRequest<AlertCheckResponse[]>('/notification/', {
+    method: 'GET',
+  })
+
+  return response.data || []
+}

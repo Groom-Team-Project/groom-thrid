@@ -143,8 +143,7 @@ export default function AdminPage() {
     setReportToDelete(null)
   }
 
-  const handleSelectReport = (reportId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
+  const handleSelectReport = (reportId: string) => {
     const newSelected = new Set(selectedReports)
     if (newSelected.has(reportId)) {
       newSelected.delete(reportId)
@@ -377,7 +376,7 @@ export default function AdminPage() {
                   <input
                     type="checkbox"
                     checked={selectedReports.has(report.id)}
-                    onChange={(e) => handleSelectReport(report.id, e)}
+                    onChange={() => handleSelectReport(report.id)}
                     onClick={(e) => e.stopPropagation()}
                     className={styles.checkbox}
                   />

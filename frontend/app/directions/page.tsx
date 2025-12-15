@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic'
+
 import React, { useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { updateLocation } from "@/lib/location";
@@ -146,7 +148,7 @@ const DirectionsPage: React.FC = () => {
 
       if ("pathNodeList" in pathData.data) {
         const nodes = pathData.data.pathNodeList;
-        const linePaths: kakao.maps.LatLng[] = [];
+        const linePaths: any[] = [];
 
         nodes.forEach((node) => {
           if (node.type === "LineString") {
