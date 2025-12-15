@@ -1,5 +1,5 @@
 // API base URL
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/v1'
 
 // API response wrapper
 export interface ApiResponse<T> {
@@ -93,7 +93,7 @@ export const getRelationIdFromToken = (token: string): number | null => {
 }
 
 // 인증이 필요 없는 엔드포인트 목록
-const PUBLIC_ENDPOINTS = ['/auth/form-login', '/auth/signup']
+const PUBLIC_ENDPOINTS = ['/auth/form-login', '/auth/form-signup', '/auth/oauth-login', '/auth/oauth-signup']
 
 // API 요청 헬퍼
 export const apiRequest = async <T>(
