@@ -26,7 +26,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
 
     const mapRef = useRef<HTMLDivElement>(null)
     const kakaoMapRef = useRef<any>(null)
-    const clustererRef = useRef<kakao.maps.MarkerClusterer | null>(null)
+    const clustererRef = useRef<any>(null)
     const userMarkerRef = useRef<any>(null)
     const selectedCategoryRef = useRef(selectedCategory)
 
@@ -314,7 +314,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         // 안내 버튼 클릭 시 제보 신청 페이지로 이동
         if (!checkLogin()) return
         if (selectedStation) {
-            router.push(`/report?stationName=${encodeURIComponent(selectedStation.facilityName)}`)
+            router.push(`/report?placeId=${selectedStation.placeId}&stationName=${encodeURIComponent(selectedStation.facilityName)}`)
         }
     }
 

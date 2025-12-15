@@ -29,6 +29,8 @@ export interface Review {
 // 백엔드 응답을 프론트엔드 타입으로 변환
 const convertReviewResponse = (response: ReviewResponse, stationName?: string): Review => {
   const createdAt = new Date(response.createdAt)
+  // 날짜 + 시간 형식으로 변환
+  const date = `${createdAt.getFullYear()}.${String(createdAt.getMonth() + 1).padStart(2, '0')}.${String(createdAt.getDate()).padStart(2, '0')} ${String(createdAt.getHours()).padStart(2, '0')}:${String(createdAt.getMinutes()).padStart(2, '0')}`
   return {
     id: response.id.toString(),
     stationId: response.placeId.toString(),
@@ -38,7 +40,7 @@ const convertReviewResponse = (response: ReviewResponse, stationName?: string): 
     rating: response.rating,
     content: response.content,
     photoUrl: response.imageUrl || undefined,
-    date: createdAt.toISOString().split('T')[0].replace(/-/g, '.'),
+    date,
   }
 }
 

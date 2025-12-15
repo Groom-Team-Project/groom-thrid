@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getReports, updateReport, deleteReport, type Report } from '@/lib/reports'
-import { getStations } from '@/lib/stations'
+import { getUserReports, updateReportStatus, deleteReport, type Report } from '@/lib/reports'
+import { isAdmin } from '@/lib/auth'
 import BottomNav from '@/components/BottomNav'
 import styles from './page.module.css'
 
@@ -27,19 +27,27 @@ export default function AdminPage() {
   const [showDetailMenu, setShowDetailMenu] = useState(false)
 
   useEffect(() => {
-    // 로그인 및 관리자 타입 확인
+    // 로그인 및 관리자 권한 확인
     const loggedIn = localStorage.getItem('isLoggedIn')
-    const userType = localStorage.getItem('userType')
     
-    if (loggedIn !== 'true' || userType !== 'admin') {
+    if (loggedIn !== 'true' || !isAdmin()) {
       router.push('/auth')
       return
     }
 
-    // 모든 제보 목록 가져오기
-    const reportsData = getReports()
-    setAllReports(reportsData)
-    setReports(reportsData)
+    // 모든 제보 목록 가져오기 (백엔드 API)
+    const loadReports = async () => {
+      try {
+        const reportsData = await getUserReports()
+        setAllReports(reportsData)
+        setReports(reportsData)
+      } catch (error) {
+        console.error('제보 목록 로드 실패:', error)
+        alert('제보 목록을 불러오는 중 오류가 발생했습니다.')
+      }
+    }
+    
+    loadReports()
   }, [router])
 
   // 상태 필터 적용
@@ -57,43 +65,36 @@ export default function AdminPage() {
       setResponseStatus(newStatus)
       setShowResponseModal(true)
     } else {
-      // 다른 상태는 바로 업데이트
-      updateReportStatus(reportId, newStatus)
+      // 처리 중으로 변경 시 바로 업데이트 (백엔드 API 호출)
+      updateReportStatusAsync(reportId, newStatus)
     }
   }
 
-  const updateReportStatus = (reportId: string, newStatus: Report['status'], adminResponse?: string) => {
-    const updates: Partial<Report> = { status: newStatus }
-    
-    // 처리 중으로 변경 시 관리자 확인 시간 저장
-    if (newStatus === 'processing') {
-      const now = new Date()
-      const dateTime = `${now.toISOString().split('T')[0].replace(/-/g, '.')} ${now.toTimeString().split(' ')[0].substring(0, 5)}`
-      updates.adminCheckedDate = dateTime
-    }
-    
-    if (adminResponse) {
-      updates.adminResponse = adminResponse
-      const now = new Date()
-      const dateTime = `${now.toISOString().split('T')[0].replace(/-/g, '.')} ${now.toTimeString().split(' ')[0].substring(0, 5)}`
-      updates.adminResponseDate = dateTime
-    }
-    
-    const updated = updateReport(reportId, updates)
-    if (updated) {
-      const updatedAllReports = allReports.map(r => r.id === reportId ? updated : r)
-      setAllReports(updatedAllReports)
+  const updateReportStatusAsync = async (reportId: string, newStatus: Report['status'], adminReply?: string) => {
+    try {
+      const updated = await updateReportStatus(reportId, {
+        status: newStatus,
+        adminReply: adminReply,
+      })
       
-      // 필터 적용
-      if (statusFilter === 'all') {
-        setReports(updatedAllReports)
-      } else {
-        setReports(updatedAllReports.filter(r => r.status === statusFilter))
+      if (updated) {
+        const updatedAllReports = allReports.map(r => r.id === reportId ? updated : r)
+        setAllReports(updatedAllReports)
+        
+        // 필터 적용
+        if (statusFilter === 'all') {
+          setReports(updatedAllReports)
+        } else {
+          setReports(updatedAllReports.filter(r => r.status === statusFilter))
+        }
+        
+        if (selectedReport?.id === reportId) {
+          setSelectedReport(updated)
+        }
       }
-      
-      if (selectedReport?.id === reportId) {
-        setSelectedReport(updated)
-      }
+    } catch (error) {
+      console.error('제보 상태 변경 실패:', error)
+      alert('제보 상태 변경에 실패했습니다.')
     }
   }
 
@@ -103,11 +104,37 @@ export default function AdminPage() {
     setOpenMenuId(null)
   }
 
-  const confirmDeleteReport = () => {
+  const confirmDeleteReport = async () => {
     if (reportToDelete) {
-      deleteSingleReport(reportToDelete)
-      setShowDeleteConfirmModal(false)
-      setReportToDelete(null)
+      try {
+        await deleteReport(reportToDelete)
+        const updatedAllReports = allReports.filter(r => r.id !== reportToDelete)
+        setAllReports(updatedAllReports)
+        
+        // 필터 적용
+        if (statusFilter === 'all') {
+          setReports(updatedAllReports)
+        } else {
+          setReports(updatedAllReports.filter(r => r.status === statusFilter))
+        }
+        
+        if (selectedReport?.id === reportToDelete) {
+          setSelectedReport(null)
+        }
+        
+        // 선택 목록에서도 제거
+        const newSelected = new Set(selectedReports)
+        newSelected.delete(reportToDelete)
+        setSelectedReports(newSelected)
+        
+        alert('제보가 삭제되었습니다.')
+      } catch (error) {
+        console.error('제보 삭제 실패:', error)
+        alert('제보 삭제에 실패했습니다.')
+      } finally {
+        setShowDeleteConfirmModal(false)
+        setReportToDelete(null)
+      }
     }
   }
 
@@ -116,35 +143,7 @@ export default function AdminPage() {
     setReportToDelete(null)
   }
 
-  const deleteSingleReport = (reportId: string) => {
-    if (deleteReport(reportId)) {
-      const updatedAllReports = allReports.filter(r => r.id !== reportId)
-      setAllReports(updatedAllReports)
-      
-      // 필터 적용
-      if (statusFilter === 'all') {
-        setReports(updatedAllReports)
-      } else {
-        setReports(updatedAllReports.filter(r => r.status === statusFilter))
-      }
-      
-      if (selectedReport?.id === reportId) {
-        setSelectedReport(null)
-      }
-      
-      // 선택 목록에서도 제거
-      const newSelected = new Set(selectedReports)
-      newSelected.delete(reportId)
-      setSelectedReports(newSelected)
-      
-      alert('제보가 삭제되었습니다.')
-    } else {
-      alert('제보 삭제에 실패했습니다.')
-    }
-  }
-
-  const handleSelectReport = (reportId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
+  const handleSelectReport = (reportId: string) => {
     const newSelected = new Set(selectedReports)
     if (newSelected.has(reportId)) {
       newSelected.delete(reportId)
@@ -184,48 +183,49 @@ export default function AdminPage() {
     setShowDeleteModal(true)
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteMode) return
 
-    if (deleteMode === 'selected') {
-      selectedReports.forEach(reportId => {
-        deleteReport(reportId)
-      })
-      
-      const updatedAllReports = allReports.filter(r => !selectedReports.has(r.id))
-      setAllReports(updatedAllReports)
-      
-      // 필터 적용
-      if (statusFilter === 'all') {
-        setReports(updatedAllReports)
-      } else {
-        setReports(updatedAllReports.filter(r => r.status === statusFilter))
-      }
-      
-      if (selectedReport && selectedReports.has(selectedReport.id)) {
+    try {
+      if (deleteMode === 'selected') {
+        await Promise.all(Array.from(selectedReports).map(reportId => deleteReport(reportId)))
+        
+        const updatedAllReports = allReports.filter(r => !selectedReports.has(r.id))
+        setAllReports(updatedAllReports)
+        
+        // 필터 적용
+        if (statusFilter === 'all') {
+          setReports(updatedAllReports)
+        } else {
+          setReports(updatedAllReports.filter(r => r.status === statusFilter))
+        }
+        
+        if (selectedReport && selectedReports.has(selectedReport.id)) {
+          setSelectedReport(null)
+        }
+        
+        setSelectedReports(new Set())
+        alert(`${deleteCount}개의 제보가 삭제되었습니다.`)
+      } else if (deleteMode === 'all') {
+        const reportIdsToDelete = new Set(reports.map(r => r.id))
+        
+        await Promise.all(Array.from(reportIdsToDelete).map(reportId => deleteReport(reportId)))
+        
+        const updatedAllReports = allReports.filter(r => !reportIdsToDelete.has(r.id))
+        setAllReports(updatedAllReports)
+        setReports([])
         setSelectedReport(null)
+        setSelectedReports(new Set())
+        alert(`${deleteCount}개의 제보가 삭제되었습니다.`)
       }
-      
-      setSelectedReports(new Set())
-      alert(`${deleteCount}개의 제보가 삭제되었습니다.`)
-    } else if (deleteMode === 'all') {
-      const reportIdsToDelete = new Set(reports.map(r => r.id))
-      
-      reportIdsToDelete.forEach(reportId => {
-        deleteReport(reportId)
-      })
-      
-      const updatedAllReports = allReports.filter(r => !reportIdsToDelete.has(r.id))
-      setAllReports(updatedAllReports)
-      setReports([])
-      setSelectedReport(null)
-      setSelectedReports(new Set())
-      alert(`${deleteCount}개의 제보가 삭제되었습니다.`)
+    } catch (error) {
+      console.error('제보 삭제 실패:', error)
+      alert('제보 삭제에 실패했습니다.')
+    } finally {
+      setShowDeleteModal(false)
+      setDeleteMode(null)
+      setDeleteCount(0)
     }
-
-    setShowDeleteModal(false)
-    setDeleteMode(null)
-    setDeleteCount(0)
   }
 
   const cancelDelete = () => {
@@ -234,29 +234,28 @@ export default function AdminPage() {
     setDeleteCount(0)
   }
 
-  const handleResponseSubmit = () => {
+  const handleResponseSubmit = async () => {
     if (!selectedReport || !responseStatus || !responseText.trim()) {
       alert('답변을 입력해주세요.')
       return
     }
 
-    updateReportStatus(selectedReport.id, responseStatus, responseText.trim())
-    setShowResponseModal(false)
-    setResponseText('')
-    setResponseStatus(null)
-    alert('답변이 전송되었습니다.')
+    try {
+      await updateReportStatusAsync(selectedReport.id, responseStatus, responseText.trim())
+      setShowResponseModal(false)
+      setResponseText('')
+      setResponseStatus(null)
+      alert('답변이 전송되었습니다.')
+    } catch (error) {
+      console.error('답변 전송 실패:', error)
+      alert('답변 전송에 실패했습니다.')
+    }
   }
 
   const handleReportSelect = (report: Report) => {
     setSelectedReport(report)
-    // 충전소 위치 찾기
-    const stations = getStations()
-    const station = stations.find(s => s.name === report.stationName)
-    if (station) {
-      setStationLocation({ lat: station.lat, lng: station.lng })
-    } else {
-      setStationLocation(null)
-    }
+    // 충전소 위치는 필요시 chargerApi로 가져올 수 있음
+    setStationLocation(null)
   }
 
   const getStatusText = (status: Report['status']) => {
@@ -377,7 +376,7 @@ export default function AdminPage() {
                   <input
                     type="checkbox"
                     checked={selectedReports.has(report.id)}
-                    onChange={(e) => handleSelectReport(report.id, e)}
+                    onChange={() => handleSelectReport(report.id)}
                     onClick={(e) => e.stopPropagation()}
                     className={styles.checkbox}
                   />
@@ -385,6 +384,12 @@ export default function AdminPage() {
                 <div className={styles.reportInfo}>
                   <h3 className={styles.reportStation}>{report.stationName}</h3>
                   <p className={styles.reportContent}>{report.content}</p>
+                  {isAdmin() && report.authorName && (
+                    <p className={styles.reportAuthor}>
+                      작성자: {report.authorName}
+                      {report.authorEmail && ` (${report.authorEmail})`}
+                    </p>
+                  )}
                   <div className={styles.reportMeta}>
                     <span className={styles.reportDate}>{report.date}</span>
                     <div className={styles.reportActions}>
@@ -482,6 +487,16 @@ export default function AdminPage() {
               </div>
             </div>
             <div className={styles.modalBody}>
+              <div className={styles.detailItem}>
+                <label>작성자</label>
+                <p>{selectedReport.authorName || selectedReport.userId}</p>
+              </div>
+              {selectedReport.authorEmail && (
+                <div className={styles.detailItem}>
+                  <label>작성자 이메일</label>
+                  <p>{selectedReport.authorEmail}</p>
+                </div>
+              )}
               <div className={styles.detailItem}>
                 <label>충전소명</label>
                 <p>{selectedReport.stationName}</p>

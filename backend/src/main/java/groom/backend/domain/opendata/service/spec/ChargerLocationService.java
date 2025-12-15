@@ -12,8 +12,6 @@ public interface ChargerLocationService {
 
     List<ChargerLocationResponse> getAllChargerLocations();
 
-    ChargerLocationResponse getChargerLocationById(Long id);
-
     List<ChargerLocationResponse> getChargerLocationsByViewport(ViewportRequest viewportRequest);
 
     List<ChargerLocationResponse> getChargerLocationsByNearby(NearbyRequest nearbyRequest);
