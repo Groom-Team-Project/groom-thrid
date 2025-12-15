@@ -17,7 +17,7 @@ public interface AuthService {
 
     CommonAuthResponse oauthLogin(OAuthLoginRequest req);
 
-    void logout(String refreshToken);
+    void logout(String accessToken, String refreshToken);
 
     CommonAuthResponse refreshToken(String refreshToken);
 }

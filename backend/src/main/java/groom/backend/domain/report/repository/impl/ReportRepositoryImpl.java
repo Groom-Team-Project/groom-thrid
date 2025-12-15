@@ -25,7 +25,7 @@ public class ReportRepositoryImpl implements ReportRepository {
 
     @Override
     public Optional<Report> findById(Long id) {
-        return jpaReportRepository.findById(id);
+        return jpaReportRepository.findByIdWithUser(id);
     }
 
     @Override
@@ -73,9 +73,7 @@ public class ReportRepositoryImpl implements ReportRepository {
 
     @Override
     public boolean existsByIdAndUserId(Long id, UUID userId) {
-        return jpaReportRepository.findById(id)
-                .map(report -> report.getUser() != null && report.getUser().getId().equals(userId))
-                .orElse(false);
+        return jpaReportRepository.existsByIdAndUserId(id, userId);
     }
 
     @Override

@@ -3,6 +3,7 @@ package groom.backend.domain.notification.repository.impl;
 import groom.backend.domain.notification.entity.Notification;
 import groom.backend.domain.notification.repository.jpa.JpaNotificationRepository;
 import groom.backend.domain.notification.repository.spec.NotificationRepository;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -21,5 +22,10 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     @Override
     public Optional<Notification> findLatestByRelationId(Long relationId) {
         return jpaNotificationRepository.findFirstByRelation_IdOrderByCreatedAtDesc(relationId);
+    }
+
+    @Override
+    public List<Notification> findAllByRelationId(Long relationId) {
+        return jpaNotificationRepository.findAllByRelation_IdOrderByCreatedAtDesc(relationId);
     }
 }

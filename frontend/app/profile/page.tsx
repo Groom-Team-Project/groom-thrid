@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getStoredRelationInfo, getRelationInfo, saveRelationInfo, type RelationInfo } from '@/lib/user'
 import { getRelationIdFromToken, getAccessToken } from '@/lib/api'
+import { logout } from '@/lib/auth'
 import BottomNav from '@/components/BottomNav'
 import styles from './page.module.css'
 
@@ -63,11 +64,15 @@ export default function ProfilePage() {
     }
   }, [router])
 
-  const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn')
-    localStorage.removeItem('userName')
-    localStorage.removeItem('userEmail')
-    router.push('/login')
+  const handleLogout = async () => {
+    try {
+      await logout()
+      router.push('/login')
+    } catch (error) {
+      console.error('로그아웃 중 오류 발생:', error)
+      // 에러가 발생해도 로그인 페이지로 이동
+      router.push('/login')
+    }
   }
 
   const handleGuardianClick = () => {

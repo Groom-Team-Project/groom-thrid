@@ -1,5 +1,6 @@
 package groom.backend.common.security;
 
+import groom.backend.domain.auth.service.spec.TokenBlacklistService;
 import groom.backend.domain.users.entity.Role;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -24,6 +25,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Override
     protected void doFilterInternal(
@@ -39,14 +41,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // 2. 토큰이 있고 유효한 경우
             if (token != null && jwtUtil.validateToken(token)) {
 
-                // 3. 토큰에서 사용자 정보 추출
+                // 3. 블랙리스트 확인
+                if (tokenBlacklistService.isBlacklisted(token)) {
+                    log.warn("Blacklisted token attempted - IP: {}", request.getRemoteAddr());
+                    SecurityContextHolder.clearContext();
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+
+                // 4. 토큰에서 사용자 정보 추출
                 AuthUser userInfo = jwtUtil.getUserInfoFromToken(token);
 
                 UUID userId = userInfo.userId();
                 Role role = userInfo.role();
                 Long relationId = userInfo.relationId();
 
-                // 4. Spring Security 인증 객체 생성
+                // 5. Spring Security 인증 객체 생성
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
                                 new AuthUser(userId, role, relationId),
@@ -54,12 +64,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 List.of(new SimpleGrantedAuthority("ROLE_" + role))
                         );
 
-                // 5. 요청 상세 정보 설정
+                // 6. 요청 상세 정보 설정
                 authentication.setDetails(
                         new WebAuthenticationDetailsSource().buildDetails(request)
                 );
 
-                // 6. SecurityContext에 인증 정보 저장
+                // 7. SecurityContext에 인증 정보 저장
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
                 log.debug("JWT 인증 성공 - userId: {}, role: {}, relationId: {}", userId, role, relationId);
@@ -71,7 +81,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.clearContext();
         }
 
-        // 7. 다음 필터로 진행
+        // 8. 다음 필터로 진행
         filterChain.doFilter(request, response);
     }
 

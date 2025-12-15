@@ -1,36 +1,55 @@
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
 COMPOSE_FILE="docker-compose.prod.yml"
 ENV_FILE=".env.prod"
 
-case "$1" in
-  up)
-    echo "Starting PROD containers..."
-    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up
+timestamp() { date --iso-8601=seconds; }
+
+on_exit() {
+  rc=$?
+  if [ $rc -eq 0 ]; then
+    echo ">>> prod.sh: FINISHED SUCCESS rc=0 $(timestamp)"
+  else
+    echo ">>> prod.sh: FINISHED FAILED rc=$rc $(timestamp)" >&2
+  fi
+}
+trap on_exit EXIT
+
+echo ">>> prod.sh: START $(timestamp) args=$*"
+
+case "${1:-}" in
+  down)
+    echo ">>> prod.sh: stopping images $(timestamp)"
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" stop || true
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" down
+    echo ">>> prod.sh: stop complete $(timestamp)"
     ;;
 
   build)
-    echo "Building PROD containers..."
-    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up --build
+    echo ">>> prod.sh: Building images (no attach) $(timestamp)"
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build
+    echo ">>> prod.sh: Build complete $(timestamp)"
     ;;
 
-  detach)
-    echo "Starting PROD containers in detached mode..."
-    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d
-    ;;
-
-  down)
-    echo "Stopping PROD containers..."
-    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" stop || true
-
-    echo "Removing PROD containers..."
+  restart)
+    echo ">>> Restarting service (down + up -d) $(timestamp)"
     docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" down
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d
+    echo ">>> Restart finished $(timestamp)"
+    ;;
+
+  deploy)
+    echo ">>> FULL DEPLOY START $(timestamp)"
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" down
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d
+    echo ">>> FULL DEPLOY SUCCESS $(timestamp)"
     ;;
 
   *)
-    echo "Usage: ./prod.sh {build|up|detach|down}"
+    echo "Usage: ./prod.sh {build|restart|deploy|down}"
     exit 1
     ;;
 esac
