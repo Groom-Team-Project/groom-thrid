@@ -55,6 +55,6 @@ logging:
     groom.backend.common.service.S3Service: INFO  # S3 서비스 로그 레벨
     software.amazon.awssdk: DEBUG  # AWS SDK 상세 로그 (필요시)
 
-# 프론트엔드 URL
+# 프론트엔드 URL (개발 환경 - nginx 80포트를 통한 접속)
 frontend:
-  url: http://localhost:3000
+  url: http://localhost

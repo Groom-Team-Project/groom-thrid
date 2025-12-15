@@ -336,7 +336,9 @@ export const oauthSignup = async (request: OAuthSignupRequest): Promise<AuthResp
       const relationId = getRelationIdFromToken(response.data.accessToken)
 
       // 사용자 정보 저장
-      localStorage.setItem('userEmail', request.email)
+      if (request.email) {
+        localStorage.setItem('userEmail', request.email)
+      }
       localStorage.setItem('userName', name || request.name)
       localStorage.setItem('userRole', role || request.role)
       localStorage.setItem('isLoggedIn', 'true')
