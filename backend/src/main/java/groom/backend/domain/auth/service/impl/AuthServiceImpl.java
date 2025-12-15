@@ -2,8 +2,11 @@ package groom.backend.domain.auth.service.impl;
 
 import groom.backend.common.exception.BusinessException;
 import groom.backend.common.exception.ErrorCode;
+import groom.backend.common.security.AuthUser;
 import groom.backend.common.security.JwtUtil;
 import groom.backend.domain.auth.dto.request.FormLoginAuthRequest;
+import groom.backend.domain.auth.enums.BlacklistReason;
+import groom.backend.domain.auth.service.spec.TokenBlacklistService;
 import groom.backend.domain.auth.dto.request.FormSignupAuthRequest;
 import groom.backend.domain.auth.dto.request.OAuthLoginRequest;
 import groom.backend.domain.auth.dto.request.OAuthSignupAuthRequest;
@@ -36,6 +39,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtil jwtUtil;
     private final UserRelationRepository userRelationRepository;
     private final UserCredentialRepository userCredentialRepository;
+    private final TokenBlacklistService tokenBlacklistService;
 
     // secret에서 만료시간 가져오기
     @Value("${jwt.refresh-token-expiration}")
@@ -214,14 +218,23 @@ public class AuthServiceImpl implements AuthService {
 
     }
 
-    // 로그아웃 (현재 기기) - RefreshToken을 Redis에서 삭제하여 무효화 - Access Token은 만료 시간까지 유효 (단기간이므로 문제 없음)
+    // 로그아웃 (현재 기기) - Access Token과 Refresh Token을 모두 무효화
     @Override
-    public void logout(String refreshTokenString) {
-        // RefreshToken 존재 여부 확인 후 삭제
-        if (refreshTokenRedisRepository.existsByToken(refreshTokenString)) {
-            refreshTokenRedisRepository.deleteByToken(refreshTokenString);
+    public void logout(String accessToken, String refreshToken) {
+        // 1. Access Token에서 userId 추출
+        AuthUser authUser = jwtUtil.getUserInfoFromToken(accessToken);
+
+        // 2. Access Token 블랙리스트 추가
+        tokenBlacklistService.blacklistToken(
+                accessToken,
+                authUser.userId(),
+                BlacklistReason.LOGOUT
+        );
+
+        // 3. Refresh Token 삭제
+        if (refreshTokenRedisRepository.existsByToken(refreshToken)) {
+            refreshTokenRedisRepository.deleteByToken(refreshToken);
         }
-        // 존재하지 않아도 예외 발생 안함 (이미 로그아웃되었거나 만료됨)
     }
 
     // Access Token 갱신 - Refresh Token으로 새로운 Access Token 발급 - Refresh Token도 새로 발급하여 Rotation 적용 (보안 강화)

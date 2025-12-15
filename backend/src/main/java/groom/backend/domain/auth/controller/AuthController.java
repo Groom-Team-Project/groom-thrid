@@ -151,7 +151,7 @@ public class AuthController {
 
     @Operation(
             summary = "로그아웃",
-            description = "현재 기기에서 로그아웃 처리합니다. Redis에서 Refresh Token을 삭제하여 무효화합니다."
+            description = "현재 기기에서 로그아웃 처리합니다. Access Token을 블랙리스트에 추가하고 Refresh Token을 삭제하여 무효화합니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -161,11 +161,14 @@ public class AuthController {
     })
     @PostMapping("/logout")
     public void logout(
+            @Parameter(description = "Bearer {accessToken}", required = true)
+            @RequestHeader("Authorization") String accessTokenHeader,
             @Parameter(description = "Bearer {refreshToken}", required = true)
-            @RequestHeader("Authorization") String authorizationHeader
+            @RequestHeader("X-Refresh-Token") String refreshTokenHeader
     ) {
-        String refreshToken = authorizationHeader.replace("Bearer ", "");
-        authService.logout(refreshToken);
+        String accessToken = accessTokenHeader.replace("Bearer ", "");
+        String refreshToken = refreshTokenHeader.replace("Bearer ", "");
+        authService.logout(accessToken, refreshToken);
     }
 
     @Operation(
