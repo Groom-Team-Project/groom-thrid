@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import groom.backend.domain.opendata.dto.OpenDataCharger;
+import groom.backend.domain.opendata.vo.OpenDataCharger;
 import groom.backend.domain.opendata.dto.request.NearbyRequest;
 import groom.backend.domain.opendata.dto.request.ViewportRequest;
 import groom.backend.domain.opendata.dto.response.ChargerLocationResponse;
@@ -48,7 +48,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class ChargerLocationServiceImpl implements ChargerLocationService {
 
-    @Value("${api.opendata.url}")
+    @Value("${api.opendata.charger.url}")
     private String BASE_URL;
     @Value("${api.opendata.api-key}")
     private String SERVICE_KEY;
