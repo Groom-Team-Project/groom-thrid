@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getUserReports, updateReportStatus, deleteReport, type Report } from '@/lib/reports'
-import { isAdmin } from '@/lib/auth'
+import { isAdmin, logout } from '@/lib/auth'
 import BottomNav from '@/components/BottomNav'
 import styles from './page.module.css'
 
@@ -288,12 +288,15 @@ export default function AdminPage() {
     }
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn')
-    localStorage.removeItem('userName')
-    localStorage.removeItem('userEmail')
-    localStorage.removeItem('userType')
-    router.push('/auth')
+  const handleLogout = async () => {
+    try {
+      await logout()
+      router.push('/auth')
+    } catch (error) {
+      console.error('로그아웃 중 오류 발생:', error)
+      // 에러가 발생해도 로그인 페이지로 이동
+      router.push('/auth')
+    }
   }
 
   return (

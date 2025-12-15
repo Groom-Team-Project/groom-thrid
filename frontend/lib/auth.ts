@@ -245,9 +245,29 @@ export const isAdmin = (): boolean => {
 }
 
 // 로그아웃
-export const logout = () => {
-  clearTokens()
-  clearRelationInfo()
+export const logout = async (): Promise<void> => {
+  try {
+    const accessToken = localStorage.getItem('accessToken')
+    const refreshToken = localStorage.getItem('refreshToken')
+
+    // 토큰이 있으면 백엔드 로그아웃 API 호출
+    if (accessToken && refreshToken) {
+      await apiRequest('/auth/logout', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'X-Refresh-Token': `Bearer ${refreshToken}`,
+        },
+      })
+    }
+  } catch (error) {
+    // 로그아웃 API 호출 실패해도 로컬 토큰은 삭제
+    console.error('로그아웃 API 호출 실패:', error)
+  } finally {
+    // 로컬 스토리지에서 토큰 및 사용자 정보 삭제
+    clearTokens()
+    clearRelationInfo()
+  }
 }
 
 // OAuth 로그인 API
