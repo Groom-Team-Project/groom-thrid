@@ -3,6 +3,8 @@ package groom.backend.domain.auth.repository.impl;
 import groom.backend.domain.auth.repository.spec.RefreshTokenRedisRepository;
 import groom.backend.domain.auth.vo.RefreshTokenValue;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,5 +53,21 @@ public class RefreshTokenRedisRepositoryImpl implements RefreshTokenRedisReposit
     public void deleteByToken(String token) {
         String key = KEY_PREFIX + token;
         redisTemplate.delete(key);
+    }
+
+    // 특정 사용자의 모든 RefreshToken 삭제
+    @Override
+    public void deleteAllByUserId(UUID userId) {
+        String pattern = KEY_PREFIX + "*";
+        Set<String> keys = redisTemplate.keys(pattern);
+
+        if (keys != null && !keys.isEmpty()) {
+            keys.stream()
+                    .filter(key -> {
+                        RefreshTokenValue value = (RefreshTokenValue) redisTemplate.opsForValue().get(key);
+                        return value != null && value.getUserId().equals(userId);
+                    })
+                    .forEach(redisTemplate::delete);
+        }
     }
 }
