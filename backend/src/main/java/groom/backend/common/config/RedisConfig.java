@@ -5,11 +5,15 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import groom.backend.domain.location.redis.subscriber.LocationSubscriber;
 import java.time.Duration;
+
+import groom.backend.domain.opendata.dto.response.ChargerLocationResponse;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -18,6 +22,7 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
@@ -51,6 +56,7 @@ public class RedisConfig {
 
     // RedisTemplate 설정 (String - Object) - Key: String (토큰 문자열 or userId) - Value: Object (RefreshTokenValue)
     @Bean
+    @Primary
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
@@ -72,6 +78,7 @@ public class RedisConfig {
      * CacheManager 설정 - Spring Cache 추상화 사용 - TTL: 30분
      */
     @Bean
+    @Primary
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(30)) // 캐시 TTL
@@ -91,6 +98,55 @@ public class RedisConfig {
                 .cacheDefaults(config)
                 .build();
     }
+
+    // RedisTemplate 설정 (String - Object) - Key: String (토큰 문자열 or userId) - Value: Object (RefreshTokenValue)
+    @Bean
+    @Qualifier("chargerRedisTemplate")
+    public RedisTemplate<String, ChargerLocationResponse> chargerRedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, ChargerLocationResponse> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+
+        // JSON 직렬화 설정
+        Jackson2JsonRedisSerializer<ChargerLocationResponse> chargerSerializer =
+                new Jackson2JsonRedisSerializer<>(ChargerLocationResponse.class);
+
+        // Key는 String, Value는 JSON
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(chargerSerializer);
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(chargerSerializer);
+
+        template.afterPropertiesSet();
+        return template;
+    }
+
+    @Bean
+    public CacheManager chargerCacheManager(RedisConnectionFactory connectionFactory) {
+        Jackson2JsonRedisSerializer<ChargerLocationResponse> serializer =
+                new Jackson2JsonRedisSerializer<>(objectMapper(), ChargerLocationResponse.class);
+
+        // 2. 캐시 설정 구성
+        RedisCacheConfiguration redisCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
+                .serializeKeysWith(
+                        RedisSerializationContext.SerializationPair.fromSerializer(
+                                new StringRedisSerializer()
+                        )
+                )
+                .serializeValuesWith(
+                        RedisSerializationContext.SerializationPair.fromSerializer(
+                                serializer
+                        )
+                )
+                // (선택사항) TTL 설정: .entryTtl(Duration.ofMinutes(10));
+                ;
+
+        // 3. CacheManager 빌드 및 반환
+        return RedisCacheManager.RedisCacheManagerBuilder
+                .fromConnectionFactory(connectionFactory)
+                .cacheDefaults(redisCacheConfiguration)
+                .build();
+    }
+
 
     /**
      * ObjectMapper 설정 - LocalDateTime 등 Java 8 날짜/시간 API 지원 - 전역 Bean으로 등록하여 모든 JSON 직렬화/역직렬화에 동일한 설정 적용

@@ -32,6 +32,29 @@ export interface AuthResponse {
   refreshToken: string
 }
 
+// OAuth Provider
+export enum Provider {
+  NAVER = 'Naver',
+  GOOGLE = 'Google',
+  KAKAO = 'Kakao',
+}
+
+// OAuth 회원가입 요청
+export interface OAuthSignupRequest {
+  name: string
+  email: string
+  phone?: string
+  role: Role
+  provider: Provider
+  providerId: string
+}
+
+// OAuth 로그인 요청
+export interface OAuthLoginRequest {
+  provider: Provider
+  providerId: string
+}
+
 // 비밀번호 검증 정규식
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/
 
@@ -222,7 +245,120 @@ export const isAdmin = (): boolean => {
 }
 
 // 로그아웃
-export const logout = () => {
-  clearTokens()
-  clearRelationInfo()
+export const logout = async (): Promise<void> => {
+  try {
+    const accessToken = localStorage.getItem('accessToken')
+    const refreshToken = localStorage.getItem('refreshToken')
+
+    // 토큰이 있으면 백엔드 로그아웃 API 호출
+    if (accessToken && refreshToken) {
+      await apiRequest('/auth/logout', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'X-Refresh-Token': `Bearer ${refreshToken}`,
+        },
+      })
+    }
+  } catch (error) {
+    // 로그아웃 API 호출 실패해도 로컬 토큰은 삭제
+    console.error('로그아웃 API 호출 실패:', error)
+  } finally {
+    // 로컬 스토리지에서 토큰 및 사용자 정보 삭제
+    clearTokens()
+    clearRelationInfo()
+  }
+}
+
+// OAuth 로그인 API
+export const oauthLogin = async (request: OAuthLoginRequest): Promise<AuthResponse> => {
+  try {
+    const response = await apiRequest<AuthResponse>('/auth/oauth-login', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+
+    if (response.data) {
+      saveTokens(response.data.accessToken, response.data.refreshToken)
+
+      // JWT에서 role, name, relationId 추출
+      const role = getRoleFromToken(response.data.accessToken)
+      const name = getNameFromToken(response.data.accessToken)
+      const relationId = getRelationIdFromToken(response.data.accessToken)
+
+      // 사용자 정보 저장
+      localStorage.setItem('userName', name || '')
+      localStorage.setItem('userRole', role || 'USER')
+      localStorage.setItem('isLoggedIn', 'true')
+
+      // relationId가 있으면 연관 정보 가져오기
+      if (relationId !== null) {
+        try {
+          const relationInfo = await getRelationInfo()
+          saveRelationInfo(relationInfo)
+        } catch (error) {
+          console.error('관계 정보 조회 실패:', error)
+        }
+      } else {
+        clearRelationInfo()
+      }
+
+      return response.data
+    }
+
+    throw new Error('OAuth 로그인에 실패했습니다.')
+  } catch (error) {
+    // 사용자를 찾을 수 없는 경우 (회원가입 필요)
+    if (error instanceof Error && error.message.includes('404')) {
+      throw new Error('USER_NOT_FOUND')
+    }
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error('OAuth 로그인 중 오류가 발생했습니다.')
+  }
+}
+
+// OAuth 회원가입 API
+export const oauthSignup = async (request: OAuthSignupRequest): Promise<AuthResponse> => {
+  try {
+    const response = await apiRequest<AuthResponse>('/auth/oauth-signup', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+
+    if (response.data) {
+      saveTokens(response.data.accessToken, response.data.refreshToken)
+
+      // JWT에서 role, name, relationId 추출
+      const role = getRoleFromToken(response.data.accessToken)
+      const name = getNameFromToken(response.data.accessToken)
+      const relationId = getRelationIdFromToken(response.data.accessToken)
+
+      // 사용자 정보 저장
+      localStorage.setItem('userEmail', request.email)
+      localStorage.setItem('userName', name || request.name)
+      localStorage.setItem('userRole', role || request.role)
+      localStorage.setItem('isLoggedIn', 'true')
+
+      // relationId가 있으면 연관 정보 가져오기
+      if (relationId !== null) {
+        try {
+          const relationInfo = await getRelationInfo()
+          saveRelationInfo(relationInfo)
+        } catch (error) {
+          console.error('관계 정보 조회 실패:', error)
+        }
+      }
+
+      return response.data
+    }
+
+    throw new Error('OAuth 회원가입에 실패했습니다.')
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error('OAuth 회원가입 중 오류가 발생했습니다.')
+  }
 }

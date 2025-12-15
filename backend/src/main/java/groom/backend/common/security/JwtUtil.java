@@ -92,7 +92,7 @@ public class JwtUtil {
     }
 
     // 토큰 파싱
-    private Claims parseToken(String token) {
+    public Claims parseToken(String token) {
         return Jwts.parser()
                 .verifyWith(secretKey)
                 .build()

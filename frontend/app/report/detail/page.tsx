@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { getReportById, deleteReport, updateReportStatus, type Report } from '@/lib/reports'
@@ -41,7 +43,7 @@ export default function ReportDetailPage() {
             // 작성자 이메일과 현재 사용자 이메일을 비교 (동명이인 구분)
             // ADMIN은 모든 제보를 수정/삭제할 수 있음
             const authorEmail = foundReport.authorEmail
-            setIsOwner(isAdmin() || (authorEmail && authorEmail === currentUserEmail))
+            setIsOwner(Boolean(isAdmin() || (authorEmail && authorEmail === currentUserEmail)))
           } else {
             alert('제보를 찾을 수 없습니다.')
             router.push('/report/list')

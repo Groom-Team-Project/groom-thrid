@@ -1,7 +1,9 @@
 package groom.backend.domain.auth.dto.request;
 
+import groom.backend.domain.users.entity.Provider;
+
 public record OAuthLoginRequest(
-        String provider,
-        String providerToken
+        Provider provider,
+        String providerId
 ) {
 }

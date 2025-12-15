@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getUserReports, deleteReport, type Report } from '@/lib/reports'
@@ -58,8 +60,7 @@ export default function ReportListPage() {
     router.push(`/report/detail?id=${reportId}`)
   }
 
-  const handleSelectReport = (reportId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
+  const handleSelectReport = (reportId: string) => {
     const newSelected = new Set(selectedReports)
     if (newSelected.has(reportId)) {
       newSelected.delete(reportId)
@@ -286,7 +287,7 @@ export default function ReportListPage() {
                     <input
                       type="checkbox"
                       checked={selectedReports.has(report.id)}
-                      onChange={(e) => handleSelectReport(report.id, e)}
+                      onChange={() => handleSelectReport(report.id)}
                       onClick={(e) => e.stopPropagation()}
                       className={styles.checkbox}
                     />
