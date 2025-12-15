@@ -71,4 +71,12 @@ public class UserCredential extends BaseEntity {
         credential.providerId = providerId;
         return credential;
     }
+
+    // 비밀번호 업데이트 (이미 암호화된 비밀번호를 받음)
+    public void updatePassword(String encodedPassword) {
+        if (this.provider != Provider.Form) {
+            throw new IllegalStateException("OAuth 계정은 비밀번호를 변경할 수 없습니다");
+        }
+        this.password = encodedPassword;
+    }
 }

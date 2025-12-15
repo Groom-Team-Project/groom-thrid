@@ -1,6 +1,7 @@
 package groom.backend.domain.users.controller;
 
 import groom.backend.common.security.AuthUser;
+import groom.backend.domain.users.dto.request.ChangePasswordRequest;
 import groom.backend.domain.users.dto.request.GuardianMatchRequest;
 import groom.backend.domain.users.dto.request.UpdateUserRequest;
 import groom.backend.domain.users.dto.response.RelationInfoResponse;
@@ -195,5 +196,58 @@ public class UserController {
         Long relationId = user.relationId();
 
         return userService.relationInfo(relationId);
+    }
+
+    @Operation(
+            summary = "비밀번호 변경",
+            description = "현재 로그인한 사용자의 비밀번호를 변경합니다. 변경 시 모든 기기에서 로그아웃됩니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "비밀번호 변경 성공"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "현재 비밀번호 불일치"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 필요"
+            )
+    })
+    @PatchMapping("/password")
+    public void changePassword(
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthUser authUser,
+            @Valid @RequestBody ChangePasswordRequest request
+    ) {
+        userService.changePassword(authUser.userId(), request);
+    }
+
+    @Operation(
+            summary = "[관리자] 사용자 강제 로그아웃",
+            description = "관리자가 특정 사용자의 모든 세션을 강제 종료합니다. ADMIN 권한이 필요합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "강제 로그아웃 성공"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "권한 없음 (ADMIN 권한 필요)"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "사용자를 찾을 수 없음"
+            )
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{userId}/force-logout")
+    public void forceLogout(
+            @Parameter(description = "사용자 ID (UUID)", required = true)
+            @PathVariable UUID userId
+    ) {
+        userService.forceLogout(userId);
     }
 }
