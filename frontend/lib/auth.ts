@@ -81,7 +81,7 @@ export const validateEmail = (email: string): boolean => {
 // 회원가입 API
 export const signup = async (request: SignupRequest): Promise<AuthResponse> => {
   try {
-    const response = await apiRequest<AuthResponse>('/auth/signup', {
+    const response = await apiRequest<AuthResponse>('/auth/form-signup', {
       method: 'POST',
       body: JSON.stringify(request),
     })
