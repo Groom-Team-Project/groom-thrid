@@ -176,7 +176,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public CommonAuthResponse oauthLogin(OAuthLoginRequest req) {
 
-        // 1. provider, provicerId(token) 으로 로그인 가능여부 확인
+        // 1. provider, providerId(token) 으로 로그인 가능여부 확인
         UserCredential credential = userCredentialRepository
                 .findByProviderIdAndProvider(req.providerId(), req.provider())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
