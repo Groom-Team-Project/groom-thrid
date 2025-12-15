@@ -23,6 +23,8 @@ public enum ErrorCode {
     OAUTH_ACCESS_TOKEN_ERROR(500, "A_010", "OAuth Access Token 발급에 실패했습니다"),
     OAUTH_USER_INFO_ERROR(500, "A_011", "OAuth 사용자 정보 조회에 실패했습니다"),
     INVALID_OAUTH_PROVIDER(400, "A_012", "지원하지 않는 OAuth 제공자입니다"),
+    BLACKLISTED_TOKEN(401, "A_013", "블랙리스트에 등록된 토큰입니다"),
+    PASSWORD_MISMATCH(400, "A_014", "현재 비밀번호가 일치하지 않습니다"),
 
     // Client/Validation 에러 (C_xxx)
     INVALID_INPUT(400, "C_001", "입력값이 올바르지 않습니다"),
