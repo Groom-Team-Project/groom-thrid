@@ -64,7 +64,7 @@ jobs:
             # 배포 스크립트 실행
             echo ">>> Running deployment script...$(date)"
             chmod +x prod.sh
-            ./prod.sh build
+            ./prod.sh deploy --no-cache
             
             # 결과 확인
             echo ">>> prod.sh finished with exit \$? $(date)"

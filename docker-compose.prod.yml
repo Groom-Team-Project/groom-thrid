@@ -42,8 +42,6 @@ services:
       - "3000:3000"
     depends_on:
       - backend
-    environment:
-      - NEXT_PUBLIC_API_URL=https://wheelfinder.deving.xyz/api/v1
     env_file:
       - .env.prod
     networks:
@@ -57,16 +55,6 @@ services:
       - redis_data:/data
     ports:
       - "6379:6379"
-    networks:
-      - app-network
-
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
-    restart: always
-    ports:
-      - "5672:5672"
-      - "15672:15672"
     networks:
       - app-network
 
