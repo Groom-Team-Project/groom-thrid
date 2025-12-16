@@ -14,6 +14,13 @@ spring:
     enabled: false  # 개발 환경에서 Hibernate 자동 스키마 업데이트를 위해 일시적으로 비활성화
     locations: classpath:db/migration
 
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB  # 개별 파일 크기 제한
+      max-request-size: 50MB  # 전체 요청 크기 제한
+      file-size-threshold: 2KB
+
 springdoc:
   swagger-ui:
     enabled: true
@@ -29,6 +36,9 @@ server:
   servlet:
     context-path: /api
   address: 0.0.0.0
+  tomcat:
+    max-http-post-size: 50MB  # HTTP POST 요청 본문 크기 제한 (Base64 이미지 포함 JSON 요청용)
+    max-swallow-size: 50MB  # 스왈로우(swallow) 크기 제한
 
 # Redis 설정
 redis:

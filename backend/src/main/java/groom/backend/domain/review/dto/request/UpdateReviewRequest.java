@@ -21,7 +21,7 @@ public record UpdateReviewRequest(
     Double rating,
 
     @Schema(description = "이미지 URL", example = "https://example.com/image.jpg")
-    @Size(max = 10000000, message = "이미지 URL은 10000000자 이하여야 합니다")
+    @Size(max = 30000000, message = "이미지 URL은 30000000자 이하여야 합니다 (약 20MB 이미지)")
     String imageUrl
 ) {
 }
