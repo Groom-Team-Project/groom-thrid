@@ -15,6 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 @Slf4j
 @RestController
@@ -23,9 +25,12 @@ import java.util.List;
 public class ConvenientFacilityLocationController {
 
     private final ConvenientFacilityService convenientFacilityService;
+    private final Executor opendataExecutor;
 
-    public ConvenientFacilityLocationController(ConvenientFacilityService convenientFacilityService) {
+
+    public ConvenientFacilityLocationController(ConvenientFacilityService convenientFacilityService, Executor opendataExecutor) {
         this.convenientFacilityService = convenientFacilityService;
+        this.opendataExecutor = opendataExecutor;
     }
 
     /**
@@ -89,16 +94,20 @@ public class ConvenientFacilityLocationController {
             description = "특정 편의시설의 편의시설 기구목록을 조회합니다."
     )
     @PostMapping("/info/{id}/refresh")
-    public ResponseEntity<ApiResponse<ConvenientFacilityResponse>> getConvenientFacilityInfo(
+    public ResponseEntity<ApiResponse<Void>> getConvenientFacilityInfo(
             @Parameter(description = "편의시설 ID", example = "1", required = true)
             @PathVariable String id) {
 
         log.info("편의시설 편의시설 기구목록 조회: ID={}", id);
+        CompletableFuture.runAsync(() -> {
+            try {
+                convenientFacilityService.updateConvenientFacilityInfo(id);
+            } catch (Exception e) {
+                log.error("OpenApi 장애인 편의시설 데이터 수집 실패: {}", e);
+            }
+        }, opendataExecutor);
+        ApiResponse<Void> response = ApiResponse.success(202, "데이터 수집 작업이 시작되었습니다", null);
+        return ResponseEntity.accepted().body(response);
 
-        ConvenientFacilityResponse facility = convenientFacilityService.updateConvenientFacilityInfo(id);
-
-        return ResponseEntity.ok(
-                ApiResponse.success(200, "갱신 및 조회 성공", facility)
-        );
     }
 }
