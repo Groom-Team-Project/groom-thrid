@@ -65,11 +65,11 @@ export const facilityApi = {
 
     },
 
-    getConvenientFacilityInfo: async (id: string): Promise<Facility> => {
+    // 편의시설 상세 정보 갱신 요청
+    getConvenientFacilityInfo: async (id: string): Promise<void> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/ConvenientFacilities/info/${id}/refresh` , { method: 'POST' })
-            const data = await parseJsonOrThrow(response)
-            return data.data
+            await fetch(`${API_BASE_URL}/ConvenientFacilities/info/${id}/refresh` , { method: 'POST' })
+
         } catch (err) {
             console.error('getConvenientFacilityInfo error:', err)
         }

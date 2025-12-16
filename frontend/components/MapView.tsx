@@ -367,10 +367,6 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     const handleFacilityClick = async (facility: Facility) => {
         if (facility.convenientFacilityInfo == null) {
             const updatedFacility = await facilityApi.getConvenientFacilityInfo(facility.facilityId)
-
-            if (updatedFacility && updatedFacility.convenientFacilityInfo != null) {
-                facility.convenientFacilityInfo = updatedFacility.convenientFacilityInfo;
-            }
         }
 
         setSelectedFacility(facility)
