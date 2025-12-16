@@ -1,6 +1,6 @@
 package groom.backend.domain.opendata.mapper;
 
-import groom.backend.domain.opendata.dto.OpenDataCharger;
+import groom.backend.domain.opendata.vo.OpenDataCharger;
 import groom.backend.domain.opendata.dto.response.ChargerLocationResponse;
 import groom.backend.domain.opendata.entity.ChargerLocation;
 import org.springframework.stereotype.Component;

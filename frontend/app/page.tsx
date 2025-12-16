@@ -12,13 +12,20 @@ import { createAlert } from '@/lib/notification'
 import { Role } from '@/lib/auth'
 import styles from './page.module.css'
 
+interface FacilityTypeItem {
+    name: string
+    label: string
+}
+
 export default function Home() {
   const router = useRouter()
   const location = useLocation()
-  const [selectedCategory, setSelectedCategory] = useState<'charging' | 'restroom' | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userRole, setUserRole] = useState<string | null>(null)
   const [isAlertLoading, setIsAlertLoading] = useState(false)
+
+  const [facilityTypes, setFacilityTypes] = useState<FacilityTypeItem[]>([])
 
   useEffect(() => {
     const loggedIn = localStorage.getItem('isLoggedIn')
@@ -29,6 +36,30 @@ export default function Home() {
       setUserRole(role)
     }
   }, [router])
+
+  // 서버에서 활성화된 facility type 목록을 가져옴
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch('/api/v1/opendata/facilityTypes')
+        if (!res.ok) return
+
+        const json = await res.json() as {
+            status?: string
+            code?: number
+            message?: string
+            data?: FacilityTypeItem[] | null
+            errors?: any
+        }
+
+        const items = Array.isArray(json?.data) ? json.data : []
+        setFacilityTypes(items)
+      } catch (e) {
+        console.error('facility types load failed', e)
+      }
+   }
+   load()
+  }, [])
 
   const handleAlertClick = async () => {
     if (isAlertLoading) return
@@ -73,6 +104,7 @@ export default function Home() {
     <div className={styles.container}>
       <TopBar
         selectedCategory={selectedCategory}
+        facilityTypes={facilityTypes}
         onCategoryChange={setSelectedCategory}
       />
       <MapView selectedCategory={selectedCategory} />
