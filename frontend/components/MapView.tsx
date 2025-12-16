@@ -249,9 +249,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
 
                 // 마커 이미지 설정
                 const imageSrc = selectedStation?.placeId === station.placeId
-                    ? 'https://img.icons8.com/external-phatplus-lineal-color-phatplus/64/external-point-ev-car-phatplus-lineal-color-phatplus.png'
-                    : 'https://img.icons8.com/external-phatplus-lineal-phatplus/64/external-point-ev-car-phatplus-lineal-phatplus.png'
-
+                    ? '/icons/marker-active.svg' : "/icons/marker-inactive.svg"
 
                 const imageSize = new window.kakao.maps.Size(36, 36)
                 const imageOptions = {offset: new window.kakao.maps.Point(18, 30)}
