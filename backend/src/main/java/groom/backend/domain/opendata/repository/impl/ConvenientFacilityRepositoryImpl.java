@@ -93,12 +93,17 @@ public class ConvenientFacilityRepositoryImpl implements ConvenientFacilityRepos
     }
 
     @Override
-    public ConvenientFacilityResponse findById(Long id) {
+    public ConvenientFacility findById(String id) {
         ConvenientFacility convenientFacility = jpaConvenientFacilityRepository.findById(id).orElse(null);
         if (convenientFacility == null) {
             throw new IllegalArgumentException("해당 ID의 편의 시설을 찾을 수 없습니다: " + id);
         }
 
-        return ConvenientFacilityMapper.toResponse(convenientFacility);
+        return convenientFacility;
+    }
+
+    @Override
+    public void save(ConvenientFacility convenientFacility) {
+        jpaConvenientFacilityRepository.save(convenientFacility);
     }
 }

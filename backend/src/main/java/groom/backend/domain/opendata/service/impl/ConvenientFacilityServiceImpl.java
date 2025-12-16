@@ -7,9 +7,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import groom.backend.domain.opendata.dto.request.ViewportRequest;
 import groom.backend.domain.opendata.dto.response.ConvenientFacilityResponse;
+import groom.backend.domain.opendata.entity.ConvenientFacility;
 import groom.backend.domain.opendata.enums.FacilityType;
 import groom.backend.domain.opendata.mapper.ConvenientFacilityMapper;
 import groom.backend.domain.opendata.repository.spec.ConvenientFacilityRepository;
@@ -22,7 +24,6 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 import java.io.IOException;
 import java.net.URI;
@@ -171,8 +172,14 @@ public class ConvenientFacilityServiceImpl implements ConvenientFacilityService 
 
 
     @Override
-    public ConvenientFacilityResponse getConvenientFacilityById(Long id) {
-        return repository.findById(id);
+    public ConvenientFacilityResponse getConvenientFacilityById(String id) {
+        log.info("DB에서 편의시설 상세 조회: ID={}", id);
+        ConvenientFacility facility = repository.findById(id);
+        if (facility == null) {
+            log.warn("해당 ID의 편의시설을 찾을 수 없음: ID={}", id);
+            return null;
+        }
+        return ConvenientFacilityMapper.toResponse(facility);
     }
 
     /**
@@ -227,10 +234,54 @@ public class ConvenientFacilityServiceImpl implements ConvenientFacilityService 
         return String.format(Locale.ROOT, fmt, CACHE_KEY_VIEWPORT, category, minLat, maxLat, minLng, maxLng);
     }
 
+    @Override
+    @Transactional
+    public ConvenientFacilityResponse updateConvenientFacilityInfo(String id) {
+        ConvenientFacility facility = repository.findById(id);
+        if (facility == null) {
+            log.warn("해당 ID의 편의시설을 찾을 수 없음: ID={}", id);
+            return null;
+        }
+
+        String url = CONVEIENT_FACiLITY_INFO_URL + "?"
+                + URLEncoder.encode("serviceKey", StandardCharsets.UTF_8) + "="
+                + URLEncoder.encode(SERVICE_KEY, StandardCharsets.UTF_8)
+                + "&" + URLEncoder.encode("wfcltId", StandardCharsets.UTF_8) + "="
+                + URLEncoder.encode(String.valueOf(id), StandardCharsets.UTF_8);
+
+        String body = fetchResponseBody(url);
+        if (body == null || body.isBlank()) {
+            log.warn("빈 응답 본문으로 인해 편의시설 정보 갱신 중단");
+            return null;
+        }
+
+        String info;
+        try {
+            JsonNode root = xmlMapper.readTree(body.getBytes(StandardCharsets.UTF_8));
+            if(root.get("servList") == null || root.get("servList").get("evalInfo") == null) {
+                log.warn("편의시설 정보가 존재하지 않음: ID={}", id);
+                return null;
+            }
+
+            info = root.get("servList").get("evalInfo").toString();
+
+        } catch (Exception e) {
+            return null;
+        }
+
+        facility.setConvenientFacilityInfo(info);
+
+        repository.save(facility);
+
+        log.info("편의시설 정보 갱신 완료: ID={}", id);
+        return ConvenientFacilityMapper.toResponse(facility);
+    }
+
+
     /**
      * 모든 캐시 삭제 (관리자용)
      */
-    @CacheEvict(value = "chargers", allEntries = true)
+    @CacheEvict(value = "facilities", allEntries = true)
     public void clearAllCache() {
         redisTemplate.keys(CACHE_KEY_VIEWPORT + "*")
                 .forEach(redisTemplate::delete);

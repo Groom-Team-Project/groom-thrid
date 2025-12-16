@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface JpaConvenientFacilityRepository extends JpaRepository<ConvenientFacility, Long> {
+public interface JpaConvenientFacilityRepository extends JpaRepository<ConvenientFacility, String> {
 
     /**
      * Viewport 기반 조회 (사각형 영역)

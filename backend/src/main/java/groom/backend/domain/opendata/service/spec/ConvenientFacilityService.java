@@ -10,7 +10,9 @@ public interface ConvenientFacilityService {
 
     void getAllOpenDataConvenientFacilities();
 
-    ConvenientFacilityResponse getConvenientFacilityById(Long id);
+    ConvenientFacilityResponse getConvenientFacilityById(String id);
+
+    ConvenientFacilityResponse updateConvenientFacilityInfo(String id);
 
     List<ConvenientFacilityResponse> getConvenientFacilityByViewport(FacilityType facilityType, ViewportRequest viewportRequest);
 }

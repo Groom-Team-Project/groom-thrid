@@ -16,5 +16,7 @@ public interface ConvenientFacilityRepository {
      */
     List<ConvenientFacilityResponse> findByLatBetweenAndLngBetween(FacilityType facilityType, ViewportRequest viewportRequest);
 
-    ConvenientFacilityResponse findById(Long id);
+    ConvenientFacility findById(String id);
+
+    void save(ConvenientFacility convenientFacility);
 }

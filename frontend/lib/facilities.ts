@@ -52,10 +52,8 @@ export const facilityApi = {
 
     },
 
-
-
     // 충전소 상세 조회
-    getConvenientFacilityById: async (id: number): Promise<Facility> => {
+    getConvenientFacilityById: async (id: string): Promise<Facility> => {
         try {
             const response = await fetch(`${API_BASE_URL}/ConvenientFacilities/${id}`)
             const data = await parseJsonOrThrow(response)
@@ -65,5 +63,15 @@ export const facilityApi = {
             throw err
         }
 
+    },
+
+    getConvenientFacilityInfo: async (id: string): Promise<Facility> => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/ConvenientFacilities/info/${id}/refresh` , { method: 'POST' })
+            const data = await parseJsonOrThrow(response)
+            return data.data
+        } catch (err) {
+            console.error('getConvenientFacilityInfo error:', err)
+        }
     },
 }

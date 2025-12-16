@@ -70,7 +70,7 @@ public class ConvenientFacilityLocationController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ConvenientFacilityResponse>> getConvenientFacilityById(
             @Parameter(description = "편의시설 ID", example = "1", required = true)
-            @PathVariable Long id) {
+            @PathVariable String id) {
 
         log.info("편의시설 상세 조회: ID={}", id);
 
@@ -78,6 +78,27 @@ public class ConvenientFacilityLocationController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(200, "조회 성공", facility)
+        );
+    }
+
+    /**
+     * 편의시설 기구목록 조회
+     */
+    @Operation(
+            summary = "편의시설 기구목록 조회",
+            description = "특정 편의시설의 편의시설 기구목록을 조회합니다."
+    )
+    @PostMapping("/info/{id}/refresh")
+    public ResponseEntity<ApiResponse<ConvenientFacilityResponse>> getConvenientFacilityInfo(
+            @Parameter(description = "편의시설 ID", example = "1", required = true)
+            @PathVariable String id) {
+
+        log.info("편의시설 편의시설 기구목록 조회: ID={}", id);
+
+        ConvenientFacilityResponse facility = convenientFacilityService.updateConvenientFacilityInfo(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "갱신 및 조회 성공", facility)
         );
     }
 }

@@ -365,6 +365,14 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     }
 
     const handleFacilityClick = async (facility: Facility) => {
+        if (facility.convenientFacilityInfo == null) {
+            const updatedFacility = await facilityApi.getConvenientFacilityInfo(facility.facilityId)
+
+            if (updatedFacility && updatedFacility.convenientFacilityInfo != null) {
+                facility.convenientFacilityInfo = updatedFacility.convenientFacilityInfo;
+            }
+        }
+
         setSelectedFacility(facility)
     }
 
@@ -390,16 +398,18 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         if (selectedStation || selectedFacility) {
             // 지도에 표시된 충전소만 도착지로 설정 가능
 
-            const selectedStation = selectedCategory === 'charging' ? selectedStation : selectedFacility;
+
+            const target = (selectedCategory === 'charging' ? selectedStation : selectedFacility) as ChargingStation | Facility | null
+            if(!target) return
 
             // 출발지가 없으면 현재 위치를 출발지로 사용
             router.push(
                 `/directions?start-lat=${lat}` +
                 `&start-lng=${lng}` +
-                `&end-lat=${selectedStation.lat}` +
-                `&end-lng=${selectedStation.lng}` +
+                `&end-lat=${target.lat}` +
+                `&end-lng=${target.lng}` +
                 `&start-name=현재 위치` +
-                `&end-name=${encodeURIComponent(selectedStation.facilityName)}`
+                `&end-name=${encodeURIComponent(target.facilityName)}`
             )
 
         }

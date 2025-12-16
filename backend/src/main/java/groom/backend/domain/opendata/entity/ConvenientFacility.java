@@ -47,7 +47,7 @@ public class ConvenientFacility extends BaseEntity {
     // 편의 시설 정보
     private String convenientFacilityInfo;
 
-    private void setConvenientFacilityInfo(String convenientFacilityInfo) {
+    public void setConvenientFacilityInfo(String convenientFacilityInfo) {
         this.convenientFacilityInfo = convenientFacilityInfo;
     }
 }
