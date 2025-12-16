@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { type ChargingStation, chargerApi } from '@/lib/stations'
 import { getReviewsByStation, deleteReview, type Review } from '@/lib/reviews'
+import { isAdmin } from '@/lib/auth'
 import { saveAlert } from '@/lib/alerts'
 import StarRating from './StarRating'
 import styles from './MapView.module.css'
@@ -25,7 +26,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
 
     const mapRef = useRef<HTMLDivElement>(null)
     const kakaoMapRef = useRef<any>(null)
-    const markersRef = useRef<any[]>([])
+    const clustererRef = useRef<any>(null)
     const userMarkerRef = useRef<any>(null)
     const selectedCategoryRef = useRef(selectedCategory)
 
@@ -60,7 +61,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         if (typeof window === 'undefined') return;
 
         const script = document.createElement('script')
-        script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&autoload=false&libraries=services`
+        script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&autoload=false&libraries=services,clusterer`
         script.async = true
         script.onload = () => {
             window.kakao.maps.load(() => {
@@ -88,10 +89,13 @@ export default function MapView({ selectedCategory }: MapViewProps) {
             setSelectedStation(null)
             setShowSearchButton(false)
             setError(null)
-            // 기존 마커들 제거
-            markersRef.current.forEach(marker => marker.setMap(null))
-            markersRef.current = []
             return
+        }
+
+        // 클러스터러 정리
+        if (clustererRef.current) {
+            clustererRef.current.clear(); // 또는 removeMarkers()
+            clustererRef.current.setMap(null);
         }
 
         // 맵이 준비되지 않았으면 대기
@@ -196,13 +200,25 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         userMarkerRef.current = customOverlay
     }
 
+
+
     // 충전소 마커들 생성
     useEffect(() => {
+        // 클러스터러 정리
+        if (clustererRef.current) {
+            clustererRef.current.clear(); // 또는 removeMarkers()
+            clustererRef.current.setMap(null);
+        }
+
         if (!kakaoMapRef.current || !mapLoaded || selectedCategory !== 'charging') return
 
-        // 기존 마커들 제거
-        markersRef.current.forEach(marker => marker.setMap(null))
-        markersRef.current = []
+
+        const clusterer = new window.kakao.maps.MarkerClusterer({
+            map: kakaoMapRef.current, // 마커들을 클러스터로 관리하고 표시할 지도 객체
+            averageCenter: true, // 클러스터에 포함된 마커들의 평균 위치를 클러스터 마커 위치로 설정
+            minLevel: 5 // 클러스터 할 최소 지도 레벨
+        });
+        clustererRef.current = clusterer;
 
         // 새 마커들 생성
         stations.forEach((station) => {
@@ -233,11 +249,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
                 handleStationClick(station)
             })
 
-            marker.setMap(kakaoMapRef.current)
-            markersRef.current.push(marker)
-
-        })
-
+            clusterer.addMarker(marker) })
     }, [stations, selectedStation, mapLoaded, selectedCategory])
 
     // 선택된 충전소로 지도 이동
@@ -302,7 +314,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         // 안내 버튼 클릭 시 제보 신청 페이지로 이동
         if (!checkLogin()) return
         if (selectedStation) {
-            router.push(`/report?stationName=${encodeURIComponent(selectedStation.facilityName)}`)
+            router.push(`/report?placeId=${selectedStation.placeId}&stationName=${encodeURIComponent(selectedStation.facilityName)}`)
         }
     }
 
@@ -649,9 +661,13 @@ export default function MapView({ selectedCategory }: MapViewProps) {
                     </div>
                   ) : (
                     reviews.map((review) => {
-                      // 백엔드에서 userId를 제공하지 않으므로 작성자 이름으로 확인
+                      // 권한 체크:
+                      // - USER, PROTECTOR: 자기가 작성한 리뷰만 수정/삭제 가능
+                      // - ADMIN: 모든 리뷰 수정/삭제 가능
+                      // 실제 권한 검증은 백엔드에서 처리됨
                       const userName = localStorage.getItem('userName') || ''
                       const isOwner = review.userName === userName
+                      const canEditOrDelete = isOwner || isAdmin()
                       const isMenuOpen = openMenuId === review.id
                       
                       const handleMenuClick = (e: React.MouseEvent) => {
@@ -705,7 +721,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
                                 size="small"
                               />
                             </div>
-                            {isOwner && (
+                            {canEditOrDelete && (
                               <div 
                                 className={styles.reviewActions}
                                 onClick={(e) => e.stopPropagation()}

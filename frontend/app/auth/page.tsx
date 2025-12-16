@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import styles from './page.module.css'
-import { login, signup, validatePassword, validateEmail, Role, getUserType } from '@/lib/auth'
+import { login, signup, validatePassword, validateEmail, Role, getUserType, Provider } from '@/lib/auth'
 
 export default function AuthPage() {
   const router = useRouter()
@@ -99,6 +99,38 @@ export default function AuthPage() {
     setPassword('')
     setConfirmPassword('')
     setPhone('')
+  }
+
+  // 소셜 로그인 핸들러 - 백엔드 OAuth callback URL 사용
+  const handleSocialLogin = (provider: Provider) => {
+    // OAuth redirect_uri는 카카오 서버가 직접 호출하므로 백엔드의 실제 URL을 사용해야 함
+    const backendOAuthUrl = process.env.NEXT_PUBLIC_BACKEND_OAUTH_URL || 'http://localhost:8080/api'
+    const backendRedirectUri = `${backendOAuthUrl}/v1/auth/oauth/callback/${provider.toLowerCase()}`
+    let authUrl = ''
+    let clientId = ''
+
+    switch (provider) {
+      case Provider.NAVER:
+        clientId = process.env.NEXT_PUBLIC_NAVER_CLIENT_ID || ''
+        authUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(backendRedirectUri)}&state=naver`
+        break
+      case Provider.GOOGLE:
+        clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
+        authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(backendRedirectUri)}&scope=openid%20email%20profile&state=google`
+        break
+      case Provider.KAKAO:
+        clientId = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID || ''
+        // 카카오는 scope 파라미터 없이도 개발자 콘솔의 동의 항목 설정에 따라 자동으로 요청됨
+        authUrl = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(backendRedirectUri)}&state=kakao`
+        break
+    }
+
+    if (!clientId) {
+      setError(`${provider} Client ID가 설정되지 않았습니다.`)
+      return
+    }
+
+    window.location.href = authUrl
   }
 
   return (
@@ -205,6 +237,46 @@ export default function AuthPage() {
             {loading ? '처리 중...' : mode === 'login' ? '로그인' : '회원가입'}
           </button>
         </form>
+
+        {mode === 'login' && (
+          <>
+            <div className={styles.divider}>
+              <span className={styles.dividerText}>또는</span>
+            </div>
+
+            <div className={styles.socialButtons}>
+              <button
+                type="button"
+                className={`${styles.socialButton} ${styles.naver}`}
+                onClick={() => handleSocialLogin(Provider.NAVER)}
+                disabled={loading}
+              >
+                <span className={styles.socialIcon}>N</span>
+                네이버로 로그인
+              </button>
+
+              <button
+                type="button"
+                className={`${styles.socialButton} ${styles.google}`}
+                onClick={() => handleSocialLogin(Provider.GOOGLE)}
+                disabled={loading}
+              >
+                <span className={styles.socialIcon}>G</span>
+                구글로 로그인
+              </button>
+
+              <button
+                type="button"
+                className={`${styles.socialButton} ${styles.kakao}`}
+                onClick={() => handleSocialLogin(Provider.KAKAO)}
+                disabled={loading}
+              >
+                <span className={styles.socialIcon}>K</span>
+                카카오로 로그인
+              </button>
+            </div>
+          </>
+        )}
 
         <div className={styles.switchContainer}>
           <span className={styles.switchText}>

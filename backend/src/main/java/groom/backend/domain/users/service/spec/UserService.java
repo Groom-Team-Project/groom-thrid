@@ -1,6 +1,8 @@
 package groom.backend.domain.users.service.spec;
 
+import groom.backend.domain.users.dto.request.ChangePasswordRequest;
 import groom.backend.domain.users.dto.request.UpdateUserRequest;
+import groom.backend.domain.users.dto.response.RelationInfoResponse;
 import groom.backend.domain.users.dto.response.UserResponse;
 import groom.backend.domain.users.entity.User;
 import groom.backend.domain.users.entity.UserCredential;
@@ -24,8 +26,17 @@ public interface UserService {
     // 사용자 삭제
     void deleteUser(UUID id);
 
+    // 관계 설정
     void guardianMatch(UUID userId, String email);
 
+    // 관계 조회
+    RelationInfoResponse relationInfo(Long relationId);
+
+    // 비밀번호 변경 (모든 토큰 무효화)
+    void changePassword(UUID userId, ChangePasswordRequest request);
+
+    // 관리자 강제 로그아웃 (모든 토큰 무효화)
+    void forceLogout(UUID userId);
     // ================= 내부 api용 ===================
 
     // User 엔티티로 사용자 생성

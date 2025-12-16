@@ -3,7 +3,12 @@ package groom.backend.domain.users.service.impl;
 import groom.backend.common.exception.BusinessException;
 import groom.backend.common.exception.ErrorCode;
 import groom.backend.common.exception.UserNotFoundException;
+import groom.backend.domain.auth.enums.BlacklistReason;
+import groom.backend.domain.auth.repository.spec.RefreshTokenRedisRepository;
+import groom.backend.domain.auth.service.spec.TokenBlacklistService;
+import groom.backend.domain.users.dto.request.ChangePasswordRequest;
 import groom.backend.domain.users.dto.request.UpdateUserRequest;
+import groom.backend.domain.users.dto.response.RelationInfoResponse;
 import groom.backend.domain.users.dto.response.UserResponse;
 import groom.backend.domain.users.entity.User;
 import groom.backend.domain.users.entity.UserCredential;
@@ -18,8 +23,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -28,6 +36,9 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserCredentialRepository userCredentialRepository;
     private final UserRelationRepository userRelationRepository;
+    private final TokenBlacklistService tokenBlacklistService;
+    private final RefreshTokenRedisRepository refreshTokenRedisRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserResponse getUserById(UUID id) {
@@ -84,6 +95,53 @@ public class UserServiceImpl implements UserService {
         // 5. 관계 생성
         UserRelation relation = UserRelation.create(user, guardian);
         userRelationRepository.save(relation);
+    }
+
+    @Override
+    public RelationInfoResponse relationInfo(Long relationId) {
+        UserRelation userRelation = userRelationRepository.findById(relationId).get();
+
+        return UserMapper.toDto(userRelation);
+    }
+
+    @Override
+    public void changePassword(UUID userId, ChangePasswordRequest request) {
+        // 1. 사용자 및 credential 조회
+        User user = userRepository.findUserById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+
+        UserCredential credential = user.getCredential();
+        if (credential == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        // 2. 현재 비밀번호 검증
+        if (!passwordEncoder.matches(request.getCurrentPassword(), credential.getPassword())) {
+            throw new BusinessException(ErrorCode.PASSWORD_MISMATCH);
+        }
+
+        // 3. 비밀번호 업데이트
+        String encodedNewPassword = passwordEncoder.encode(request.getNewPassword());
+        credential.updatePassword(encodedNewPassword);
+
+        // 4. 모든 토큰 무효화
+        tokenBlacklistService.blacklistAllUserTokens(userId, BlacklistReason.PASSWORD_CHANGE);
+        refreshTokenRedisRepository.deleteAllByUserId(userId);
+
+        log.info("Password changed for userId: {} - All sessions invalidated", userId);
+    }
+
+    @Override
+    public void forceLogout(UUID userId) {
+        // 사용자 존재 확인
+        userRepository.findUserById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+
+        // 모든 토큰 무효화
+        tokenBlacklistService.blacklistAllUserTokens(userId, BlacklistReason.ADMIN_FORCED);
+        refreshTokenRedisRepository.deleteAllByUserId(userId);
+
+        log.warn("Admin forced logout for userId: {}", userId);
     }
 
     // ================= 내부 api용 ===================

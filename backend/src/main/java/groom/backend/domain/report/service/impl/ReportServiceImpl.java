@@ -54,12 +54,12 @@ public class ReportServiceImpl implements ReportService {
     @Transactional(readOnly = true)
     public List<ReportResponseDto> getReports(AuthUser authUser) {
         // ADMIN: 모든 제보 목록 조회
-        // USER, PROTECTOR: 자신이 생성한 제보 목록만 조회
+        // USER, GUARDIAN: 자신이 생성한 제보 목록만 조회
         if (authUser.role() == Role.ADMIN) {
             List<Report> reports = reportRepository.findAll();
             return ReportMapper.toResponseDtoList(reports);
         } else {
-            // USER, PROTECTOR는 자신의 userId로 제보 조회
+            // USER, GUARDIAN는 자신의 userId로 제보 조회
             List<Report> reports = reportRepository.findByUserId(authUser.userId());
             return ReportMapper.toResponseDtoList(reports);
         }
@@ -72,7 +72,7 @@ public class ReportServiceImpl implements ReportService {
                 .orElseThrow(() -> new IllegalArgumentException("제보를 찾을 수 없습니다. ID: " + reportId));
         
         // ADMIN: 모든 제보 조회 가능
-        // USER, PROTECTOR: 자신이 생성한 제보만 조회 가능
+        // USER, GUARDIAN: 자신이 생성한 제보만 조회 가능
         if (authUser.role() != Role.ADMIN) {
             if (report.getUser() == null || !report.getUser().getId().equals(authUser.userId())) {
                 throw new IllegalArgumentException("본인의 제보만 조회할 수 있습니다.");
@@ -89,7 +89,7 @@ public class ReportServiceImpl implements ReportService {
                 .orElseThrow(() -> new IllegalArgumentException("제보를 찾을 수 없습니다. ID: " + reportId));
         
         // ADMIN: 모든 제보 수정 가능
-        // USER, PROTECTOR: 자신이 생성한 제보만 수정 가능
+        // USER, GUARDIAN: 자신이 생성한 제보만 수정 가능
         if (authUser.role() != Role.ADMIN) {
             if (report.getUser() == null || !report.getUser().getId().equals(authUser.userId())) {
                 throw new IllegalArgumentException("본인의 제보만 수정할 수 있습니다.");
@@ -117,7 +117,7 @@ public class ReportServiceImpl implements ReportService {
                 .orElseThrow(() -> new IllegalArgumentException("제보를 찾을 수 없습니다. ID: " + reportId));
         
         // ADMIN: 모든 제보 삭제 가능
-        // USER, PROTECTOR: 자신이 생성한 제보만 삭제 가능
+        // USER, GUARDIAN: 자신이 생성한 제보만 삭제 가능
         if (authUser.role() != Role.ADMIN) {
             if (report.getUser() == null || !report.getUser().getId().equals(authUser.userId())) {
                 throw new IllegalArgumentException("본인의 제보만 삭제할 수 있습니다.");
@@ -138,7 +138,7 @@ public class ReportServiceImpl implements ReportService {
         List<Long> reportIds = request.reportIds();
         
         // ADMIN: 모든 제보 삭제 가능
-        // USER, PROTECTOR: 자신이 생성한 제보만 삭제 가능
+        // USER, GUARDIAN: 자신이 생성한 제보만 삭제 가능
         if (authUser.role() == Role.ADMIN) {
             // 모든 제보가 존재하는지 확인
             for (Long reportId : reportIds) {
@@ -147,7 +147,7 @@ public class ReportServiceImpl implements ReportService {
                 }
             }
         } else {
-            // USER, PROTECTOR는 자신의 제보만 삭제 가능
+            // USER, GUARDIAN는 자신의 제보만 삭제 가능
             for (Long reportId : reportIds) {
                 if (!reportRepository.existsByIdAndUserId(reportId, authUser.userId())) {
                     throw new IllegalArgumentException("제보 ID " + reportId + "는 본인의 제보가 아니거나 존재하지 않습니다.");

@@ -1,9 +1,11 @@
-import { apiRequest, saveTokens, clearTokens, getRoleFromToken, getNameFromToken } from './api'
+import { apiRequest, saveTokens, clearTokens, getRoleFromToken, getNameFromToken, getRelationIdFromToken } from './api'
+import { getRelationInfo, saveRelationInfo, clearRelationInfo } from './user'
 
 // Role enum (백엔드와 일치)
 export enum Role {
   USER = 'USER',
   GUARDIAN = 'GUARDIAN',
+  ADMIN = 'ADMIN',
 }
 
 // 사용자 타입 (화면 구분용)
@@ -28,6 +30,29 @@ export interface LoginRequest {
 export interface AuthResponse {
   accessToken: string
   refreshToken: string
+}
+
+// OAuth Provider
+export enum Provider {
+  NAVER = 'Naver',
+  GOOGLE = 'Google',
+  KAKAO = 'Kakao',
+}
+
+// OAuth 회원가입 요청
+export interface OAuthSignupRequest {
+  name: string
+  email: string
+  phone?: string
+  role: Role
+  provider: Provider
+  providerId: string
+}
+
+// OAuth 로그인 요청
+export interface OAuthLoginRequest {
+  provider: Provider
+  providerId: string
 }
 
 // 비밀번호 검증 정규식
@@ -56,7 +81,7 @@ export const validateEmail = (email: string): boolean => {
 // 회원가입 API
 export const signup = async (request: SignupRequest): Promise<AuthResponse> => {
   try {
-    const response = await apiRequest<AuthResponse>('/auth/signup', {
+    const response = await apiRequest<AuthResponse>('/auth/form-signup', {
       method: 'POST',
       body: JSON.stringify(request),
     })
@@ -64,15 +89,26 @@ export const signup = async (request: SignupRequest): Promise<AuthResponse> => {
     if (response.data) {
       saveTokens(response.data.accessToken, response.data.refreshToken)
 
-      // JWT에서 role과 name 추출
+      // JWT에서 role, name, relationId 추출
       const role = getRoleFromToken(response.data.accessToken)
       const name = getNameFromToken(response.data.accessToken)
+      const relationId = getRelationIdFromToken(response.data.accessToken)
 
       // 사용자 정보 저장
       localStorage.setItem('userEmail', request.email)
       localStorage.setItem('userName', name || request.name)
       localStorage.setItem('userRole', role || request.role)
       localStorage.setItem('isLoggedIn', 'true')
+
+      // relationId가 있으면 연관 정보 가져오기
+      if (relationId !== null) {
+        try {
+          const relationInfo = await getRelationInfo()
+          saveRelationInfo(relationInfo)
+        } catch (error) {
+          console.error('관계 정보 조회 실패:', error)
+        }
+      }
 
       return response.data
     }
@@ -97,15 +133,29 @@ export const login = async (request: LoginRequest): Promise<AuthResponse> => {
     if (response.data) {
       saveTokens(response.data.accessToken, response.data.refreshToken)
 
-      // JWT에서 role과 name 추출
+      // JWT에서 role, name, relationId 추출
       const role = getRoleFromToken(response.data.accessToken)
       const name = getNameFromToken(response.data.accessToken)
+      const relationId = getRelationIdFromToken(response.data.accessToken)
 
       // 사용자 정보 저장
       localStorage.setItem('userEmail', request.email)
       localStorage.setItem('userName', name || '')
       localStorage.setItem('userRole', role || 'USER')
       localStorage.setItem('isLoggedIn', 'true')
+
+      // relationId가 있으면 연관 정보 가져오기
+      if (relationId !== null) {
+        try {
+          const relationInfo = await getRelationInfo()
+          saveRelationInfo(relationInfo)
+        } catch (error) {
+          console.error('관계 정보 조회 실패:', error)
+        }
+      } else {
+        // relationId가 없으면 기존 relationInfo 삭제
+        clearRelationInfo()
+      }
 
       return response.data
     }
@@ -133,7 +183,184 @@ export const getUserType = (): UserType | null => {
   return null
 }
 
+// JWT 재발급 (refresh token으로 새 access token 발급)
+export const refreshAccessToken = async (): Promise<AuthResponse> => {
+  try {
+    const refreshToken = localStorage.getItem('refreshToken')
+
+    if (!refreshToken) {
+      throw new Error('Refresh token이 없습니다.')
+    }
+
+    const response = await apiRequest<AuthResponse>('/auth/refresh', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${refreshToken}`,
+      },
+    })
+
+    if (response.data) {
+      saveTokens(response.data.accessToken, response.data.refreshToken)
+
+      // JWT에서 role, name, relationId 추출
+      const role = getRoleFromToken(response.data.accessToken)
+      const name = getNameFromToken(response.data.accessToken)
+      const relationId = getRelationIdFromToken(response.data.accessToken)
+
+      // 사용자 정보 업데이트
+      const currentEmail = localStorage.getItem('userEmail')
+      if (currentEmail) {
+        localStorage.setItem('userName', name || '')
+        localStorage.setItem('userRole', role || 'USER')
+      }
+
+      // relationId가 있으면 연관 정보 가져오기
+      if (relationId !== null) {
+        try {
+          const relationInfo = await getRelationInfo()
+          saveRelationInfo(relationInfo)
+        } catch (error) {
+          console.error('관계 정보 조회 실패:', error)
+        }
+      } else {
+        clearRelationInfo()
+      }
+
+      return response.data
+    }
+
+    throw new Error('토큰 재발급에 실패했습니다.')
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error('토큰 재발급 중 오류가 발생했습니다.')
+  }
+}
+
+// 현재 사용자가 ADMIN인지 확인
+export const isAdmin = (): boolean => {
+  const role = localStorage.getItem('userRole')
+  return role === Role.ADMIN
+}
+
 // 로그아웃
-export const logout = () => {
-  clearTokens()
+export const logout = async (): Promise<void> => {
+  try {
+    const accessToken = localStorage.getItem('accessToken')
+    const refreshToken = localStorage.getItem('refreshToken')
+
+    // 토큰이 있으면 백엔드 로그아웃 API 호출
+    if (accessToken && refreshToken) {
+      await apiRequest('/auth/logout', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'X-Refresh-Token': `Bearer ${refreshToken}`,
+        },
+      })
+    }
+  } catch (error) {
+    // 로그아웃 API 호출 실패해도 로컬 토큰은 삭제
+    console.error('로그아웃 API 호출 실패:', error)
+  } finally {
+    // 로컬 스토리지에서 토큰 및 사용자 정보 삭제
+    clearTokens()
+    clearRelationInfo()
+  }
+}
+
+// OAuth 로그인 API
+export const oauthLogin = async (request: OAuthLoginRequest): Promise<AuthResponse> => {
+  try {
+    const response = await apiRequest<AuthResponse>('/auth/oauth-login', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+
+    if (response.data) {
+      saveTokens(response.data.accessToken, response.data.refreshToken)
+
+      // JWT에서 role, name, relationId 추출
+      const role = getRoleFromToken(response.data.accessToken)
+      const name = getNameFromToken(response.data.accessToken)
+      const relationId = getRelationIdFromToken(response.data.accessToken)
+
+      // 사용자 정보 저장
+      localStorage.setItem('userName', name || '')
+      localStorage.setItem('userRole', role || 'USER')
+      localStorage.setItem('isLoggedIn', 'true')
+
+      // relationId가 있으면 연관 정보 가져오기
+      if (relationId !== null) {
+        try {
+          const relationInfo = await getRelationInfo()
+          saveRelationInfo(relationInfo)
+        } catch (error) {
+          console.error('관계 정보 조회 실패:', error)
+        }
+      } else {
+        clearRelationInfo()
+      }
+
+      return response.data
+    }
+
+    throw new Error('OAuth 로그인에 실패했습니다.')
+  } catch (error) {
+    // 사용자를 찾을 수 없는 경우 (회원가입 필요)
+    if (error instanceof Error && error.message.includes('404')) {
+      throw new Error('USER_NOT_FOUND')
+    }
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error('OAuth 로그인 중 오류가 발생했습니다.')
+  }
+}
+
+// OAuth 회원가입 API
+export const oauthSignup = async (request: OAuthSignupRequest): Promise<AuthResponse> => {
+  try {
+    const response = await apiRequest<AuthResponse>('/auth/oauth-signup', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+
+    if (response.data) {
+      saveTokens(response.data.accessToken, response.data.refreshToken)
+
+      // JWT에서 role, name, relationId 추출
+      const role = getRoleFromToken(response.data.accessToken)
+      const name = getNameFromToken(response.data.accessToken)
+      const relationId = getRelationIdFromToken(response.data.accessToken)
+
+      // 사용자 정보 저장
+      if (request.email) {
+        localStorage.setItem('userEmail', request.email)
+      }
+      localStorage.setItem('userName', name || request.name)
+      localStorage.setItem('userRole', role || request.role)
+      localStorage.setItem('isLoggedIn', 'true')
+
+      // relationId가 있으면 연관 정보 가져오기
+      if (relationId !== null) {
+        try {
+          const relationInfo = await getRelationInfo()
+          saveRelationInfo(relationInfo)
+        } catch (error) {
+          console.error('관계 정보 조회 실패:', error)
+        }
+      }
+
+      return response.data
+    }
+
+    throw new Error('OAuth 회원가입에 실패했습니다.')
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error('OAuth 회원가입 중 오류가 발생했습니다.')
+  }
 }

@@ -1,5 +1,5 @@
 // API base URL
-export const API_BASE_URL = 'http://localhost:8080/api/v1'
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'
 
 // API response wrapper
 export interface ApiResponse<T> {
@@ -45,6 +45,7 @@ interface JwtPayload {
   sub: string // userId
   role: string // USER, GUARDIAN
   name: string // 사용자 이름
+  relationId: number | null // 관계 ID (없으면 null)
   iat: number // issued at
   exp: number // expiration
 }
@@ -85,8 +86,14 @@ export const getNameFromToken = (token: string): string | null => {
   return payload?.name || null
 }
 
+// JWT에서 relationId 추출
+export const getRelationIdFromToken = (token: string): number | null => {
+  const payload = decodeJwt(token)
+  return payload?.relationId ?? null
+}
+
 // 인증이 필요 없는 엔드포인트 목록
-const PUBLIC_ENDPOINTS = ['/auth/form-login', '/auth/signup']
+const PUBLIC_ENDPOINTS = ['/auth/form-login', '/auth/form-signup', '/auth/oauth-login', '/auth/oauth-signup']
 
 // API 요청 헬퍼
 export const apiRequest = async <T>(
@@ -116,10 +123,76 @@ export const apiRequest = async <T>(
       headers,
     })
 
-    const data: ApiResponse<T> = await response.json()
+    // 204 No Content 응답인 경우 body가 없으므로 빈 응답 반환
+    if (response.status === 204) {
+      return {
+        status: 'success',
+        code: 204,
+        message: 'No Content',
+        data: null as T,
+        errors: null, 
+      }
+    }
+
+    // 응답 본문을 먼저 텍스트로 읽기 (Response body는 한 번만 읽을 수 있음)
+    const responseText = await response.text()
+    
+    // 빈 응답 처리 (DELETE 등)
+    if (!responseText || responseText.trim().length === 0) {
+      if (response.ok) {
+        return {
+          status: 'success',
+          code: response.status,
+          message: '요청이 성공했습니다.',
+          data: null,
+          errors: null,
+        } as ApiResponse<T>
+      } else {
+        throw new Error(`서버 오류 (${response.status}): 응답 본문이 비어있습니다.`)
+      }
+    }
+
+    // JSON 파싱 시도
+    let data: ApiResponse<T>
+    try {
+      data = JSON.parse(responseText)
+    } catch (parseError) {
+      console.error('JSON 파싱 실패:', {
+        status: response.status,
+        statusText: response.statusText,
+        responseText: responseText.substring(0, 500), // 처음 500자만 표시
+        endpoint,
+      })
+      throw new Error(`서버 응답을 파싱할 수 없습니다. (${response.status} ${response.statusText})`)
+    }
 
     if (!response.ok) {
-      throw new Error(data.message || '요청이 실패했습니다.')
+      // 에러 상세 정보 로깅
+      console.error('API 요청 실패:', {
+        status: response.status,
+        statusText: response.statusText,
+        endpoint,
+        message: data.message,
+        errors: data.errors,
+        responseText: responseText.substring(0, 1000), // 처음 1000자만 표시
+      })
+      
+      // 에러 메시지 구성
+      let errorMessage = data.message || '요청이 실패했습니다.'
+      
+      // 500 오류인 경우 더 자세한 정보 제공
+      if (response.status === 500) {
+        errorMessage = `서버 내부 오류가 발생했습니다.${data.message ? ` (${data.message})` : ''}`
+        if (data.errors && data.errors.length > 0) {
+          errorMessage += `\n상세: ${data.errors.map(e => `${e.field}: ${e.reason}`).join(', ')}`
+        }
+      } else if (data.errors && data.errors.length > 0) {
+        // 검증 오류가 있는 경우
+        const validationErrors = data.errors.map(e => `${e.field}: ${e.reason}`).join(', ')
+        errorMessage = `${errorMessage}\n${validationErrors}`
+      }
+      
+      throw new Error(errorMessage)
     }
 
     return data
