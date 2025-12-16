@@ -99,6 +99,9 @@ public class OAuthServiceImpl implements OAuthService {
                 throw new BusinessException(ErrorCode.OAUTH_USER_INFO_ERROR);
             }
 
+            // 응답 로그 출력 (디버깅용)
+            log.info("OAuth 사용자 정보 응답 - provider: {}, response: {}", provider, responseBody);
+
             // Provider별로 응답 형식이 다르므로 파싱 처리
             return parseUserInfo(provider, responseBody);
         } catch (Exception e) {
@@ -108,14 +111,8 @@ public class OAuthServiceImpl implements OAuthService {
     }
 
     @Override
-    public CommonAuthResponse processOAuthCallback(Provider provider, String code) {
-        // 1. Access Token 발급
-        String accessToken = getAccessToken(provider, code);
-
-        // 2. 사용자 정보 조회
-        OAuthUserInfo userInfo = getUserInfo(provider, accessToken);
-
-        // 3. DB에서 사용자 조회 (providerId + provider로 조회)
+    public CommonAuthResponse processOAuthLogin(OAuthUserInfo userInfo) {
+        // 1. DB에서 사용자 조회 (providerId + provider로 조회)
         Optional<UserCredential> credentialOpt = userCredentialRepository
                 .findByProviderIdAndProvider(userInfo.getProviderId(), userInfo.getProvider());
 
@@ -155,6 +152,19 @@ public class OAuthServiceImpl implements OAuthService {
         return new CommonAuthResponse(newAccessToken, refreshTokenString);
     }
 
+    @Override
+    @Deprecated
+    public CommonAuthResponse processOAuthCallback(Provider provider, String code) {
+        // 1. Access Token 발급
+        String accessToken = getAccessToken(provider, code);
+
+        // 2. 사용자 정보 조회
+        OAuthUserInfo userInfo = getUserInfo(provider, accessToken);
+
+        // 3. 로그인 처리
+        return processOAuthLogin(userInfo);
+    }
+
     /**
      * Provider별로 사용자 정보 응답 파싱
      */
@@ -179,13 +189,40 @@ public class OAuthServiceImpl implements OAuthService {
                         .name(rootNode.has("name") ? rootNode.get("name").asText() : null)
                         .build();
                 case Kakao -> {
+                    String providerId = rootNode.get("id").asText();
+                    String email = null;
+                    String name = null;
+
+                    // 닉네임 추출 (kakao_account.profile.nickname 우선, 없으면 properties.nickname)
                     JsonNode kakaoAccount = rootNode.get("kakao_account");
-                    JsonNode profile = kakaoAccount.get("profile");
+                    if (kakaoAccount != null) {
+                        // 이메일 추출
+                        if (kakaoAccount.has("email")) {
+                            email = kakaoAccount.get("email").asText();
+                        }
+
+                        // 닉네임 추출 (kakao_account.profile.nickname)
+                        JsonNode profile = kakaoAccount.get("profile");
+                        if (profile != null && profile.has("nickname")) {
+                            name = profile.get("nickname").asText();
+                        }
+                    }
+
+                    // kakao_account에 닉네임이 없으면 properties.nickname 사용
+                    if (name == null && rootNode.has("properties")) {
+                        JsonNode properties = rootNode.get("properties");
+                        if (properties.has("nickname")) {
+                            name = properties.get("nickname").asText();
+                        }
+                    }
+
+                    log.info("Kakao 사용자 정보 파싱 완료 - providerId: {}, name: {}, email: {}", providerId, name, email);
+
                     yield OAuthUserInfo.builder()
                             .provider(Provider.Kakao)
-                            .providerId(rootNode.get("id").asText())
-                            .email(kakaoAccount.has("email") ? kakaoAccount.get("email").asText() : null)
-                            .name(profile.has("nickname") ? profile.get("nickname").asText() : null)
+                            .providerId(providerId)
+                            .email(email)
+                            .name(name)
                             .build();
                 }
                 default -> throw new BusinessException(ErrorCode.INVALID_OAUTH_PROVIDER);

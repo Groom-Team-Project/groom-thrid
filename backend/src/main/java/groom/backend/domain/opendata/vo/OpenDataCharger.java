@@ -1,4 +1,4 @@
-package groom.backend.domain.opendata.dto;
+package groom.backend.domain.opendata.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

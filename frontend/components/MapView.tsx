@@ -9,9 +9,10 @@ import { saveAlert } from '@/lib/alerts'
 import StarRating from './StarRating'
 import styles from './MapView.module.css'
 import { useLocation } from '@/providers/LocationProvider';
+import { type Facility, facilityApi } from "@/lib/facilities";
 
 interface MapViewProps {
-  selectedCategory: 'charging' | 'restroom' | null
+  selectedCategory: string | null
 }
 
 declare global {
@@ -31,7 +32,9 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     const selectedCategoryRef = useRef(selectedCategory)
 
     const [stations, setStations] = useState<ChargingStation[]>([])
+    const [facilities, setFacilities] = useState<Facility[]>([])
     const [selectedStation, setSelectedStation] = useState<ChargingStation | null>(null)
+    const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null)
     const [mapLoaded, setMapLoaded] = useState(false)
     const [showEmergencyDialog, setShowEmergencyDialog] = useState(false)
     const [activeTab, setActiveTab] = useState<'info' | 'review'>('info')
@@ -81,12 +84,13 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         setUserType(type)
     }, [])
 
-    // 충전소 데이터 로드
+    // 선택된 카테고리 변경 시
     useEffect(() => {
-        if (selectedCategory !== 'charging') {
-            // 충전소 카테고리가 아니면 마커 제거
+        if (selectedCategory === null) {
+            setFacilities([])
             setStations([])
             setSelectedStation(null)
+            setSelectedFacility(null)
             setShowSearchButton(false)
             setError(null)
             return
@@ -103,7 +107,8 @@ export default function MapView({ selectedCategory }: MapViewProps) {
 
         let mounted = true
 
-        const loadStations = async () => {
+
+        const loadDatas = async () => {
             const bounds = kakaoMapRef.current.getBounds?.()
             if (!bounds) return
 
@@ -111,21 +116,38 @@ export default function MapView({ selectedCategory }: MapViewProps) {
             const ne = bounds.getNorthEast();
 
             try {
-                const stationsResult = await chargerApi.getChargersInViewport(
-                    sw.getLat(), ne.getLat(), sw.getLng(), ne.getLng()
-                )
-                if (!mounted) return
 
-                setStations(stationsResult)
+                if (selectedCategory === 'charging') {
+                    const stationsResult = await chargerApi.getChargersInViewport(
+                        sw.getLat(), ne.getLat(), sw.getLng(), ne.getLng()
+                    )
+
+                    if (!mounted) return
+
+                    setFacilities([])
+                    setStations(stationsResult)
+
+                } else {
+                    const facilitiesResult = await facilityApi.getConvenientFacilityInViewport(
+                        selectedCategory, sw.getLat(), ne.getLat(), sw.getLng(), ne.getLng()
+                    )
+
+                    if (!mounted) return
+
+                    setStations([])
+                    setFacilities(facilitiesResult)
+                }
+
                 setShowSearchButton(false)
                 setError(null) // 성공 시 에러 초기화
+
             } catch (error) {
                 console.error('충전소 데이터 로드 오류:', error)
                 setError('충전소 로드에 실패했습니다. 잠시 후 다시 시도해주세요.')
             }
         }
 
-        loadStations()
+        loadDatas()
 
         return () => {
             mounted = false
@@ -148,18 +170,19 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         // 지도 클릭 이벤트 - 선택 해제
         window.kakao.maps.event.addListener(map, 'click', () => {
             setSelectedStation(null)
+            setSelectedFacility(null)
         })
 
         // 지도 이동 이벤트 - 검색 버튼 표시
         window.kakao.maps.event.addListener(map, 'dragend', () => {
-            if (selectedCategoryRef.current === 'charging') {
+            if (selectedCategoryRef.current !== null) {
                 setShowSearchButton(true)
             }
         })
 
         // 지도 줌 변경 이벤트 - 검색 버튼 표시
         window.kakao.maps.event.addListener(map, 'zoom_changed', () => {
-            if (selectedCategoryRef.current === 'charging') {
+            if (selectedCategoryRef.current !== null) {
                 setShowSearchButton(true)
             }
         })
@@ -210,8 +233,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
             clustererRef.current.setMap(null);
         }
 
-        if (!kakaoMapRef.current || !mapLoaded || selectedCategory !== 'charging') return
-
+        if (!kakaoMapRef.current || !mapLoaded || selectedCategory === null) return
 
         const clusterer = new window.kakao.maps.MarkerClusterer({
             map: kakaoMapRef.current, // 마커들을 클러스터로 관리하고 표시할 지도 객체
@@ -220,48 +242,87 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         });
         clustererRef.current = clusterer;
 
-        // 새 마커들 생성
-        stations.forEach((station) => {
-            const markerPosition = new window.kakao.maps.LatLng(station.lat, station.lng)
+        if (selectedCategory === 'charging') {
+            // 새 마커들 생성
+            stations.forEach((station) => {
+                const markerPosition = new window.kakao.maps.LatLng(station.lat, station.lng)
 
-            // 마커 이미지 설정
-            const imageSrc = selectedStation?.placeId === station.placeId
-                ? 'https://img.icons8.com/external-phatplus-lineal-color-phatplus/64/external-point-ev-car-phatplus-lineal-color-phatplus.png'
-                : 'https://img.icons8.com/external-phatplus-lineal-phatplus/64/external-point-ev-car-phatplus-lineal-phatplus.png'
+                // 마커 이미지 설정
+                const imageSrc = selectedStation?.placeId === station.placeId
+                    ? 'https://img.icons8.com/external-phatplus-lineal-color-phatplus/64/external-point-ev-car-phatplus-lineal-color-phatplus.png'
+                    : 'https://img.icons8.com/external-phatplus-lineal-phatplus/64/external-point-ev-car-phatplus-lineal-phatplus.png'
 
 
-            const imageSize = new window.kakao.maps.Size(36, 36)
-            const imageOptions = { offset: new window.kakao.maps.Point(18, 30) }
-            const markerImage = new window.kakao.maps.MarkerImage(
-                imageSrc,
-                imageSize,
-                imageOptions
-            )
-            const marker = new window.kakao.maps.Marker({
-                position: markerPosition,
-                image: markerImage,
-                title: station.facilityName,
-                clickable: true
+                const imageSize = new window.kakao.maps.Size(36, 36)
+                const imageOptions = {offset: new window.kakao.maps.Point(18, 30)}
+                const markerImage = new window.kakao.maps.MarkerImage(
+                    imageSrc,
+                    imageSize,
+                    imageOptions
+                )
+                const marker = new window.kakao.maps.Marker({
+                    position: markerPosition,
+                    image: markerImage,
+                    title: station.facilityName,
+                    clickable: true
+                })
+
+                // 마커 클릭 이벤트
+                window.kakao.maps.event.addListener(marker, 'click', () => {
+                    handleStationClick(station)
+                })
+
+                clusterer.addMarker(marker)
             })
+        } else {
+            // 새 마커들 생성
+            facilities.forEach((facility) => {
+                const markerPosition = new window.kakao.maps.LatLng(facility.lat, facility.lng)
 
-            // 마커 클릭 이벤트
-            window.kakao.maps.event.addListener(marker, 'click', () => {
-                handleStationClick(station)
+                // 마커 이미지 설정
+                const imageSrc = selectedFacility?.facilityId === facility.facilityId
+                    ? 'https://img.icons8.com/tiny-color/48/marker.png'
+                    : 'https://img.icons8.com/tiny-glyph/48/marker.png'
+
+
+                const imageSize = new window.kakao.maps.Size(32, 32)
+                const imageOptions = {offset: new window.kakao.maps.Point(16, 32)}
+                const markerImage = new window.kakao.maps.MarkerImage(
+                    imageSrc,
+                    imageSize,
+                    imageOptions
+                )
+                const marker = new window.kakao.maps.Marker({
+                    position: markerPosition,
+                    image: markerImage,
+                    title: facility.facilityName,
+                    clickable: true
+                })
+
+                // 마커 클릭 이벤트
+                window.kakao.maps.event.addListener(marker, 'click', () => {
+                    handleFacilityClick(facility)
+                })
+
+                clusterer.addMarker(marker)
             })
-
-            clusterer.addMarker(marker) })
-    }, [stations, selectedStation, mapLoaded, selectedCategory])
+        }
+    }, [stations, selectedStation, facilities, selectedFacility, mapLoaded, selectedCategory])
 
     // 선택된 충전소로 지도 이동
     useEffect(() => {
-        if (!selectedStation || !kakaoMapRef.current) return
+        if ((!selectedStation && !selectedFacility) || !kakaoMapRef.current) return
 
         const map = kakaoMapRef.current
 
+        const latVal = selectedStation ? selectedStation.lat : selectedFacility!.lat
+        const lngVal = selectedStation ? selectedStation.lng : selectedFacility!.lng
+
         // 마커의 좌표
         const markerPosition = new window.kakao.maps.LatLng(
-            selectedStation.lat,
-            selectedStation.lng
+            latVal,
+            lngVal
+
         )
 
         // 마커를 화면의 특정 위치(중앙보다 위쪽)에 배치
@@ -281,10 +342,12 @@ export default function MapView({ selectedCategory }: MapViewProps) {
 
         map.panTo(newCenter)
 
-    }, [selectedStation])
+    }, [selectedStation, selectedFacility])
 
     // 디버그: MapView 내부에 추가
     useEffect(() => {
+        setSelectedFacility(null)
+        setSelectedStation(null)
         selectedCategoryRef.current = selectedCategory
     }, [selectedCategory])
 
@@ -299,6 +362,18 @@ export default function MapView({ selectedCategory }: MapViewProps) {
             console.error('리뷰 로드 실패:', error)
             setReviews([])
         }
+    }
+
+    const handleFacilityClick = async (facility: Facility) => {
+        if (facility.convenientFacilityInfo == null) {
+            const updatedFacility = await facilityApi.getConvenientFacilityInfo(facility.facilityId)
+
+            if (updatedFacility && updatedFacility.convenientFacilityInfo != null) {
+                facility.convenientFacilityInfo = updatedFacility.convenientFacilityInfo;
+            }
+        }
+
+        setSelectedFacility(facility)
     }
 
     const checkLogin = () => {
@@ -320,32 +395,23 @@ export default function MapView({ selectedCategory }: MapViewProps) {
 
     const handleSetEnd = () => {
         if (!checkLogin()) return
-        if (selectedStation) {
+        if (selectedStation || selectedFacility) {
             // 지도에 표시된 충전소만 도착지로 설정 가능
-            const isStationOnMap = stations.some(s => s.placeId === selectedStation.placeId)
-            if (isStationOnMap) {
-                // 출발지 확인
-                const startStationId = localStorage.getItem('startStationId')
 
-                if (startStationId) {
-                    // 출발지가 있으면 길찾기 화면으로 이동
-                    router.push(`/directions?startId=${startStationId}&endId=${selectedStation.placeId}`)
-                    // localStorage 정리
-                    localStorage.removeItem('startStationId')
-                    localStorage.removeItem('startStationName')
-                } else {
-                    // 출발지가 없으면 현재 위치를 출발지로 사용
-                    router.push(
-                        `/directions?start-lat=${lat}` +
-                        `&start-lng=${lng}` +
-                        `&end-lat=${selectedStation.lat}` +
-                        `&end-lng=${selectedStation.lng}` +
-                        `&start-name=현재 위치` +
-                        `&end-name=${encodeURIComponent(selectedStation.facilityName)}`
-                    )
 
-                }
-            }
+            const target = (selectedCategory === 'charging' ? selectedStation : selectedFacility) as ChargingStation | Facility | null
+            if(!target) return
+
+            // 출발지가 없으면 현재 위치를 출발지로 사용
+            router.push(
+                `/directions?start-lat=${lat}` +
+                `&start-lng=${lng}` +
+                `&end-lat=${target.lat}` +
+                `&end-lng=${target.lng}` +
+                `&start-name=현재 위치` +
+                `&end-name=${encodeURIComponent(target.facilityName)}`
+            )
+
         }
     }
 
@@ -410,7 +476,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     }
 
     const handleSearchCurrentArea = async () => {
-        if (!kakaoMapRef.current) return
+        if (!kakaoMapRef.current || selectedCategory === null) return
 
         const bounds = kakaoMapRef.current.getBounds()
         if (!bounds) return
@@ -419,10 +485,20 @@ export default function MapView({ selectedCategory }: MapViewProps) {
         const ne = bounds.getNorthEast();
 
         try {
-            const stationsResult = await chargerApi.getChargersInViewport(
-                sw.getLat(), ne.getLat(), sw.getLng(), ne.getLng()
-            )
-            setStations(stationsResult)
+            if (selectedCategory === 'charging')  {
+                const stationsResult = await chargerApi.getChargersInViewport(
+                    sw.getLat(), ne.getLat(), sw.getLng(), ne.getLng()
+                )
+                setStations(stationsResult)
+                setFacilities([])
+            } else {
+                const facilitiesResult = await facilityApi.getConvenientFacilityInViewport(
+                    selectedCategory, sw.getLat(), ne.getLat(), sw.getLng(), ne.getLng()
+                )
+                setFacilities(facilitiesResult)
+                setStations([])
+            }
+
             setShowSearchButton(false)
             setError(null) // 성공 시 에러 초기화
         } catch (error) {
@@ -435,6 +511,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
     // 마커나 버튼이 아닌 지도 배경을 클릭한 경우에만 패널 닫기
     if (e.target === e.currentTarget) {
       setSelectedStation(null)
+      setSelectedFacility(null)
     }
   }
 
@@ -538,7 +615,7 @@ export default function MapView({ selectedCategory }: MapViewProps) {
       </button>
 
         {/* 현 주소에서 검색 버튼 */}
-        {showSearchButton && selectedCategory === 'charging' && (
+        {showSearchButton && selectedCategory && (
             <button className={styles.searchCurrentButton} onClick={handleSearchCurrentArea}>
                 현 주소에서 검색
             </button>
@@ -775,6 +852,43 @@ export default function MapView({ selectedCategory }: MapViewProps) {
           </div>
         </div>
       )}
+
+        {/* 편의시설 정보 패널 */}
+        {selectedFacility && (
+            <div className={styles.infoPanel}>
+                {/* 장소명, 주소, 제보, 도착 버튼을 탭 위에 배치 */}
+                <div className={styles.stationHeader}>
+                    <div className={styles.stationInfoText}>
+                        <h3 className={styles.stationName}>{selectedFacility.facilityName}</h3>
+                        <p className={styles.stationAddress}>{selectedFacility.roadAddr??'-'}</p>
+                    </div>
+                    <div className={styles.actionButtons}>
+                        <button className={styles.endButton} onClick={handleSetEnd}>
+                            도착
+                        </button>
+                    </div>
+                </div>
+                <div className={styles.infoContent}>
+                    <div className={styles.infoScroll}>
+                        <section className={styles.section}>
+                            <h4 className={styles.sectionTitle}>시설 유형</h4>
+                            <p className={styles.textPrimary}>{selectedFacility.facilityType}</p>
+                        </section>
+
+                        <section className={styles.section}>
+                            <h4 className={styles.sectionTitle}>편의 시설 기구 목록</h4>
+                            <p className={styles.textPrimary}>{selectedFacility.convenientFacilityInfo ?? '-'}</p>
+                        </section>
+
+                        <section className={styles.section}>
+                            <h4 className={styles.sectionTitle}>출처</h4>
+                            <p className={styles.smallText}>한국국사회보장정보원_장애인편의시설 현황</p>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        )}
+
     </div>
   )
 }

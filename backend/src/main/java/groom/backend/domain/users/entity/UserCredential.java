@@ -60,7 +60,7 @@ public class UserCredential extends BaseEntity {
         return credential;
     }
 
-    // OAuth용 로그인정보 Credential 생성
+    // OAuth용 로그인정보 Credential 생성 (이메일 없이)
     public static UserCredential createOAuthCredential(User user, Provider provider, String providerId) {
         if (provider == Provider.Form) {
             throw new IllegalArgumentException("Form provider는 createFormCredential을 사용해야 합니다");
@@ -69,6 +69,19 @@ public class UserCredential extends BaseEntity {
         credential.user = user;
         credential.provider = provider;
         credential.providerId = providerId;
+        return credential;
+    }
+
+    // OAuth용 로그인정보 Credential 생성 (이메일 포함)
+    public static UserCredential createOAuthCredential(User user, Provider provider, String providerId, String email) {
+        if (provider == Provider.Form) {
+            throw new IllegalArgumentException("Form provider는 createFormCredential을 사용해야 합니다");
+        }
+        UserCredential credential = new UserCredential();
+        credential.user = user;
+        credential.provider = provider;
+        credential.providerId = providerId;
+        credential.email = email; // 이메일 설정 (null 가능)
         return credential;
     }
 

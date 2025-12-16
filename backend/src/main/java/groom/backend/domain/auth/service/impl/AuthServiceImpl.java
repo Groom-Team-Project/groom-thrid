@@ -95,8 +95,8 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public SignupAuthResponse oauthSignup(OAuthSignupAuthRequest req) {
 
-        // 1. 이메일 중복 검사
-        if (userService.existsByEmail(req.email())) {
+        // 1. 이메일 중복 검사 (이메일이 제공된 경우에만)
+        if (req.email() != null && !req.email().isBlank() && userService.existsByEmail(req.email())) {
             // 에러코드 설정
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
@@ -109,11 +109,12 @@ public class AuthServiceImpl implements AuthService {
                 req.email()
         );
 
-        // 3. UserCredenial 생성
+        // 3. UserCredenial 생성 (이메일 포함)
         UserCredential credential = UserCredential.createOAuthCredential(
                 user,
                 req.provider(),
-                req.providerId()
+                req.providerId(),
+                req.email()
         );
 
         // 4. User에 양방향 관계 설정

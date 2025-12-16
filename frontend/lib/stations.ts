@@ -41,7 +41,7 @@ export const chargerApi = {
     getAllChargers: async (): Promise<ChargingStation[]> => {
         console.log('🔵 전략 1: 전체 충전소 로드 (Redis 캐싱)')
         try {
-            const response = await fetch(`${API_BASE_URL}/opendata/chargers`)
+            const response = await fetch(`${API_BASE_URL}/chargers`)
             const data = await parseJsonOrThrow(response)
             return data?.data ?? []
         } catch (error) {
@@ -66,7 +66,7 @@ export const chargerApi = {
                 minLng: minLng.toString(),
                 maxLng: maxLng.toString(),
             })
-            const response = await fetch(`${API_BASE_URL}/opendata/chargers/viewport?${params}`)
+            const response = await fetch(`${API_BASE_URL}/chargers/viewport?${params}`)
             const data = await parseJsonOrThrow(response)
             return data?.data ?? []
         } catch (err) {
@@ -89,7 +89,7 @@ export const chargerApi = {
                 lng: lng.toString(),
                 radiusKm: radiusKm.toString(),
             })
-            const response = await fetch(`${API_BASE_URL}/opendata/chargers/nearby?${params}`)
+            const response = await fetch(`${API_BASE_URL}/chargers/nearby?${params}`)
             const data = await parseJsonOrThrow(response)
             return data?.data ?? []
         } catch (error) {
@@ -102,7 +102,7 @@ export const chargerApi = {
     // 충전소 상세 조회
     getChargerById: async (id: number): Promise<ChargingStation> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/opendata/chargers/${id}`)
+            const response = await fetch(`${API_BASE_URL}/chargers/${id}`)
             const data = await parseJsonOrThrow(response)
             return data.data
         } catch (err) {

@@ -103,23 +103,25 @@ export default function AuthPage() {
 
   // 소셜 로그인 핸들러 - 백엔드 OAuth callback URL 사용
   const handleSocialLogin = (provider: Provider) => {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'
-    const backendRedirectUri = `${backendUrl}/v1/auth/oauth/callback/${provider.toLowerCase()}`
+    // OAuth redirect_uri는 카카오 서버가 직접 호출하므로 백엔드의 실제 URL을 사용해야 함
+    const backendOAuthUrl = process.env.NEXT_PUBLIC_BACKEND_OAUTH_URL || 'http://localhost:8080/api'
+    const backendRedirectUri = `${backendOAuthUrl}/v1/auth/oauth/callback/${provider.toLowerCase()}`
     let authUrl = ''
     let clientId = ''
 
     switch (provider) {
       case Provider.NAVER:
         clientId = process.env.NEXT_PUBLIC_NAVER_CLIENT_ID || ''
-        authUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${clientId}&redirect_uri=${backendRedirectUri}&state=naver`
+        authUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(backendRedirectUri)}&state=naver`
         break
       case Provider.GOOGLE:
         clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
-        authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${backendRedirectUri}&scope=openid%20email%20profile&state=google`
+        authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(backendRedirectUri)}&scope=openid%20email%20profile&state=google`
         break
       case Provider.KAKAO:
         clientId = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID || ''
-        authUrl = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${backendRedirectUri}&state=kakao`
+        // 카카오는 scope 파라미터 없이도 개발자 콘솔의 동의 항목 설정에 따라 자동으로 요청됨
+        authUrl = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(backendRedirectUri)}&state=kakao`
         break
     }
 

@@ -69,10 +69,8 @@ export default function OAuthSignupPage() {
       return
     }
 
-    if (!email) {
-      setError('이메일을 입력해주세요.')
-      return
-    }
+    // 이메일은 선택사항 (OAuth에서 제공하지 않을 수 있음)
+    // 사용자가 직접 입력 가능
 
     if (!provider || !providerId) {
       setError('OAuth 정보가 누락되었습니다.')
@@ -194,11 +192,11 @@ export default function OAuthSignupPage() {
           </div>
 
           <div className={styles.inputGroup}>
-            <label className={styles.label}>이메일</label>
+            <label className={styles.label}>이메일 (선택)</label>
             <input
               type="email"
               className={styles.input}
-              placeholder="example@email.com"
+              placeholder="example@email.com (선택사항)"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />

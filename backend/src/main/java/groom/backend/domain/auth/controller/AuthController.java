@@ -21,12 +21,18 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.view.RedirectView;
-
-import java.io.IOException;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
 @RequestMapping("/v1/auth")
@@ -213,12 +219,21 @@ public class AuthController {
             @RequestParam("code") String code,
             HttpServletResponse response
     ) throws IOException {
+        OAuthUserInfo userInfo = null;
+
         try {
             // Provider 파싱
-            Provider provider = Provider.valueOf(providerName.substring(0, 1).toUpperCase() + providerName.substring(1).toLowerCase());
+            Provider provider = Provider.valueOf(
+                    providerName.substring(0, 1).toUpperCase() + providerName.substring(1).toLowerCase());
 
-            // OAuth 로그인 처리
-            CommonAuthResponse authResponse = oauthService.processOAuthCallback(provider, code);
+            // 1. Access Token 발급
+            String accessToken = oauthService.getAccessToken(provider, code);
+
+            // 2. 사용자 정보 조회
+            userInfo = oauthService.getUserInfo(provider, accessToken);
+
+            // 3. 로그인 처리 시도 (기존 processOAuthCallback 대신 사용)
+            CommonAuthResponse authResponse = oauthService.processOAuthLogin(userInfo);
 
             // 로그인 성공 - 프론트엔드로 리다이렉트하며 토큰 전달
             String redirectUrl = String.format("%s/auth/oauth/success?accessToken=%s&refreshToken=%s",
@@ -229,22 +244,23 @@ public class AuthController {
             response.sendRedirect(redirectUrl);
 
         } catch (BusinessException e) {
-            if (e.getErrorCode() == ErrorCode.USER_NOT_FOUND) {
-                // 사용자 없음 - OAuth 사용자 정보 조회 후 회원가입 페이지로 리다이렉트
-                handleSignupRedirect(providerName, code, response);
+            if (e.getErrorCode() == ErrorCode.USER_NOT_FOUND && userInfo != null) {
+                // 사용자 없음 - 이미 조회한 사용자 정보로 회원가입 페이지로 리다이렉트
+                // (code 재사용 방지를 위해 이미 받은 userInfo 사용)
+                handleSignupRedirect(userInfo, response);
             } else {
-                // 기타 에러 - 에러 페이지로 리다이렉트
+                // 기타 에러 - 에러 페이지로 리다이렉트 (에러 코드만 전달)
                 String errorRedirectUrl = String.format("%s/auth?error=%s",
                         frontendUrl,
-                        e.getMessage()
+                        e.getErrorCode().name()
                 );
                 response.sendRedirect(errorRedirectUrl);
             }
         } catch (Exception e) {
-            // 예외 발생 - 에러 페이지로 리다이렉트
+            // 예외 발생 - 에러 페이지로 리다이렉트 (일반 에러 코드)
             String errorRedirectUrl = String.format("%s/auth?error=%s",
                     frontendUrl,
-                    "OAuth 처리 중 오류가 발생했습니다"
+                    "OAUTH_ERROR"
             );
             response.sendRedirect(errorRedirectUrl);
         }
@@ -253,30 +269,26 @@ public class AuthController {
     /**
      * OAuth 회원가입이 필요한 경우 프론트엔드 회원가입 페이지로 리다이렉트
      */
-    private void handleSignupRedirect(String providerName, String code, HttpServletResponse response) throws IOException {
+    private void handleSignupRedirect(OAuthUserInfo userInfo, HttpServletResponse response)
+            throws IOException {
         try {
-            Provider provider = Provider.valueOf(providerName.substring(0, 1).toUpperCase() + providerName.substring(1).toLowerCase());
-
-            // Access Token 발급
-            String accessToken = oauthService.getAccessToken(provider, code);
-
-            // 사용자 정보 조회
-            OAuthUserInfo userInfo = oauthService.getUserInfo(provider, accessToken);
-
             // 프론트엔드 회원가입 페이지로 리다이렉트 (사용자 정보 포함)
-            String signupRedirectUrl = String.format(
-                    "%s/auth/oauth/signup?provider=%s&providerId=%s&email=%s&name=%s",
-                    frontendUrl,
-                    userInfo.getProvider().name(),
-                    userInfo.getProviderId(),
-                    userInfo.getEmail() != null ? userInfo.getEmail() : "",
-                    userInfo.getName() != null ? userInfo.getName() : ""
-            );
+            // UriComponentsBuilder를 사용하여 자동 URL 인코딩
+            String signupRedirectUrl = UriComponentsBuilder
+                    .fromHttpUrl(frontendUrl + "/auth/oauth/signup")
+                    .queryParam("provider", userInfo.getProvider().name())
+                    .queryParam("providerId", userInfo.getProviderId())
+                    .queryParam("email", userInfo.getEmail() != null ? userInfo.getEmail() : "")
+                    .queryParam("name", userInfo.getName() != null ? userInfo.getName() : "")
+                    .build()
+                    .encode()  // 명시적으로 URL 인코딩 (한글 처리)
+                    .toUriString();
+
             response.sendRedirect(signupRedirectUrl);
         } catch (Exception e) {
             String errorRedirectUrl = String.format("%s/auth?error=%s",
                     frontendUrl,
-                    "OAuth 사용자 정보 조회에 실패했습니다"
+                    "OAUTH_USER_INFO_ERROR"
             );
             response.sendRedirect(errorRedirectUrl);
         }
