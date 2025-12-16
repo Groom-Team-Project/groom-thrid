@@ -19,6 +19,8 @@ trap on_exit EXIT
 
 echo ">>> prod.sh: START $(timestamp) args=$*"
 
+BUILD_OPTS="${2:-}"
+
 case "${1:-}" in
   down)
     echo ">>> prod.sh: stopping images $(timestamp)"
@@ -29,7 +31,7 @@ case "${1:-}" in
 
   build)
     echo ">>> prod.sh: Building images (no attach) $(timestamp)"
-    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build $BUILD_OPTS
     echo ">>> prod.sh: Build complete $(timestamp)"
     ;;
 
@@ -42,14 +44,14 @@ case "${1:-}" in
 
   deploy)
     echo ">>> FULL DEPLOY START $(timestamp)"
-    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build
+    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build $BUILD_OPTS
     docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" down
     docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d
     echo ">>> FULL DEPLOY SUCCESS $(timestamp)"
     ;;
 
   *)
-    echo "Usage: ./prod.sh {build|restart|deploy|down}"
+    echo "Usage: ./prod.sh {build|restart|deploy|down} [--no-cache]"
     exit 1
     ;;
 esac
