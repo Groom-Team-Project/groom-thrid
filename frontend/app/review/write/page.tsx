@@ -85,11 +85,66 @@ export default function WriteReviewPage() {
     loadData()
   }, [router, stationIdParam, reviewId])
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 이미지 압축 함수
+  const compressImage = (file: File, maxSizeMB: number = 10): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const img = new Image()
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          let width = img.width
+          let height = img.height
+          
+          // 최대 크기 제한 (1920px)
+          const maxDimension = 1920
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = (height / width) * maxDimension
+              width = maxDimension
+            } else {
+              width = (width / height) * maxDimension
+              height = maxDimension
+            }
+          }
+          
+          canvas.width = width
+          canvas.height = height
+          
+          const ctx = canvas.getContext('2d')
+          if (!ctx) {
+            reject(new Error('Canvas context를 가져올 수 없습니다.'))
+            return
+          }
+          
+          ctx.drawImage(img, 0, 0, width, height)
+          
+          // 품질 조정하여 압축 (최대 10MB까지 시도)
+          let quality = 0.9
+          let dataUrl = canvas.toDataURL('image/jpeg', quality)
+          
+          // Base64 크기 체크 (약 10MB 제한)
+          const maxBase64Size = maxSizeMB * 1024 * 1024 * 1.33 // Base64는 약 33% 더 큼
+          while (dataUrl.length > maxBase64Size && quality > 0.1) {
+            quality -= 0.1
+            dataUrl = canvas.toDataURL('image/jpeg', quality)
+          }
+          
+          resolve(dataUrl)
+        }
+        img.onerror = () => reject(new Error('이미지를 로드할 수 없습니다.'))
+        img.src = e.target?.result as string
+      }
+      reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다.'))
+      reader.readAsDataURL(file)
+    })
+  }
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setError('사진 크기는 5MB 이하여야 합니다.')
+      if (file.size > 20 * 1024 * 1024) {
+        setError('사진 크기는 20MB 이하여야 합니다.')
         return
       }
       
@@ -99,21 +154,35 @@ export default function WriteReviewPage() {
         return
       }
       
-      setPhoto(file)
       setError('') // 에러 초기화
       
-      // FileReader로 base64 변환 (백엔드 S3Service가 base64를 받아서 S3에 업로드)
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        // data:image/jpeg;base64,... 형식으로 변환됨
-        setPhotoPreview(reader.result as string)
-      }
-      reader.onerror = () => {
-        setError('이미지 파일을 읽는 중 오류가 발생했습니다.')
+      try {
+        // 이미지가 5MB 이상이면 자동 압축
+        let photoPreview: string
+        if (file.size > 5 * 1024 * 1024) {
+          setError('이미지를 압축 중입니다...')
+          photoPreview = await compressImage(file, 10) // 최대 10MB로 압축
+          setError('')
+        } else {
+          // FileReader로 base64 변환
+          const reader = new FileReader()
+          photoPreview = await new Promise<string>((resolve, reject) => {
+            reader.onloadend = () => {
+              resolve(reader.result as string)
+            }
+            reader.onerror = () => reject(new Error('이미지 파일을 읽는 중 오류가 발생했습니다.'))
+            reader.readAsDataURL(file)
+          })
+        }
+        
+        setPhoto(file)
+        setPhotoPreview(photoPreview)
+      } catch (err) {
+        console.error('이미지 처리 실패:', err)
+        setError(err instanceof Error ? err.message : '이미지 처리 중 오류가 발생했습니다.')
         setPhoto(null)
         setPhotoPreview(null)
       }
-      reader.readAsDataURL(file)
     }
   }
 

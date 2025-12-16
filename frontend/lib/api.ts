@@ -163,6 +163,12 @@ export const apiRequest = async <T>(
         responseText: responseText.substring(0, 500), // 처음 500자만 표시
         endpoint,
       })
+      
+      // 413 오류인 경우 특별 처리
+      if (response.status === 413) {
+        throw new Error('요청 크기가 너무 큽니다. 이미지 파일 크기를 줄이거나 더 작은 이미지를 사용해주세요. (nginx 설정 확인 필요)')
+      }
+      
       throw new Error(`서버 응답을 파싱할 수 없습니다. (${response.status} ${response.statusText})`)
     }
 
@@ -180,8 +186,11 @@ export const apiRequest = async <T>(
       // 에러 메시지 구성
       let errorMessage = data.message || '요청이 실패했습니다.'
       
-      // 500 오류인 경우 더 자세한 정보 제공
-      if (response.status === 500) {
+      // 413 오류인 경우 (Request Entity Too Large)
+      if (response.status === 413) {
+        errorMessage = '요청 크기가 너무 큽니다. 이미지 파일 크기를 줄이거나 더 작은 이미지를 사용해주세요. (nginx 설정 확인 필요)'
+      } else if (response.status === 500) {
+        // 500 오류인 경우 더 자세한 정보 제공
         errorMessage = `서버 내부 오류가 발생했습니다.${data.message ? ` (${data.message})` : ''}`
         if (data.errors && data.errors.length > 0) {
           errorMessage += `\n상세: ${data.errors.map(e => `${e.field}: ${e.reason}`).join(', ')}`
