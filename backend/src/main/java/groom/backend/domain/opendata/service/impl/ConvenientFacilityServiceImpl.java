@@ -91,9 +91,8 @@ public class ConvenientFacilityServiceImpl implements ConvenientFacilityService 
 
             processPageBatch(results);
 
-            pageNo++;
-
             log.info("편의시설 데이터 수집 진행 중 - 페이지: {}, 건수: {}", pageNo, results.size());
+            pageNo++;
         }
     }
 

@@ -322,7 +322,17 @@ const DirectionsPage: React.FC = () => {
   return (
       <div style={{ position: "relative", width: "100%", height: "100vh" }}>
         <div className={styles.topBar}>
-          <button onClick={() => router.push("/")} className={styles.backButton}>
+          <button onClick={() => router.push("/")} className={styles.backButton}
+                  style={{
+                    right: "12px",
+                    top: "12px",
+                    padding: "8px 12px",
+                    backgroundColor: "#007AFF",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  }}>
             뒤로 가기
           </button>
         </div>
