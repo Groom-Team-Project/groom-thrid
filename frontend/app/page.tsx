@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import MapView from '@/components/MapView'
 import TopBar from '@/components/TopBar'
 import BottomNav from '@/components/BottomNav'
+import SplashScreen from '@/components/SplashScreen'
 import { useLocation } from '@/providers/LocationProvider'
 import { createAlert } from '@/lib/notification'
 import { Role } from '@/lib/auth'
@@ -26,6 +27,8 @@ export default function Home() {
   const [isAlertLoading, setIsAlertLoading] = useState(false)
 
   const [facilityTypes, setFacilityTypes] = useState<FacilityTypeItem[]>([])
+
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const loggedIn = localStorage.getItem('isLoggedIn')
@@ -56,10 +59,19 @@ export default function Home() {
         setFacilityTypes(items)
       } catch (e) {
         console.error('facility types load failed', e)
+      } finally {
+          // 최소 2초 표시 후 로딩 완료
+          setTimeout(() => {
+              setIsLoading(false)
+          }, 2000)
       }
    }
    load()
   }, [])
+
+    if (isLoading) {
+        return <SplashScreen />
+    }
 
   const handleAlertClick = async () => {
     if (isAlertLoading) return
