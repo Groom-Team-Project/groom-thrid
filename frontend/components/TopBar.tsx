@@ -2,12 +2,18 @@
 
 import styles from './TopBar.module.css'
 
-interface TopBarProps {
-  selectedCategory: 'charging' | 'restroom' | null
-  onCategoryChange: (category: 'charging' | 'restroom' | null) => void
+interface FacilityTypeItem {
+    name: string
+    label: string
 }
 
-export default function TopBar({ selectedCategory, onCategoryChange }: TopBarProps) {
+interface TopBarProps {
+  selectedCategory: string | null
+  facilityTypes?: FacilityTypeItem[]
+  onCategoryChange: (category: string | null) => void
+}
+
+export default function TopBar({ selectedCategory, facilityTypes = [], onCategoryChange }: TopBarProps) {
   return (
     <div className={styles.topBar}>
       <button
@@ -16,12 +22,16 @@ export default function TopBar({ selectedCategory, onCategoryChange }: TopBarPro
       >
         충전소
       </button>
-      <button
-        className={`${styles.categoryButton} ${selectedCategory === 'restroom' ? styles.active : ''}`}
-        onClick={() => onCategoryChange(selectedCategory === 'restroom' ? null : 'restroom')}
-      >
-        화장실
-      </button>
+      {/* 서버에서 내려온 활성화된 FacilityType 목록 렌더링 */}
+      {facilityTypes.map((ft) => (
+        <button
+          key={ft.name}
+          className={`${styles.categoryButton} ${selectedCategory === ft.name ? styles.active : ''}`}
+          onClick={() => onCategoryChange(selectedCategory === ft.name ? null : ft.name)}
+        >
+          {ft.label}
+        </button>
+      ))}
     </div>
   )
 }
